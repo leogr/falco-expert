@@ -1,0 +1,111 @@
+[submodule "refs/falcosecurity/falco-website"]
+	path = refs/falcosecurity/falco-website
+	url = https://github.com/falcosecurity/falco-website.git
+[submodule "refs/falcosecurity/evolution"]
+	path = refs/falcosecurity/evolution
+	url = https://github.com/falcosecurity/evolution.git
+[submodule "refs/falcosecurity/community"]
+	path = refs/falcosecurity/community
+	url = https://github.com/falcosecurity/community
+[submodule "refs/falcosecurity/.github"]
+	path = refs/falcosecurity/.github
+	url = https://github.com/falcosecurity/.github
+[submodule "refs/falcosecurity/rules"]
+	path = refs/falcosecurity/rules
+	url = https://github.com/falcosecurity/rules
+[submodule "refs/falcosecurity/charts"]
+	path = refs/falcosecurity/charts
+	url = https://github.com/falcosecurity/charts.git
+[submodule "refs/falcosecurity/deploy-kubernetes"]
+	path = refs/falcosecurity/deploy-kubernetes
+	url = https://github.com/falcosecurity/deploy-kubernetes.git
+[submodule "refs/falcosecurity/falcoctl"]
+	path = refs/falcosecurity/falcoctl
+	url = https://github.com/falcosecurity/falcoctl.git
+[submodule "refs/falcosecurity/plugin-sdk-go"]
+	path = refs/falcosecurity/plugin-sdk-go
+	url = https://github.com/falcosecurity/plugin-sdk-go.git
+[submodule "refs/falcosecurity/libs"]
+	path = refs/falcosecurity/libs
+	url = https://github.com/falcosecurity/libs.git
+[submodule "refs/falcosecurity/falco"]
+	path = refs/falcosecurity/falco
+	url = https://github.com/falcosecurity/falco.git
+[submodule "refs/falcosecurity/plugins"]
+	path = refs/falcosecurity/plugins
+	url = https://github.com/falcosecurity/plugins.git
+[submodule "refs/falcosecurity/driverkit"]
+	path = refs/falcosecurity/driverkit
+	url = https://github.com/falcosecurity/driverkit
+[submodule "refs/falcosecurity/k8s-metacollector"]
+	path = refs/falcosecurity/k8s-metacollector
+	url = https://github.com/falcosecurity/k8s-metacollector.git
+[submodule "refs/falcosecurity/event-generator"]
+	path = refs/falcosecurity/event-generator
+	url = https://github.com/falcosecurity/event-generator.git
+[submodule "refs/falcosecurity/testing"]
+	path = refs/falcosecurity/testing
+	url = https://github.com/falcosecurity/testing.git
+[submodule "refs/falcosecurity/plugin-sdk-cpp"]
+	path = refs/falcosecurity/plugin-sdk-cpp
+	url = https://github.com/falcosecurity/plugin-sdk-cpp.git
+[submodule "refs/falcosecurity/plugin-sdk-rs"]
+	path = refs/falcosecurity/plugin-sdk-rs
+	url = https://github.com/falcosecurity/plugin-sdk-rs.git
+[submodule "refs/falcosecurity/falco-rustlings"]
+	path = refs/falcosecurity/falco-rustlings
+	url = https://github.com/falcosecurity/falco-rustlings.git
+[submodule "refs/falcosecurity/client-go"]
+	path = refs/falcosecurity/client-go
+	url = https://github.com/falcosecurity/client-go.git
+[submodule "refs/falcosecurity/contrib"]
+	path = refs/falcosecurity/contrib
+	url = https://github.com/falcosecurity/contrib.git
+[submodule "refs/falcosecurity/flycheck-falco-rules"]
+	path = refs/falcosecurity/flycheck-falco-rules
+	url = https://github.com/falcosecurity/flycheck-falco-rules.git
+[submodule "refs/falcosecurity/falcosidekick"]
+	path = refs/falcosecurity/falcosidekick
+	url = https://github.com/falcosecurity/falcosidekick.git
+[submodule "refs/falcosecurity/falcosidekick-ui"]
+	path = refs/falcosecurity/falcosidekick-ui
+	url = https://github.com/falcosecurity/falcosidekick-ui.git
+[submodule "refs/falcosecurity/falco-talon"]
+	path = refs/falcosecurity/falco-talon
+	url = https://github.com/falcosecurity/falco-talon.git
+[submodule "refs/falcosecurity/falco-actions"]
+	path = refs/falcosecurity/falco-actions
+	url = https://github.com/falcosecurity/falco-actions.git
+[submodule "refs/falcosecurity/syscalls-bumper"]
+	path = refs/falcosecurity/syscalls-bumper
+	url = https://github.com/falcosecurity/syscalls-bumper.git
+[submodule "refs/falcosecurity/kernel-crawler"]
+	path = refs/falcosecurity/kernel-crawler
+	url = https://github.com/falcosecurity/kernel-crawler.git
+[submodule "refs/falcosecurity/dbg-go"]
+	path = refs/falcosecurity/dbg-go
+	url = https://github.com/falcosecurity/dbg-go.git
+[submodule "refs/falcosecurity/kernel-testing"]
+	path = refs/falcosecurity/kernel-testing
+	url = https://github.com/falcosecurity/kernel-testing.git
+[submodule "refs/falcosecurity/pigeon"]
+	path = refs/falcosecurity/pigeon
+	url = https://github.com/falcosecurity/pigeon.git
+[submodule "refs/falcosecurity/falco-playground"]
+	path = refs/falcosecurity/falco-playground
+	url = https://github.com/falcosecurity/falco-playground.git
+[submodule "refs/falcosecurity/test-infra"]
+	path = refs/falcosecurity/test-infra
+	url = https://github.com/falcosecurity/test-infra.git
+[submodule "refs/cncf/foundation"]
+	path = refs/cncf/foundation
+	url = https://github.com/cncf/foundation.git
+[submodule "refs/falcosecurity/falco-operator"]
+	path = refs/falcosecurity/falco-operator
+	url = https://github.com/falcosecurity/falco-operator.git
+[submodule "refs/falcosecurity/falco-lsp"]
+	path = refs/falcosecurity/falco-lsp
+	url = https://github.com/falcosecurity/falco-lsp.git
+[submodule "refs/falcosecurity/prempti"]
+	path = refs/falcosecurity/prempti
+	url = https://github.com/falcosecurity/prempti.git
