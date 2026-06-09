@@ -1,0 +1,13 @@
+# Output directory - generated investigation/triage/review reports.
+# Keep the directory (via .gitkeep) but ignore its generated contents.
+output/*
+!output/.gitkeep
+
+# Development workspace (mounted into devcontainer)
+workspace/
+
+# Skill benchmark workspaces (eval outputs, grading, timing data)
+skills/*-workspace/
+
+# Skill eval definitions (tied to skill-creator workflow)
+skills/*/evals/
