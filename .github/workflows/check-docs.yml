@@ -1,19 +1,13 @@
 name: check-docs
 
-# Enforce the knowledge base's documentation validation on every pull request
-# and on pushes to the default branch.
+# Validate the knowledge base's authored documentation on every pull request and
+# on pushes to the default branch.
 #
-# The checks are implemented by tools/check-docs/main.go (Go stdlib only) and
-# exposed through the Makefile targets. They split cleanly by whether they need
-# the refs/ git submodules to be checked out:
-#
-#   - check-md-links    : repo-authored local markdown links  (no submodules)
-#   - check-index-drift : navigation indexes vs filesystem     (no submodules)
-#   - check-refs-paths  : links INTO refs/                      (REQUIRES submodules)
-#
-# We therefore use two jobs: a fast "docs" job without submodules for the common
-# path, and a "refs-links" job that checks out the submodules only to validate
-# refs/ link integrity.
+# All three checks (implemented by tools/check-docs/main.go, Go stdlib only) run in
+# a SINGLE job WITH submodules. check-md-links and check-refs-paths both resolve
+# links that point into refs/, so the refs/ submodules (and their nested submodules,
+# e.g. falco-website's Docsy theme) must be checked out for those checks to pass;
+# check-index-drift also compares the refs/ tree against the navigation indexes.
 
 on:
   pull_request:
@@ -25,32 +19,8 @@ permissions:
   contents: read
 
 jobs:
-  # Fast path: validates repo-authored markdown without cloning any submodule.
-  docs:
-    name: docs (md-links + index-drift)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Go
-        uses: actions/setup-go@v5
-        with:
-          go-version: "1.22"
-          # No go.mod / dependencies: nothing to cache, and cache is keyed on
-          # go.sum (absent here), which would emit a warning. Disable it.
-          cache: false
-
-      - name: Check markdown links
-        run: make check-md-links
-
-      - name: Check index drift
-        run: make check-index-drift
-
-  # Validates links into refs/, which requires the refs/ submodules (and their
-  # nested submodules, e.g. falco-website's Docsy theme) to be present.
-  refs-links:
-    name: refs-links (refs-paths)
+  check-docs:
+    name: check-docs
     runs-on: ubuntu-latest
     steps:
       - name: Checkout (with submodules)
@@ -63,7 +33,8 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: "1.22"
+          # No go.mod/go.sum: nothing to cache, and caching keyed on go.sum would warn.
           cache: false
 
-      - name: Check refs paths
-        run: make check-refs-paths
+      - name: Run documentation checks
+        run: make check-docs
