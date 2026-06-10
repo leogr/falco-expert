@@ -8,6 +8,18 @@ Falco Knowledge Base for AI Agents.
 
 Information in this repository corresponds to Falco version 0.44.x (released May 26, 2026).
 
+## For Humans
+
+Read the [Getting Started guide](GETTING-STARTED.md) for setup instructions and usage examples.
+
+[![Falco Expert demo](https://asciinema.org/a/jAXq49rAEpVaUxZV.png)](https://asciinema.org/a/jAXq49rAEpVaUxZV)
+
+> NOTE: This project is cumbersome and opinionated on purpose: it is optimized for accuracy, not for speed or resource consumption. Agents working with it re-read guidelines, consult the index before searching, and verify claims against the pinned sources — expect more tool calls and tokens in exchange for answers you can trust and verify. It has been mainly tested with Claude, but works nicely with Codex as well.
+
+## For AI Agents
+
+See [`AGENTS.md`](AGENTS.md) for detailed guidance on working with this repository.
+
 ## Setup
 
 After cloning, initialize the git submodules to populate the [`refs/`](refs/) data sources:
@@ -258,7 +270,3 @@ Predefined procedures for common operations.
 | [Dig Deeper](WORKFLOWS.md#dig-deeper) | Extract factual, verifiable information from the knowledge base |
 | [Ingest](WORKFLOWS.md#ingest) | Add new content to the knowledge base and produce its digest |
 | [Era Transition](WORKFLOWS.md#era-transition) | Transition the knowledge base to a new Falco release era |
-
-## For AI Agents
-
-See [`AGENTS.md`](AGENTS.md) for detailed guidance on working with this repository.

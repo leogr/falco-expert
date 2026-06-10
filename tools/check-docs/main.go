@@ -188,6 +188,7 @@ func authoredMarkdownFiles() []string {
 
 	rootDocs := []string{
 		"AGENTS.md",
+		"GETTING-STARTED.md",
 		"README.md",
 		"WORKFLOWS.md",
 		"TODOs.md",
