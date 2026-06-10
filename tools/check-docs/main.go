@@ -12,12 +12,23 @@ import (
 )
 
 var (
-	repoRoot     = mustRepoRoot()
-	refsRoot     = filepath.Join(repoRoot, "refs")
-	codeFenceRE  = regexp.MustCompile("(?s)```.*?```")
-	linkRE       = regexp.MustCompile(`!?\[([^\]]+)\]\(([^)]+)\)`)
-	countLabelRE = regexp.MustCompile(`^(\d+)\s+digests?$`)
-	upperTokenRE = regexp.MustCompile(`^[A-Z_]+$`)
+	repoRoot         = mustRepoRoot()
+	refsRoot         = filepath.Join(repoRoot, "refs")
+	digestsRoot      = filepath.Join(repoRoot, "digests")
+	specsRoot        = filepath.Join(repoRoot, "specs")
+	codeFenceRE      = regexp.MustCompile("(?s)```.*?```")
+	linkRE           = regexp.MustCompile(`!?\[([^\]]+)\]\(([^)]+)\)`)
+	countLabelRE     = regexp.MustCompile(`^(\d+)\s+digests?$`)
+	upperTokenRE     = regexp.MustCompile(`^[A-Z_]+$`)
+	headingRE        = regexp.MustCompile(`(?m)^#{1,6}[ \t]+(.+?)[ \t]*$`)
+	htmlAnchorRE     = regexp.MustCompile(`<a\s+(?:name|id)="([^"]+)"`)
+	inlineCodeRE     = regexp.MustCompile("`([^`]*)`")
+	slugStripRE      = regexp.MustCompile(`[^\p{L}\p{N}\p{M} _-]`)
+	looseSlugStripRE = regexp.MustCompile(`[^a-z0-9]`)
+	lineAnchorRE     = regexp.MustCompile(`^L\d+`)
+	// Accepts the canonical `## Sources` heading plus transitional legacy
+	// variants (see TODOs: "Source section heading normalization").
+	sourcesHeadingRE = regexp.MustCompile(`(?m)^#{2,3} (\d+\. )?(Sources|Source Files( Reference)?|Source References)\s*$`)
 )
 
 type linkRef struct {
@@ -25,16 +36,17 @@ type linkRef struct {
 	label    string
 	target   string
 	resolved string
+	fragment string
 }
 
 func main() {
 	if len(os.Args) != 2 {
-		fmt.Fprintf(os.Stderr, "usage: %s <md-links|refs-paths|index-drift|all>\n", filepath.Base(os.Args[0]))
+		fmt.Fprintf(os.Stderr, "usage: %s <md-links|refs-paths|index-drift|sources|all>\n", filepath.Base(os.Args[0]))
 		os.Exit(2)
 	}
 
 	check := os.Args[1]
-	if !slices.Contains([]string{"md-links", "refs-paths", "index-drift", "all"}, check) {
+	if !slices.Contains([]string{"md-links", "refs-paths", "index-drift", "sources", "all"}, check) {
 		fmt.Fprintf(os.Stderr, "unknown check %q\n", check)
 		os.Exit(2)
 	}
@@ -48,6 +60,9 @@ func main() {
 	}
 	if check == "index-drift" || check == "all" {
 		failures += checkIndexDrift()
+	}
+	if check == "sources" || check == "all" {
+		failures += checkSources()
 	}
 
 	if failures != 0 {
@@ -64,10 +79,27 @@ func checkMDLinks() int {
 		for _, ref := range iterLocalLinks(path) {
 			if !pathExists(ref.resolved) {
 				issues = append(issues, fmt.Sprintf("%s:%d: missing local link target `%s`", rel(path), ref.line, ref.target))
+				continue
+			}
+			if isWithin(path, digestsRoot) && (ref.resolved == specsRoot || isWithin(ref.resolved, specsRoot)) {
+				issues = append(issues, fmt.Sprintf("%s:%d: digest links into specs/ (`%s`); link direction is one-way (specs -> digests, never the reverse)", rel(path), ref.line, ref.target))
+			}
+			if hasCheckableAnchor(ref) && !anchorExists(ref.resolved, ref.fragment) {
+				issues = append(issues, fmt.Sprintf("%s:%d: missing anchor `#%s` in `%s`", rel(path), ref.line, ref.fragment, rel(ref.resolved)))
 			}
 		}
 	}
 	return reportIssues("check-md-links", issues)
+}
+
+// hasCheckableAnchor reports whether the link carries a fragment that should
+// be validated against the target's headings. Fragments into refs/ (upstream
+// content) and GitHub line anchors (#L123) are skipped.
+func hasCheckableAnchor(ref linkRef) bool {
+	return ref.fragment != "" &&
+		strings.HasSuffix(strings.ToLower(ref.resolved), ".md") &&
+		!isWithin(ref.resolved, refsRoot) &&
+		!lineAnchorRE.MatchString(ref.fragment)
 }
 
 func checkRefsPaths() int {
@@ -98,14 +130,7 @@ func checkIndexDrift() int {
 	addSetDiffIssues(&issues, digestsIndex, digestsExpected, digestsListed)
 
 	counts := advertisedDigestCounts(digestsIndex, filepath.Dir(digestsIndex))
-	expectedCounts := map[string]int{
-		"falco/":         countMarkdownDigests(filepath.Join(filepath.Dir(digestsIndex), "falco")),
-		"falcosidekick/": countMarkdownDigests(filepath.Join(filepath.Dir(digestsIndex), "falcosidekick")),
-		"falco-website/": countMarkdownDigests(filepath.Join(filepath.Dir(digestsIndex), "falco-website")),
-		"libs/":          countMarkdownDigests(filepath.Join(filepath.Dir(digestsIndex), "libs")),
-		"plugins/":       countMarkdownDigests(filepath.Join(filepath.Dir(digestsIndex), "plugins")) + 1,
-		"test-infra/":    countMarkdownDigests(filepath.Join(filepath.Dir(digestsIndex), "test-infra")),
-	}
+	expectedCounts := expectedDigestCounts(filepath.Dir(digestsIndex))
 	for key, expected := range expectedCounts {
 		advertised, ok := counts[key]
 		if !ok {
@@ -123,6 +148,39 @@ func checkIndexDrift() int {
 	addSetDiffIssues(&issues, skillsIndex, skillsExpected, skillsListed)
 
 	return reportIssues("check-index-drift", issues)
+}
+
+// checkSources verifies that every content digest and spec ends with a
+// sources section (AGENTS.md "Digest Creation" rule 3). Navigation hub
+// README.md files are exempt.
+func checkSources() int {
+	issues := []string{}
+
+	files := map[string]struct{}{}
+	collectMarkdownFiles(files, digestsRoot, false)
+	collectMarkdownFiles(files, specsRoot, false)
+
+	paths := make([]string, 0, len(files))
+	for path := range files {
+		paths = append(paths, path)
+	}
+	slices.Sort(paths)
+
+	for _, path := range paths {
+		if filepath.Base(path) == "README.md" {
+			continue
+		}
+		content, err := os.ReadFile(path)
+		if err != nil {
+			issues = append(issues, fmt.Sprintf("%s: unreadable: %v", rel(path), err))
+			continue
+		}
+		if !sourcesHeadingRE.MatchString(blankCode(string(content))) {
+			issues = append(issues, fmt.Sprintf("%s: missing `## Sources` section", rel(path)))
+		}
+	}
+
+	return reportIssues("check-sources", issues)
 }
 
 func authoredMarkdownFiles() []string {
@@ -191,42 +249,133 @@ func iterLocalLinks(path string) []linkRef {
 		return nil
 	}
 
-	text := blankCode(string(content))
+	text := blankInlineCode(blankCode(string(content)))
 	matches := linkRE.FindAllStringSubmatchIndex(text, -1)
 	refs := make([]linkRef, 0, len(matches))
 
 	for _, match := range matches {
 		label := strings.TrimSpace(text[match[2]:match[3]])
 		target := strings.TrimSpace(text[match[4]:match[5]])
-		if strings.HasPrefix(target, "http://") || strings.HasPrefix(target, "https://") || strings.HasPrefix(target, "mailto:") || strings.HasPrefix(target, "#") {
+		if strings.HasPrefix(target, "http://") || strings.HasPrefix(target, "https://") || strings.HasPrefix(target, "mailto:") {
 			continue
 		}
 		if isPlaceholderTarget(target) {
 			continue
 		}
 
-		targetPath, _, _ := strings.Cut(target, "#")
+		line := 1 + strings.Count(text[:match[0]], "\n")
+
+		// Anchor-only links resolve to the containing file itself.
+		if strings.HasPrefix(target, "#") {
+			refs = append(refs, linkRef{
+				line:     line,
+				label:    label,
+				target:   target,
+				resolved: path,
+				fragment: strings.TrimPrefix(target, "#"),
+			})
+			continue
+		}
+
+		targetPath, fragment, _ := strings.Cut(target, "#")
 		targetPath = strings.TrimSpace(targetPath)
 		if targetPath == "" {
 			continue
 		}
 
 		resolved := filepath.Clean(filepath.Join(filepath.Dir(path), targetPath))
-		line := 1 + strings.Count(text[:match[0]], "\n")
 		refs = append(refs, linkRef{
 			line:     line,
 			label:    label,
 			target:   target,
 			resolved: resolved,
+			fragment: strings.TrimSpace(fragment),
 		})
 	}
 
 	return refs
 }
 
+var headingSlugCache = map[string]map[string]struct{}{}
+
+// anchorExists reports whether fragment matches a heading anchor (GitHub
+// slug) or explicit HTML anchor in the markdown file at path. A lenient
+// fallback comparison (alphanumerics and hyphens only) absorbs slugging
+// corner cases such as emoji in headings.
+func anchorExists(path, fragment string) bool {
+	slugs, ok := headingSlugCache[path]
+	if !ok {
+		slugs = headingSlugs(path)
+		headingSlugCache[path] = slugs
+	}
+
+	frag := strings.ToLower(fragment)
+	if _, ok := slugs[frag]; ok {
+		return true
+	}
+	loose := looseSlugStripRE.ReplaceAllString(frag, "")
+	for slug := range slugs {
+		if looseSlugStripRE.ReplaceAllString(slug, "") == loose {
+			return true
+		}
+	}
+	return false
+}
+
+func headingSlugs(path string) map[string]struct{} {
+	slugs := map[string]struct{}{}
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return slugs
+	}
+
+	text := blankCode(string(content))
+	seen := map[string]int{}
+	for _, match := range headingRE.FindAllStringSubmatch(text, -1) {
+		slug := githubSlug(match[1])
+		// GitHub disambiguates repeated headings with -1, -2, ... suffixes.
+		if n := seen[slug]; n > 0 {
+			slugs[fmt.Sprintf("%s-%d", slug, n)] = struct{}{}
+		} else {
+			slugs[slug] = struct{}{}
+		}
+		seen[slug]++
+	}
+	for _, match := range htmlAnchorRE.FindAllStringSubmatch(text, -1) {
+		slugs[strings.ToLower(match[1])] = struct{}{}
+	}
+	return slugs
+}
+
+// githubSlug converts a heading text into its GitHub-generated anchor:
+// inline markup stripped, lowercased, punctuation removed, spaces hyphenated.
+func githubSlug(heading string) string {
+	s := strings.TrimSpace(heading)
+	s = inlineCodeRE.ReplaceAllString(s, "$1")
+	s = linkRE.ReplaceAllString(s, "$1")
+	s = strings.ToLower(s)
+	s = slugStripRE.ReplaceAllString(s, "")
+	s = strings.ReplaceAll(s, " ", "-")
+	return s
+}
+
 func blankCode(text string) string {
 	return codeFenceRE.ReplaceAllStringFunc(text, func(match string) string {
 		return strings.Repeat("\n", strings.Count(match, "\n"))
+	})
+}
+
+// blankInlineCode blanks `inline code` spans (preserving offsets and line
+// numbers) so that example links inside them are not treated as real links.
+func blankInlineCode(text string) string {
+	return inlineCodeRE.ReplaceAllStringFunc(text, func(match string) string {
+		blanked := []rune(match)
+		for i, r := range blanked {
+			if r != '\n' {
+				blanked[i] = ' '
+			}
+		}
+		return string(blanked)
 	})
 }
 
@@ -317,6 +466,29 @@ func expectedDirs(base string, include func(path string, d fs.DirEntry) bool) ma
 			continue
 		}
 		expected[entry.Name()+"/"] = struct{}{}
+	}
+	return expected
+}
+
+// expectedDigestCounts derives, from the filesystem, the digest count each
+// subdirectory group must advertise in the index. A sibling `<name>.md`
+// overview file (e.g., plugins.md next to plugins/) counts toward its group.
+func expectedDigestCounts(base string) map[string]int {
+	entries, err := os.ReadDir(base)
+	if err != nil {
+		return nil
+	}
+
+	expected := map[string]int{}
+	for _, entry := range entries {
+		if !entry.IsDir() {
+			continue
+		}
+		count := countMarkdownDigests(filepath.Join(base, entry.Name()))
+		if pathExists(filepath.Join(base, entry.Name()+".md")) {
+			count++
+		}
+		expected[entry.Name()+"/"] = count
 	}
 	return expected
 }

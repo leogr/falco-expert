@@ -1,4 +1,4 @@
-.PHONY: init check-md-links check-refs-paths check-index-drift check-docs
+.PHONY: init check-md-links check-refs-paths check-index-drift check-sources check-docs
 
 GOCACHE ?= /tmp/falco-expert-go-build
 DOC_CHECK = GOCACHE=$(GOCACHE) go run ./tools/check-docs/main.go
@@ -14,6 +14,9 @@ check-refs-paths: ## Validate repo-authored links into refs/
 
 check-index-drift: ## Validate key navigation indexes against the filesystem
 	$(DOC_CHECK) index-drift
+
+check-sources: ## Validate that digests and specs have a sources section
+	$(DOC_CHECK) sources
 
 check-docs: ## Run all local documentation validation checks
 	$(DOC_CHECK) all

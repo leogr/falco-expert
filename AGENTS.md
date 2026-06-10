@@ -378,7 +378,7 @@ When adding code references in specs:
 - [`specs/`](specs/): Update and refine, maintain references
 - [`skills/`](skills/): Update existing only; ask before creating new
 - [`README.md`](README.md): Keep ToC in sync with all changes
-- **After modifying any markdown files**, run `make check-docs` to validate links, refs paths, and index consistency. Fix any reported issues before considering the change complete. Individual checks are also available: `make check-md-links`, `make check-refs-paths`, `make check-index-drift`.
+- **After modifying any markdown files**, run `make check-docs` to validate links (targets, anchors, and the digests-must-not-link-to-specs direction rule), refs paths, index consistency, and sources sections. Fix any reported issues before considering the change complete. Individual checks are also available: `make check-md-links`, `make check-refs-paths`, `make check-index-drift`, `make check-sources`.
 
 ### Era Relevance Verification
 
