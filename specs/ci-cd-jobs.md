@@ -26,7 +26,7 @@
    - [EKS Upgrade Reminder](#313-eks-upgrade-reminder)
 4. [GitHub Organization Management](#4-github-organization-management)
 5. [OWNERS Files and Approval Workflow](#5-owners-files-and-approval-workflow)
-6. [Team Sync (peribolos-syncer)](#6-team-sync-peribolos-syncer)
+6. [Team Sync (peribolos-syncer)](#6-team-sync-peribolos-syncer----consolidated)
 7. [Common Job Patterns](#7-common-job-patterns)
 8. [Related Specs](#8-related-specs)
 9. [Sources](#9-sources)

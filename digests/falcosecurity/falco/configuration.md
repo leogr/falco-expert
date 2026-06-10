@@ -299,7 +299,7 @@ program_output:
 
 ### grpc_output (Removed in 0.44)
 
-Removed in Falco 0.44.0 along with the gRPC server. The `grpc_output:` key no longer exists. Use [`http_output`](#http_output) or [Falcosidekick](../falcosidekick/).
+Removed in Falco 0.44.0 along with the gRPC server. The `grpc_output:` key no longer exists. Use [`http_output`](#http_output-stable) or [Falcosidekick](../falcosidekick/).
 
 ## Service Configuration
 

@@ -240,7 +240,7 @@ Push metrics to external StatsD server. See [outputs.md](outputs.md#statsd--dogs
 
 ### OTLP Metrics
 
-Export metrics via OpenTelemetry Protocol. See [outputs.md](outputs.md#otlp-metrics).
+Export metrics via OpenTelemetry Protocol. See [outputs.md](outputs.md#metrics--observability).
 
 **Source:** [`README.md`](../../../refs/falcosecurity/falcosidekick/README.md)
 

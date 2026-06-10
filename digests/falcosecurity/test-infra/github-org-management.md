@@ -18,7 +18,7 @@ For the broader governance model that informs these organizational structures, s
   - [Poiana Bot and machine_users](#poiana-bot-and-machine_users)
   - [Repository Configurations](#repository-configurations)
 - [Peribolos — Organization Sync](#peribolos--organization-sync)
-- [update-github-teams — Per-Repo Team Sync](#update-github-teams--per-repo-team-sync)
+- [update-github-teams — Per-Repo Team Sync](#update-github-teams----per-repo-team-sync-consolidated)
 - [update-maintainers — Maintainers List Sync](#update-maintainers--maintainers-list-sync)
 - [Branch Protection](#branch-protection)
 - [OWNERS Files](#owners-files)
@@ -204,7 +204,7 @@ Per the documentation ([docs/github-org-management.md:16-37](../../../refs/falco
 
 ## update-github-teams -- Per-Repo Team Sync (Consolidated)
 
-> Note: Historically the falcosecurity org maintained a fan-out of 33 individual `peribolos-syncer-<repo>.yaml` Prow jobs under `config/jobs/update-github-teams/` (one per repository), each invoking the [`peribolos-syncer`](https://github.com/falcosecurity/peribolos-syncer) tool to sync per-repository maintainer teams in `org.yaml` from each repo's `OWNERS` file. In the current era, those per-repo job files have been consolidated and the single [`config/jobs/peribolos/peribolos.yaml`](../../../refs/falcosecurity/test-infra/config/jobs/peribolos/peribolos.yaml) job, together with the [`update-maintainers`](#update-maintainers-job) job, handles org-wide team synchronization.
+> Note: Historically the falcosecurity org maintained a fan-out of 33 individual `peribolos-syncer-<repo>.yaml` Prow jobs under `config/jobs/update-github-teams/` (one per repository), each invoking the [`peribolos-syncer`](https://github.com/falcosecurity/peribolos-syncer) tool to sync per-repository maintainer teams in `org.yaml` from each repo's `OWNERS` file. In the current era, those per-repo job files have been consolidated and the single [`config/jobs/peribolos/peribolos.yaml`](../../../refs/falcosecurity/test-infra/config/jobs/peribolos/peribolos.yaml) job, together with the [`update-maintainers`](#update-maintainers----maintainers-list-sync) job, handles org-wide team synchronization.
 
 **Source:** [`config/jobs/peribolos/peribolos.yaml`](../../../refs/falcosecurity/test-infra/config/jobs/peribolos/peribolos.yaml)
 
@@ -391,7 +391,7 @@ OWNERS files integrate with Prow's `approve` and `lgtm` plugins:
 
 The OWNERS files serve a dual purpose:
 1. **Prow access control**: Determining who can approve/review PRs
-2. **Team membership source of truth**: The [peribolos-syncer](#update-github-teams--per-repo-team-sync) jobs read the `approvers` from each repository's root OWNERS file and sync them to the corresponding `-maintainers` team in org.yaml
+2. **Team membership source of truth**: The [peribolos-syncer](#update-github-teams----per-repo-team-sync-consolidated) jobs read the `approvers` from each repository's root OWNERS file and sync them to the corresponding `-maintainers` team in org.yaml
 
 This means that **changing an OWNERS file in a repository automatically propagates to the GitHub team membership** through the automated sync chain.
 

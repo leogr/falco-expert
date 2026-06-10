@@ -21,7 +21,7 @@ This digest catalogs all Prow CI/CD jobs defined in the `falcosecurity/test-infr
    - [update-maintainers](#38-update-maintainers)
    - [update-rules-index](#39-update-rules-index)
    - [update-falco-k8s-manifests](#310-update-falco-k8s-manifests)
-   - [update-github-teams](#311-update-github-teams)
+   - [update-github-teams](#311-update-github-teams-consolidated)
    - [peribolos](#312-peribolos)
    - [branchprotector](#313-branchprotector)
    - [autobump](#314-autobump)
@@ -352,7 +352,7 @@ All share:
 
 ### 3.11. update-github-teams (Consolidated)
 
-> Note: Historically, falcosecurity maintained 31 individual `peribolos-syncer-<repo>.yaml` postsubmit jobs under `config/jobs/update-github-teams/`, one per repository. They used the [`peribolos-syncer`](https://github.com/falcosecurity/peribolos-syncer) tool to keep each `<repo>-maintainers` team in `config/org.yaml` in sync with that repo's `OWNERS` file. In the current era, these per-repo job files have been consolidated; team synchronization is now driven by [`config/jobs/peribolos/peribolos.yaml`](../../../refs/falcosecurity/test-infra/config/jobs/peribolos/peribolos.yaml) together with the [`update-maintainers`](#310-update-maintainers) job.
+> Note: Historically, falcosecurity maintained 31 individual `peribolos-syncer-<repo>.yaml` postsubmit jobs under `config/jobs/update-github-teams/`, one per repository. They used the [`peribolos-syncer`](https://github.com/falcosecurity/peribolos-syncer) tool to keep each `<repo>-maintainers` team in `config/org.yaml` in sync with that repo's `OWNERS` file. In the current era, these per-repo job files have been consolidated; team synchronization is now driven by [`config/jobs/peribolos/peribolos.yaml`](../../../refs/falcosecurity/test-infra/config/jobs/peribolos/peribolos.yaml) together with the [`update-maintainers`](#38-update-maintainers) job.
 
 **Source:** [config/jobs/peribolos/peribolos.yaml](../../../refs/falcosecurity/test-infra/config/jobs/peribolos/peribolos.yaml)
 
