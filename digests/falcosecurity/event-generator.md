@@ -4,6 +4,7 @@ Testing and demonstration tool for generating synthetic security events detected
 
 **Repository:** [falcosecurity/event-generator](https://github.com/falcosecurity/event-generator)
 **Version:** v0.13.0
+**Era:** 0.44
 **Scope:** Ecosystem
 **Status:** Incubating
 **Compatibility:** Requires Falco 0.37.0 or newer

@@ -86,7 +86,7 @@ AI-optimized summaries of reference materials.
   - [`falco-lsp.md`](digests/falcosecurity/falco-lsp.md) - LSP, CLI tool (falco-lang), VS Code extension for Falco rules (Incubating)
   - [`falco-operator.md`](digests/falcosecurity/falco-operator.md) - Kubernetes Operator, 5 CRDs (Falco, Component, Rulesfile, Plugin, Config), artifact management, reference protection (Incubating)
   - [`falco-playground.md`](digests/falcosecurity/falco-playground.md) - Browser-based rule validation, Falco Wasm proof-of-concept (Sandbox, Falco 0.37.1)
-  - [`falco/`](digests/falcosecurity/falco/) - 6 digests (~110KB total)
+  - [`falco/`](digests/falcosecurity/falco/) - 6 digests (~115KB total)
     - [`README.md`](digests/falcosecurity/falco/README.md) - Overview and navigation
     - [`architecture.md`](digests/falcosecurity/falco/architecture.md) - Application lifecycle, event flow, libs integration
     - [`rule-language.md`](digests/falcosecurity/falco/rule-language.md) - Complete rule language specification
@@ -94,7 +94,7 @@ AI-optimized summaries of reference materials.
     - [`outputs.md`](digests/falcosecurity/falco/outputs.md) - Alert output channels and formatting
     - [`cli-reference.md`](digests/falcosecurity/falco/cli-reference.md) - CLI options and introspection
     - [`proposals.md`](digests/falcosecurity/falco/proposals.md) - Design proposals, adoption/deprecation, roadmap
-  - [`falco-website/`](digests/falcosecurity/falco-website/) - 5 digests (~83KB total)
+  - [`falco-website/`](digests/falcosecurity/falco-website/) - 5 digests (~120KB total)
     - [`docs.md`](digests/falcosecurity/falco-website/docs.md) - Core documentation
     - [`blog.md`](digests/falcosecurity/falco-website/blog.md) - Blog posts (with era markers)
     - [`about.md`](digests/falcosecurity/falco-website/about.md) - Use cases, FAQ, ecosystem
@@ -110,7 +110,7 @@ AI-optimized summaries of reference materials.
   - [`k8s-metacollector.md`](digests/falcosecurity/k8s-metacollector.md) - Centralized K8s metadata streaming service
   - [`kernel-crawler.md`](digests/falcosecurity/kernel-crawler.md) - Kernel version discovery for driver building (Infra)
   - [`kernel-testing.md`](digests/falcosecurity/kernel-testing.md) - Driver testing across kernels with Firecracker microVMs (Infra)
-  - [`libs/`](digests/falcosecurity/libs/) - 11 digests (~112KB total)
+  - [`libs/`](digests/falcosecurity/libs/) - 11 digests (~206KB total)
     - [`README.md`](digests/falcosecurity/libs/README.md) - Overview and navigation
     - [`proposals-and-architecture.md`](digests/falcosecurity/libs/proposals-and-architecture.md) - Design proposals, versioning, roadmap
     - [`architecture.md`](digests/falcosecurity/libs/architecture.md) - Component relationships, event flow
@@ -128,7 +128,7 @@ AI-optimized summaries of reference materials.
   - [`plugin-sdk-rs.md`](digests/falcosecurity/plugin-sdk-rs.md) - Rust plugin SDK, traits, strongly-typed events
   - [`falco-rustlings.md`](digests/falcosecurity/falco-rustlings.md) - Interactive Rustlings exercises, Sandbox status (January 2025)
   - [`prempti.md`](digests/falcosecurity/prempti.md) - Falco-powered policy and visibility layer for AI coding agents (Sandbox, Experimental Preview, Falco 0.43.0)
-  - [`plugins/`](digests/falcosecurity/plugins/) - 5 digests (~80KB total)
+  - [`plugins/`](digests/falcosecurity/plugins/) - 5 digests (~115KB total)
     - [`../plugins.md`](digests/falcosecurity/plugins.md) - Plugin registry, key plugins overview, OCI distribution
     - [`container.md`](digests/falcosecurity/plugins/container.md) - Container plugin architecture and implementation
     - [`json.md`](digests/falcosecurity/plugins/json.md) - JSON extractor plugin for parsing JSON event payloads
@@ -138,7 +138,7 @@ AI-optimized summaries of reference materials.
   - [`rules.md`](digests/falcosecurity/rules.md) - Detection rules, maturity framework, versioning
   - [`testing.md`](digests/falcosecurity/testing.md) - Regression test suite, test harness, CI integration
   - [`syscalls-bumper.md`](digests/falcosecurity/syscalls-bumper.md) - Syscall table automation for libs (Infra)
-  - [`test-infra/`](digests/falcosecurity/test-infra/) - 5 digests (~162KB total)
+  - [`test-infra/`](digests/falcosecurity/test-infra/) - 5 digests (~165KB total)
     - [`README.md`](digests/falcosecurity/test-infra/README.md) - Overview and navigation
     - [`prow-infrastructure.md`](digests/falcosecurity/test-infra/prow-infrastructure.md) - Prow components, AWS EKS, deployment, images, tools
     - [`prow-config.md`](digests/falcosecurity/test-infra/prow-config.md) - Configuration reference, plugins, Tide, branch protection

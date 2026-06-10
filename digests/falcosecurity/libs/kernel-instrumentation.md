@@ -1,4 +1,5 @@
 # Kernel Instrumentation
+> **Era:** 0.44 | **Version:** libs 0.25.2 | **Source:** [`refs/falcosecurity/libs/`](../../../refs/falcosecurity/libs/)
 
 ## Overview
 

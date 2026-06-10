@@ -1,4 +1,5 @@
 # Proposals and Architectural Decisions
+> **Era:** 0.44 | **Version:** libs 0.25.2 | **Source:** [`refs/falcosecurity/libs/`](../../../refs/falcosecurity/libs/)
 
 ## Overview
 
@@ -66,10 +67,10 @@ This digest documents the design proposals and architectural decisions that shap
 
 **Version Computation Example:**
 ```
-API_VERSION = 8.0.4
-SCHEMA_VERSION = 4.1.0
+API_VERSION = 10.1.0
+SCHEMA_VERSION = 4.5.1
 
-Driver version = max(8,4).max(0,1).max(4,0) = 8.1.4+driver
+Driver version = max(10,4).max(1,5).max(0,1) = 10.5.1+driver
 ```
 
 **Benefits:**
@@ -248,12 +249,12 @@ Instrumentation Overhead Analysis (modern eBPF, Redis workload):
 4. TOCTOU mitigation via per-thread-ID BPF hash maps
 5. Adapt consumers (Falco, sysdig, plugins) and rules for exit-only semantics
 
-**Implementation Progress (0.43 era):**
-- Driver-side enter event generation removed ([libs#2588](https://github.com/falcosecurity/libs/issues/2588))
-- Scap-file converter implemented at [`userspace/libscap/engine/savefile/converter/`](../../../refs/falcosecurity/libs/userspace/libscap/engine/savefile/converter/) with `EF_CONVERTER_MANAGED` flag (stabilized from `EF_TMP_CONVERTER_MANAGED` as of July 2025 update)
-- WIP: Internal parsing layers to avoid propagation of TOCTOU mitigation enter events to upper layers
-- WIP: `event.dir='>'` deprecation
-- Per-enter-event parameter migration tracked in [libs#2427](https://github.com/falcosecurity/libs/issues/2427)
+**Implementation Progress (0.44 era):**
+- Modern eBPF driver: userspace-facing syscall enter event generation removed ([libs#2588](https://github.com/falcosecurity/libs/issues/2588)); specialized TOCTOU-mitigation enter programs are retained kernel-side only at [`driver/modern_bpf/programs/attached/events/toctou_mitigation/`](../../../refs/falcosecurity/libs/driver/modern_bpf/programs/attached/events/toctou_mitigation/)
+- Scap-file converter operational at [`userspace/libscap/engine/savefile/converter/`](../../../refs/falcosecurity/libs/userspace/libscap/engine/savefile/converter/) with `EF_CONVERTER_MANAGED` flag (stabilized from `EF_TMP_CONVERTER_MANAGED` in September 2025); 140 enter-event conversion rules defined in [`converter/table.cpp`](../../../refs/falcosecurity/libs/userspace/libscap/engine/savefile/converter/table.cpp)
+- Userspace filtering implemented: TOCTOU-mitigation enter events (open, openat, openat2, creat, connect, execve, execveat) are dropped from the event-processing pipeline in [`parsers.cpp`](../../../refs/falcosecurity/libs/userspace/libsinsp/parsers.cpp) and retained internally only for legacy scap-file parameter recovery
+- Not yet addressed: `event.dir='>'` deprecation — the field remains fully operational ([`sinsp_filtercheck_event.cpp`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_event.cpp)) with no deprecation timeline
+- Per-enter-event parameter migration ongoing ([libs#2427](https://github.com/falcosecurity/libs/issues/2427)): 101 of 219 enter events carry `EF_CONVERTER_MANAGED` in [`event_table.c`](../../../refs/falcosecurity/libs/driver/event_table.c), with exit-event schemas expanded to absorb enter parameters (e.g., `PPME_SYSCALL_OPEN_X` gained `dev`, `ino`)
 
 **Expected Benefits:**
 - ~50% reduction in events
