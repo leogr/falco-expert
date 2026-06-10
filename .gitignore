@@ -11,3 +11,6 @@ skills/*-workspace/
 
 # Skill eval definitions (tied to skill-creator workflow)
 skills/*/evals/
+
+# Local scratchpad for tracked improvements and open questions
+TODOs.md
