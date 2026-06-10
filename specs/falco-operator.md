@@ -231,9 +231,9 @@ Common ConfigMap/Secret keys: `rules.yaml`, `config.yaml`, `username`, `password
 | Resources | Requests: 100m CPU, 512Mi; Limits: 1000m CPU, 1024Mi |
 | Probes | Liveness (60s delay), Readiness (30s delay) on `/healthz:8765` |
 | Tolerations | master + control-plane NoSchedule |
-| Default image | `docker.io/falcosecurity/falco:0.41.0` |
+| Default image | `docker.io/falcosecurity/falco:0.43.0` (pinned operator v0.2.2; the announced operator 0.3.0 bumps this default to `0.44.0`) |
 
-**Source:** [`internal/pkg/resources/falco.go`](../refs/falcosecurity/falco-operator/internal/pkg/resources/falco.go)
+**Source:** [`internal/pkg/image/const.go:28`](../refs/falcosecurity/falco-operator/internal/pkg/image/const.go) (`FalcoTag`), [`internal/pkg/resources/falco.go`](../refs/falcosecurity/falco-operator/internal/pkg/resources/falco.go) (`FalcoDefaults.ImageTag = image.FalcoTag`)
 
 ### Deployment Mode
 
@@ -247,12 +247,12 @@ Common ConfigMap/Secret keys: `rules.yaml`, `config.yaml`, `username`, `password
 
 | Setting | Value |
 |---------|-------|
-| Default image | `docker.io/falcosecurity/k8s-metacollector:0.1.1` |
+| Default image | `docker.io/falcosecurity/k8s-metacollector:0.1.2` |
 | Ports | metrics (8080), health-probe (8081), broker-grpc (45000) |
 | Resources | Requests: 100m CPU, 128Mi; Limits: 250m CPU, 256Mi |
 | Security context | Non-root (UID 1000), drop ALL capabilities |
 
-**Source:** [`internal/pkg/resources/metacollector.go`](../refs/falcosecurity/falco-operator/internal/pkg/resources/metacollector.go)
+**Source:** [`internal/pkg/image/const.go:33`](../refs/falcosecurity/falco-operator/internal/pkg/image/const.go) (`MetacollectorTag`), [`internal/pkg/resources/metacollector.go`](../refs/falcosecurity/falco-operator/internal/pkg/resources/metacollector.go)
 
 ### Artifact Operator Sidecar
 
@@ -282,8 +282,8 @@ Creates: 5 CRDs, `falco-operator` namespace, ServiceAccount, ClusterRole/Binding
 | Aspect | Detail |
 |--------|--------|
 | Language | Go 1.26.0 |
-| Framework | kubebuilder v4, controller-runtime 0.23.3 |
-| K8s API | k8s.io/api v0.35.2 |
+| Framework | kubebuilder v4, controller-runtime 0.24.0 |
+| K8s API | k8s.io/api v0.36.0 |
 | OCI client | oras-go/v2 2.6.0 |
 | Container base | `cgr.dev/chainguard/static` (non-root user 65532) |
 | Architectures | linux/amd64, linux/arm64 |

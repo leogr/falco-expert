@@ -10,9 +10,9 @@ Interactive Rustlings exercises for learning Falco plugin development with the R
 
 ## Era Relevance Notes
 
-**Last Updated:** January 16, 2025 (approximately 1 year before era 0.43)
+**Last Updated:** January 16, 2025 (approximately 1.3 years before era 0.44)
 
-**Compatibility:** The exercises are compatible with the current plugin-sdk-rs (v0.5.0) because:
+**Compatibility:** The exercises are compatible with the current plugin-sdk-rs (era 0.44 pins commit `2a5228e`, post-v0.5.0, `git describe` = `v0.5.0-61-g2a5228e`) because:
 - Core SDK API patterns (`Plugin`, `SourcePlugin`, `ExtractPlugin`, `ParsePlugin`, `AsyncEventPlugin` traits) remain unchanged
 - Uses git dependencies without version pinning, pulling the latest SDK
 - The fundamental learning patterns taught remain valid

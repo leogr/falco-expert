@@ -4,7 +4,7 @@
 
 ## Overview
 
-Falco is the Cloud Native Runtime Security tool. The CLI is the primary interface for running Falco, validating rules, and introspecting the system. This reference documents all command-line options available in Falco 0.43.
+Falco is the Cloud Native Runtime Security tool. The CLI is the primary interface for running Falco, validating rules, and introspecting the system. This reference documents all command-line options available in Falco 0.44.
 
 ## Basic Usage
 
@@ -23,7 +23,7 @@ When invoked without arguments, Falco attempts to load configuration from the de
 | `--config-schema` | Print the configuration JSON schema and exit. Useful for config validation. |
 | `--rule-schema` | Print the rules JSON schema and exit. Useful for rules validation. |
 
-**Source:** [`options.cpp:94-102`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp)
+**Source:** [`options.cpp:139-144, 158`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp)
 
 ## Rules Options
 
@@ -34,7 +34,7 @@ When invoked without arguments, Falco attempts to load configuration from the de
 | `-L` | Show name and description of all rules and exit. With `json_output`, prints details about all rules, macros, and lists in JSON format. |
 | `-l <rule>` | Show name and description of the specified rule and exit. With `json_output`, prints rule details in JSON format. |
 
-**Source:** [`options.cpp:110-111, 122, 125`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp)
+**Source:** [`options.cpp:149-150, 162, 165`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp)
 
 ## Output Options
 
@@ -46,7 +46,7 @@ When invoked without arguments, Falco attempts to load configuration from the de
 
 > **Note:** The `-A` flag was **removed in Falco 0.39**. Use the `base_syscalls.all` configuration option instead.
 
-**Source:** [`options.cpp:120, 124, 126`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp)
+**Source:** [`options.cpp:160, 164, 166`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp)
 
 ## Event Sources
 
@@ -57,7 +57,7 @@ When invoked without arguments, Falco attempts to load configuration from the de
 
 Both options have no effect when reproducing events from a capture file.
 
-**Source:** [`options.cpp:103, 105`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp)
+**Source:** [`options.cpp:145, 147`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp)
 
 ## Introspection Commands
 
@@ -67,9 +67,10 @@ Both options have no effect when reproducing events from a capture file.
 |--------|-------------|
 | `--list [source]` | List all defined fields and exit. Optionally filter by source (e.g., `syscall` or plugin source names). |
 | `-N` | Only print field names (use with `--list`). |
-| `--markdown` | Print output in Markdown format (use with `--list` or `--list-events`). |
+| `--format <format>` | Print output in the specified format (`text`, `markdown`, or `json`) when used with `--list` or `--list-events`. Added in Falco 0.44. Cannot be combined with `--markdown`. |
+| `--markdown` | **DEPRECATED** in Falco 0.44 — use `--format markdown` instead. Print output in Markdown format (use with `--list` or `--list-events`). Still works but emits a runtime warning and will be removed in a future release. |
 
-**Source:** [`options.cpp:112, 116-117`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp), [`list_fields.cpp`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/list_fields.cpp)
+**Source:** [`options.cpp:151, 155-156`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp), [`list_fields.cpp`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/list_fields.cpp)
 
 ### Event Listing
 
@@ -80,7 +81,7 @@ Both options have no effect when reproducing events from a capture file.
 
 The `--list-events` output shows for each event: whether it is enabled by default, direction (`>` enter, `<` exit), name, and parameters with types.
 
-**Source:** [`options.cpp:109, 113`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp), [`print_syscall_events.cpp`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/print_syscall_events.cpp)
+**Source:** [`options.cpp:148, 152`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp), [`print_syscall_events.cpp`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/print_syscall_events.cpp)
 
 ### Plugin Introspection
 
@@ -89,7 +90,7 @@ The `--list-events` output shows for each event: whether it is enabled by defaul
 | `--list-plugins` | Print info on all loaded plugins and exit. Shows plugin count and details for each. |
 | `--plugin-info <name>` | Print detailed info for a specific plugin and exit. Shows name, author, init config schema, and suggested open parameters. `<name>` can be the plugin name or its `library_path`. |
 
-**Source:** [`options.cpp:114, 119`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp), [`list_plugins.cpp`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/list_plugins.cpp), [`print_plugin_info.cpp`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/print_plugin_info.cpp)
+**Source:** [`options.cpp:153, 159`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp), [`list_plugins.cpp`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/list_plugins.cpp), [`print_plugin_info.cpp`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/print_plugin_info.cpp)
 
 ### System Information
 
@@ -99,7 +100,7 @@ The `--list-events` output shows for each event: whether it is enabled by defaul
 | `--support` | Print support information bundle as JSON and exit. Includes version info, system info, command line, loaded configuration, and rules files content. |
 | `--page-size` | Print the system page size and exit. Helps choose appropriate syscall ring buffer size. |
 
-**Source:** [`options.cpp:123, 127-128`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp), [`print_version.cpp`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/print_version.cpp), [`print_support.cpp`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/print_support.cpp)
+**Source:** [`options.cpp:163, 167-168`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp), [`print_version.cpp`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/print_version.cpp), [`print_support.cpp`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/print_support.cpp)
 
 ## Runtime Options
 
@@ -109,7 +110,7 @@ The `--list-events` output shows for each event: whether it is enabled by defaul
 | `-P <pid_file>`, `--pidfile <pid_file>` | Write PID to the specified file path. By default, no PID file is created. |
 | `--dry-run` | Run Falco without processing events. Validates configuration and rules without starting event capture. |
 
-**Source:** [`options.cpp:104, 115, 121`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp)
+**Source:** [`options.cpp:146, 154, 161`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp)
 
 ## Help
 
@@ -117,7 +118,7 @@ The `--list-events` output shows for each event: whether it is enabled by defaul
 |--------|-------------|
 | `-h`, `--help` | Print the help list and exit. |
 
-**Source:** [`options.cpp:95`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp)
+**Source:** [`options.cpp:137`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp)
 
 ## Exit Codes
 
@@ -183,8 +184,11 @@ falco --list
 # List syscall fields only
 falco --list syscall
 
-# List fields in markdown format
-falco --list --markdown
+# List fields in markdown format (Falco 0.44+; --markdown is deprecated)
+falco --list --format markdown
+
+# List fields as JSON (Falco 0.44+)
+falco --list --format json
 
 # List field names only
 falco --list -N
@@ -192,8 +196,8 @@ falco --list -N
 # List all event types
 falco --list-events
 
-# List events in markdown format
-falco --list-events --markdown
+# List events in markdown format (Falco 0.44+; --markdown is deprecated)
+falco --list-events --format markdown
 
 # Show ignored syscalls
 falco -i

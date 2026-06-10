@@ -26,7 +26,7 @@ The `json` plugin is a general-purpose extractor plugin that extracts arbitrary 
 | Property | Value |
 |----------|-------|
 | Plugin Name | `json` |
-| Plugin Version | 0.7.3 |
+| Plugin Version | 0.7.4 |
 | Language | Go |
 | Event Source | None (extractor only) |
 | Capabilities | Extraction |

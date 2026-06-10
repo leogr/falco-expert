@@ -1,6 +1,6 @@
 # falco-playground Digest
 
-> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/falco-playground/`](../../refs/falcosecurity/falco-playground/) | **Commit:** `8c87a0a` (March 18, 2025)
+> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/falco-playground/`](../../refs/falcosecurity/falco-playground/) | **Commit:** `d5042a3` (May 11, 2026; `git describe` = `v0.1.1-3-gd5042a3`)
 
 **Repository:** [falcosecurity/falco-playground](https://github.com/falcosecurity/falco-playground)
 **Scope:** Infra
@@ -12,7 +12,7 @@ Browser-based playground for creating, editing, and validating Falco rules using
 
 > **IMPORTANT STATUS NOTICE**
 >
-> This project is **experimental and not actively curated** (~3 years without major updates). The deployed application at [play.falco.org](https://play.falco.org/) runs **Falco 0.37.1** (wasm), which is significantly behind the current era (0.43).
+> This project is **experimental and not actively curated** (~3 years without major updates). The deployed application at [play.falco.org](https://play.falco.org/) runs **Falco 0.37.1** (wasm), which is significantly behind the current era (0.44).
 >
 > **Why it remains relevant:**
 > 1. **User perspective**: Demonstrates an interactive playground for rule authors - a valuable UX pattern for future development

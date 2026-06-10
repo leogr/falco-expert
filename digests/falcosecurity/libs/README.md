@@ -2,7 +2,7 @@
 
 **Repository:** [falcosecurity/libs](https://github.com/falcosecurity/libs)
 **Version:** 0.25.2 (libs version for Falco 0.44 era; bundled with Falco 0.44.0)
-**API Version:** 8.0.4 | **Schema Version:** 4.1.0 | **Plugin API:** 3.12.0
+**API Version:** 10.1.0 | **Schema Version:** 4.5.1 | **Plugin API:** 3.12.0
 
 ## Overview
 

@@ -2,7 +2,7 @@
 name: falco-triage
 description: Triage GitHub issues and pull requests across falcosecurity repositories. Fetches, categorizes, and analyzes issues/PRs using the falco-expert knowledge base for technical context, checks for duplicates and related work, evaluates PR status, and generates actionable triage reports with ready-to-run gh commands. Supports tiered (quick scan + selective deep dive) and deep-dive-all analysis modes. Read-only — never modifies issues or PRs directly.
 metadata:
-  falco-version: "0.43"
+  falco-version: "0.44"
 ---
 
 # Falco Triage
@@ -415,7 +415,7 @@ For each issue, determine:
 2. **Is this a documented feature being misunderstood?** Check digests and website docs.
 3. **Does this relate to an existing proposal?** Check [`digests/falcosecurity/falco/proposals.md`](../../digests/falcosecurity/falco/proposals.md) and [`digests/falcosecurity/libs/proposals-and-architecture.md`](../../digests/falcosecurity/libs/proposals-and-architecture.md).
 4. **Has the relevant code area changed in the current era?** Check spec source references.
-5. **Which era does this issue belong to?** Infer from the Falco version mentioned in the issue body, `falco --support` output, or the creation date mapped to the [release schedule](../../AGENTS.md#release-schedule). If the issue spans multiple eras (e.g., reported in 0.39, still open in 0.43), note all relevant eras clearly.
+5. **Which era does this issue belong to?** Infer from the Falco version mentioned in the issue body, `falco --support` output, or the creation date mapped to the [release schedule](../../AGENTS.md#release-schedule). If the issue spans multiple eras (e.g., reported in 0.39, still open in 0.44), note all relevant eras clearly.
 
 #### Step 3c: Check If Already Addressed
 
@@ -683,7 +683,7 @@ If you cannot verify something, tag it [ASSUMPTION] and move on.
 1. Is this a known architectural limitation or design decision?
 2. Is this a documented feature being misunderstood?
 3. Does this relate to an existing proposal?
-4. Has the relevant code area changed in the current era (0.43)?
+4. Has the relevant code area changed in the current era (0.44)?
 5. Is there documentation that would resolve this issue?
 
 **Output requirements:**

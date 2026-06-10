@@ -42,9 +42,7 @@ userspace/libscap/
 ├── metrics_v2.h               # Extended statistics definitions
 ├── engine/
 │   ├── modern_bpf/            # Modern eBPF engine (DEFAULT)
-│   ├── bpf/                   # Legacy eBPF engine (DEPRECATED)
 │   ├── kmod/                  # Kernel module engine
-│   ├── gvisor/                # gVisor engine (DEPRECATED)
 │   ├── savefile/              # Capture file replay engine
 │   ├── source_plugin/         # Plugin-provided event engine
 │   ├── nodriver/              # No-driver engine (/proc scan only)

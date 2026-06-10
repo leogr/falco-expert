@@ -290,7 +290,7 @@ Key features consolidated in 0.43:
 #### Modern eBPF Probe
 - **Post**: [Getting started with modern BPF probe in Falco](../../../refs/falcosecurity/falco-website/content/en/blog/falco-modern-bpf/index.md) (2022-11-30)
 - **Post**: [Modern eBPF probe is ready to shine](../../../refs/falcosecurity/falco-website/content/en/blog/falco-modern-bpf-0-35-0/index.md) (2023-06-14)
-- **Status**: Production-ready since 0.35.0, **recommended for 0.43**
+- **Status**: Production-ready since 0.35.0, **the sole eBPF driver in 0.44** (legacy eBPF removed)
 - **Requirements**: Linux kernel 5.8+, BTF support
 
 #### Plugin System
@@ -313,7 +313,7 @@ Key features consolidated in 0.43:
 
 ### Still Relevant Tutorials
 
-| Title | Date | Topic | 0.43 Relevance |
+| Title | Date | Topic | 0.44 Relevance |
 |-------|------|-------|----------------|
 | [How to Deploy Falco with k8s-metacollector + k8smeta Plugin](../../../refs/falcosecurity/falco-website/content/en/blog/falco-k8smeta-plugin/index.md) | 2024-10-14 | Kubernetes enrichment | High |
 | [Deploy Falco on a Talos cluster](../../../refs/falcosecurity/falco-website/content/en/blog/talos/index.md) | 2024-07-22 | Talos Linux | High |
@@ -332,7 +332,7 @@ Key features consolidated in 0.43:
 |-------|------|-------|
 | [Choosing a Falco driver](../../../refs/falcosecurity/falco-website/content/en/blog/choosing-a-driver.md) | 2020-09-23 | **Outdated**: Modern eBPF not covered, pdig deprecated |
 | [Extend Falco outputs with falcosidekick](../../../refs/falcosecurity/falco-website/content/en/blog/extend-falco-outputs-with-falcosidekick.md) | 2020-06-22 | Concepts valid, versions outdated |
-| [Getting started with gVisor support](../../../refs/falcosecurity/falco-website/content/en/blog/intro-gvisor-falco/index.md) | 2022-09-15 | **gVisor deprecated in 0.43** |
+| [Getting started with gVisor support](../../../refs/falcosecurity/falco-website/content/en/blog/intro-gvisor-falco/index.md) | 2022-09-15 | **gVisor engine removed in 0.44** (deprecated in 0.43) |
 | [Falco on Kind with Prometheus and Grafana](../../../refs/falcosecurity/falco-website/content/en/blog/falco-kind-prometheus-grafana.md) | 2020-03-19 | Commands may be outdated |
 
 ---
@@ -361,7 +361,7 @@ The "Kubernetes Response Engine" blog series demonstrates integration patterns:
 - Part 5: Falcosidekick + Argo
 - Part 6-9: Cloud Run, Cloud Functions, Flux v2, Fission
 
-**Note**: For 0.43, consider using **Falco Talon** as a dedicated response engine.
+**Note**: For 0.44, consider using **Falco Talon** as a dedicated response engine.
 
 ---
 
@@ -378,10 +378,10 @@ The "Kubernetes Response Engine" blog series demonstrates integration patterns:
 ### Ecosystem Tools
 
 #### Falcosidekick
-- **Latest**: [2.31.0](../../../refs/falcosecurity/falco-website/content/en/blog/falcosidekick-2-31-0/index.md) (February 2025)
+- **Latest blog-announced release**: [2.31.0](../../../refs/falcosecurity/falco-website/content/en/blog/falcosidekick-2-31-0/index.md) (February 2025); the 0.44-era reference release is 2.34.0 (no dedicated blog post)
 - 60+ output integrations
 - AWS Security Lake, OTLP Metrics support
-- Recommended replacement for deprecated gRPC output
+- Recommended replacement for the removed gRPC output (removed in 0.44)
 
 #### Falco Talon
 - **Latest**: [v0.3.0](../../../refs/falcosecurity/falco-website/content/en/blog/falco-talon-v0-3-0/index.md) (February 2025)
@@ -398,24 +398,24 @@ The "Kubernetes Response Engine" blog series demonstrates integration patterns:
 
 ## Historical Content Notes
 
-### Deprecated Features (Do Not Use in 0.43)
+### Deprecated/Removed Features (Do Not Use in 0.44)
 
-| Feature | Deprecated In | Removal Expected |
-|---------|--------------|------------------|
-| Legacy eBPF Probe (`engine.kind=ebpf`) | 0.43.0 | 0.44.0+ |
-| gVisor Engine (`engine.kind=gvisor`) | 0.43.0 | 0.44.0+ |
-| gRPC Output/Server | 0.43.0 | 0.44.0+ |
+| Feature | Deprecated In | Removal Status |
+|---------|--------------|----------------|
+| Legacy eBPF Probe (`engine.kind=ebpf`) | 0.43.0 | **Removed in 0.44.0** |
+| gVisor Engine (`engine.kind=gvisor`) | 0.43.0 | **Removed in 0.44.0** |
+| gRPC Output/Server | 0.43.0 | **Removed in 0.44.0** |
 | `evt.dir` field | 0.42.0 | Future |
 | `-p` CLI flag | 0.41.0 | Future |
 | `pdig` driver | Historical | Not recommended |
 
 ### Configuration Changes Over Time
 
-| Old Option | New Option (0.43) |
+| Old Option | New Option (0.44) |
 |------------|-------------------|
 | `--modern_ebpf` | `engine.kind: modern_ebpf` |
 | `--nodriver` | `engine.kind: nodriver` |
-| `FALCO_BPF_PROBE` env | `engine.ebpf.probe` config |
+| `FALCO_BPF_PROBE` env | Removed in 0.44 with the legacy eBPF probe — use `engine.kind: modern_ebpf` |
 | `-e <file.scap>` | `engine.kind=replay`, `engine.replay.capture_file` |
 | `--cri`, `--disable-cri-async` | Container plugin config |
 | `-D`, `-t`, `-T` | `rules[]` config with enable/disable |
@@ -426,7 +426,7 @@ The "Kubernetes Response Engine" blog series demonstrates integration patterns:
 
 ### Docker Image Evolution
 
-| Old Image | Current Equivalent (0.43) |
+| Old Image | Current Equivalent (0.44) |
 |-----------|---------------------------|
 | `falcosecurity/falco-distroless` | `falcosecurity/falco:x.y.z` |
 | `falcosecurity/falco-no-driver` | `falcosecurity/falco:x.y.z-debian` |
@@ -492,4 +492,4 @@ Pre-existing installations must import the new GPG key for package updates:
 | Falcosidekick 2.31.0 | [`blog/falcosidekick-2-31-0/index.md`](../../../refs/falcosecurity/falco-website/content/en/blog/falcosidekick-2-31-0/index.md) |
 | Falco Talon v0.3.0 | [`blog/falco-talon-v0-3-0/index.md`](../../../refs/falcosecurity/falco-website/content/en/blog/falco-talon-v0-3-0/index.md) |
 
-*Generated for Falco 0.43 era. Last updated: 2026-02-03*
+*Generated for Falco 0.44 era. Last updated: 2026-06-10*

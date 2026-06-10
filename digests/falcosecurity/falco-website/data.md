@@ -244,7 +244,7 @@ https://www.sysdig.com
 | `stdout_output` | Object | Send alerts to stdout (`enabled`) |
 | `program_output` | Object | Send alerts to a program (`enabled`, `keep_alive`) |
 | `http_output` | Object | Send alerts to HTTP endpoint (`enabled`, `url`) |
-| `grpc_output` | Object | Enable gRPC output collection (`enabled`) |
+| ~~`grpc_output`~~ | — | **Removed in 0.44.0** (gRPC output fully removed; Falco fails at startup if present). Use `http_output` or Falcosidekick |
 
 ### Event Handling
 
@@ -254,12 +254,12 @@ https://www.sysdig.com
 | `syscall_event_timeouts` | Object | Configure max consecutive timeouts (`max_consecutives`, default: 1000) |
 | `output_timeout` | Integer | Milliseconds to wait before considering outputs blocked (default: 2000ms) |
 
-### Web Server & gRPC
+### Web Server
 
 | Option | Type | Description |
 |--------|------|-------------|
 | `webserver` | Object | Embedded web server config (`enabled`, `listen_port`, `k8s_audit_endpoint`, `ssl_enabled`, `ssl_certificate`, `threadiness`) |
-| `grpc` | Object | gRPC server config (`enabled`, `bind_address`, `threadiness`, `private_key`, `cert_chain`, `root_certs`) |
+| ~~`grpc`~~ | — | **Removed in 0.44.0** (embedded gRPC server fully removed; Falco fails at startup if present) |
 
 ---
 

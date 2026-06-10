@@ -1,6 +1,6 @@
 # pigeon Digest
 
-> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/pigeon/`](../../refs/falcosecurity/pigeon/) | **Commit:** `43aad93` (May 6, 2024)
+> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/pigeon/`](../../refs/falcosecurity/pigeon/) | **Commit:** `43aad93` (tag `v0.3.0`, May 6, 2024)
 
 **Repository:** [falcosecurity/pigeon](https://github.com/falcosecurity/pigeon)
 **Scope:** Infra

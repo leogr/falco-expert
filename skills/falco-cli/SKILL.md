@@ -2,7 +2,7 @@
 name: falco-cli
 description: Use the Falco CLI for validation, introspection, and information gathering. Supports local binary, downloaded versions from download.falco.org, and container images (Docker/Podman). Validate rules files, list available fields, inspect plugins, get version info, analyze binary dependencies (GLIBC, shared libraries), and verify Falco knowledge. This skill enables CLI-mode operations and binary analysis without requiring elevated privileges or running Falco as a daemon.
 metadata:
-  falco-version: "0.43"
+  falco-version: "0.44"
 ---
 
 # Falco CLI
@@ -213,7 +213,8 @@ falco -l "Terminal shell in container"
 | `falco --list` | List all available fields for rule conditions |
 | `falco --list=syscall` | List only syscall fields |
 | `falco --list=<source>` | List fields for a specific event source |
-| `falco --list --markdown` | Output field list in Markdown format |
+| `falco --list --format <format>` | Output field list in the given format: `text` (default), `markdown`, or `json` |
+| `falco --list --markdown` | Output field list in Markdown format (DEPRECATED: use `--format markdown` instead; emits a runtime warning) |
 | `falco --list -N` | List only field names (no descriptions) |
 
 **Example output structure:**
@@ -231,7 +232,8 @@ evt.time                      event timestamp as a time string...
 | Command | Purpose |
 |---------|---------|
 | `falco --list-events` | List all syscall events, metaevents, and tracepoint events |
-| `falco --list-events --markdown` | Output in Markdown format |
+| `falco --list-events --format <format>` | Output in the given format: `text` (default), `markdown`, or `json` |
+| `falco --list-events --markdown` | Output in Markdown format (DEPRECATED: use `--format markdown` instead; emits a runtime warning) |
 
 ### Plugin Information
 

@@ -1,6 +1,6 @@
 # plugin-sdk-cpp Digest
 
-> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/plugin-sdk-cpp/`](../../refs/falcosecurity/plugin-sdk-cpp/) | **Commit:** `d08557d` (January 16, 2026)
+> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/plugin-sdk-cpp/`](../../refs/falcosecurity/plugin-sdk-cpp/) | **Commit:** `9e8332e` (tag `v0.4.1`, May 4, 2026)
 
 **Repository:** [falcosecurity/plugin-sdk-cpp](https://github.com/falcosecurity/plugin-sdk-cpp)
 **Scope:** Ecosystem
@@ -613,7 +613,7 @@ The SDK main branch is not guaranteed to be compatible with the latest released 
 |------------|---------|---------|
 | nlohmann/json | 3.12.0 | JSON parsing (bundled) |
 
-**Source:** [`include/falcosecurity/internal/deps/nlohmann/json.hpp`](../../refs/falcosecurity/plugin-sdk-cpp/include/falcosecurity/internal/deps/nlohmann/json.hpp), Git commit `d08557d`
+**Source:** [`include/falcosecurity/internal/deps/nlohmann/json.hpp`](../../refs/falcosecurity/plugin-sdk-cpp/include/falcosecurity/internal/deps/nlohmann/json.hpp), Git commit `9e8332e`
 
 ## Examples
 

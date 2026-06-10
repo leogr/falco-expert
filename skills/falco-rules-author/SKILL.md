@@ -2,7 +2,7 @@
 name: falco-rules-author
 description: Author, validate, and iteratively tune Falco detection rules. Covers the complete rule language (conditions, macros, lists, priorities, output templates, overrides), the filter expression language (19 operators, 5 transformers, all field classes), rule engine optimization (event type indexing), and practical Docker-based testing workflows with structured feedback loops for false-positive reduction. Supports modern_ebpf (live), replay (.scap), nodriver (plugins-only), and plugin event sources.
 metadata:
-  falco-version: "0.43"
+  falco-version: "0.44"
 ---
 
 # Falco Rules Author

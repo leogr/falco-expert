@@ -10,7 +10,7 @@ The official CLI tool for working with Falco and its ecosystem components. Manag
 
 Falcoctl is a Go-based CLI tool that provides:
 1. **Artifact management** - Search, install, and follow rules and plugins from OCI registries
-2. **Driver management** - Install and configure kernel drivers (kmod, ebpf, modern_ebpf)
+2. **Driver management** - Install and configure kernel drivers (kmod, modern_ebpf)
 3. **Registry operations** - Push, pull, and authenticate with OCI registries
 4. **Index management** - Configure artifact indexes for discovery
 
@@ -34,14 +34,14 @@ Falcoctl is a Go-based CLI tool that provides:
 │  │ • config    │  │             │  │             │  │             │    │
 │  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘    │
 │                                                                          │
-│  ┌─────────────┐  ┌─────────────┐                                       │
-│  │     tls     │  │   version   │                                       │
-│  ├─────────────┤  └─────────────┘                                       │
-│  │ • install   │                                                         │
+│  ┌─────────────┐                                                         │
+│  │   version   │                                                         │
 │  └─────────────┘                                                         │
 │                                                                          │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
+
+> Note: The `tls` subcommand was removed in the Falco 0.44 era (falcoctl v0.13.0), and all references to the legacy eBPF probe were removed from the `driver` command.
 
 **Source:** [`cmd/root.go`](../../refs/falcosecurity/falcoctl/cmd/root.go)
 
@@ -210,8 +210,9 @@ Falcoctl includes driver management commands that replace the legacy `falco-driv
 | Type | Extension | HasArtifacts | Description |
 |------|-----------|--------------|-------------|
 | `kmod` | `.ko` | Yes | Kernel module |
-| `ebpf` | `.o` | Yes | eBPF probe (classic, deprecated) |
 | `modern_ebpf` | - | No | CO-RE eBPF (embedded in Falco) |
+
+> Note: The legacy classic eBPF probe (`ebpf`) was fully removed in the Falco 0.44 era, so falcoctl no longer defines an `ebpf` driver type ([`pkg/driver/type/consts.go:20-23`](../../refs/falcosecurity/falcoctl/pkg/driver/type/consts.go) defines only `kmod` and `modern_ebpf`).
 
 **Source:** [`pkg/driver/type/`](../../refs/falcosecurity/falcoctl/pkg/driver/type/)
 
@@ -463,9 +464,9 @@ Falco exposes version info at `http://localhost:8765/versions`:
 {
   "falco_version": "0.44.0",
   "libs_version": "0.25.2",
-  "plugin_api_version": "3.6.0",
-  "driver_api_version": "9.1.0",
-  "driver_schema_version": "2.0.0",
+  "plugin_api_version": "3.12.0",
+  "driver_api_version": "10.1.0",
+  "driver_schema_version": "4.5.1",
   "default_driver_version": "10.2.0+driver",
   "engine_version": "62",
   "engine_version_semver": "0.62.0",

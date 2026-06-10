@@ -333,7 +333,7 @@ typedef enum {
 **Sources:**
 - [`driver/API_VERSION`](../../../refs/falcosecurity/libs/driver/API_VERSION) - Driver API version
 - [`driver/SCHEMA_VERSION`](../../../refs/falcosecurity/libs/driver/SCHEMA_VERSION) - Event schema version
-- [`plugin_api.h:31-32`](../../../refs/falcosecurity/libs/userspace/plugin/plugin_api.h) - Plugin API version
+- [`plugin_api.h:31-33`](../../../refs/falcosecurity/libs/userspace/plugin/plugin_api.h) - Plugin API version
 
 ```c
 // From driver/API_VERSION

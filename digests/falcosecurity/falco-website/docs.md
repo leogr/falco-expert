@@ -66,7 +66,7 @@ Falco is a graduated CNCF project, originally created by Sysdig.
 | Driver | Status | Description |
 |--------|--------|-------------|
 | **Modern eBPF probe** | Default | CO-RE paradigm, bundled in binary |
-| **Legacy eBPF probe** | Deprecated (0.43) | Requires kernel >= 4.14 (x86_64) / 4.17 (aarch64) |
+| **Legacy eBPF probe** | Removed in 0.44.0 | Previously required kernel >= 4.14 (x86_64) / 4.17 (aarch64) |
 | **Kernel module** | Supported | Requires kernel >= 3.10 |
 
 ### Alert Output Channels
@@ -76,7 +76,7 @@ Falco is a graduated CNCF project, originally created by Sysdig.
 - Syslog
 - Spawned program
 - HTTP/HTTPS endpoint
-- gRPC API (deprecated in 0.43)
+- ~~gRPC API~~ (removed in 0.44.0)
 
 ---
 
@@ -704,10 +704,10 @@ falco -o engine.kind=nodriver
 
 | Feature | Modern eBPF | Legacy eBPF | Kernel Module |
 |---------|-------------|-------------|---------------|
-| Status | Default | Deprecated (0.43) | Supported |
+| Status | Default | Removed in 0.44.0 | Supported |
 | Bundled | Yes | No | No |
-| Min Kernel (x86_64) | ~5.8 (varies) | 4.14 | 3.10 |
-| Min Kernel (aarch64) | ~5.8 (varies) | 4.17 | 3.10 |
+| Min Kernel (x86_64) | ~5.8 (varies) | 4.14 (pre-0.44) | 3.10 |
+| Min Kernel (aarch64) | ~5.8 (varies) | 4.17 (pre-0.44) | 3.10 |
 | CO-RE | Yes | No | N/A |
 | Install needed | No | Yes | Yes |
 
@@ -1382,10 +1382,7 @@ falcoctl driver config --type kmod
 falcoctl driver install
 falco -o engine.kind=kmod
 
-# Legacy eBPF (deprecated)
-falcoctl driver config --type ebpf
-falcoctl driver install
-falco -o engine.kind=ebpf
+# Legacy eBPF: removed in 0.44.0 (engine.kind=ebpf no longer exists; use modern_ebpf or kmod)
 
 # No driver (plugins only)
 falco -o engine.kind=nodriver
@@ -1415,12 +1412,15 @@ json_output: true
 
 This digest covers Falco documentation for **Era 0.44**.
 
-**Key Deprecations in 0.43:**
-- gVisor engine (will be removed)
-- Legacy eBPF probe (will be removed)
-- gRPC output and embedded gRPC server (will be removed)
+**Key Removals in 0.44 (deprecated in earlier releases):**
+- gVisor engine (removed)
+- Legacy eBPF probe (removed)
+- gRPC output and embedded gRPC server (removed)
+
+**Other deprecations still in effect:**
 - `append: true` syntax for rules (use `override:` section)
 - `evt.dir` field (deprecated in 0.42)
+- `--markdown` CLI flag (deprecated in 0.44; use `--format markdown`)
 
 **Default Driver:** Modern eBPF (since 0.38.0)
 

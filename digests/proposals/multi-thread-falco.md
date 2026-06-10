@@ -7,7 +7,7 @@
 This digest documents the multi-thread Falco initiative — a set of proposals to transition Falco from its current single-threaded event processing architecture to a multi-threaded one. The proposals span two repositories (falco and libs) and address both the high-level architecture and the low-level data structure changes needed.
 
 **Important caveats:**
-- These proposals have **not been implemented** in Falco 0.43 or any prior release
+- Multi-threading has **not been enabled at runtime** in any release through 0.44; the high-level design proposal was merged into the falco repo in 0.44 (`proposals/20251205-multi-thread-falco-design.md`) and only multi-thread-safety hardening (foundation work) landed in 0.44
 - The proposals have **not yet been verified** through a PoC or code implementation
 - Several approaches are presented as possibilities that require benchmarking to validate
 - The proposals may evolve significantly before any implementation

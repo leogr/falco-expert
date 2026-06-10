@@ -230,8 +230,8 @@ make sinsp
 
 - **Libs Version:** 0.25.2 (SemVer, major=0 indicates unstable API)
 - **Driver Version:** Uses `+driver` suffix (e.g., `10.2.0+driver`)
-- **API Version:** 8.0.4 (user/kernel boundary)
-- **Schema Version:** 4.1.0 (event data format)
+- **API Version:** 10.1.0 (user/kernel boundary)
+- **Schema Version:** 4.5.1 (event data format)
 - **Plugin API Version:** 3.12.0
 
 ### Compatibility Rules

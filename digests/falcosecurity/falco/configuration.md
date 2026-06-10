@@ -68,7 +68,7 @@ Each configuration key has a maturity level indicating stability (from [`proposa
 
 ### Engine Kinds
 
-The `engine.kind` setting determines how Falco captures system events (from [`configuration.cpp:240-247`](../../../refs/falcosecurity/falco/userspace/falco/configuration.cpp)):
+The `engine.kind` setting determines how Falco captures system events (from [`configuration.cpp:236-247`](../../../refs/falcosecurity/falco/userspace/falco/configuration.cpp)):
 
 | Kind | Status | Description |
 |------|--------|-------------|

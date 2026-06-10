@@ -351,34 +351,35 @@ cmake -Wno-dev \
   -DENABLE_DRIVERS_TESTS=Off \
   -DDRIVER_NAME=<name> \
   -DPROBE_NAME=<name> \
-  -DBUILD_BPF=On \
   -DDRIVER_VERSION=<version> \
   -DPROBE_VERSION=<version> \
   -DGIT_COMMIT=<commit> \
   -DDRIVER_DEVICE_NAME=<device-name> \
   -DPROBE_DEVICE_NAME=<device-name> \
-  ..
+  .. && \
+  sed -i s/'DRIVER_COMMIT ""'/'DRIVER_COMMIT "<commit>"'/g driver/src/driver_config.h
 ```
 
 **Source code URL:** `https://github.com/falcosecurity/libs/archive/<version>.tar.gz`
 
-**Source:** [`pkg/driverbuilder/builder/builders.go:36-51`](../refs/falcosecurity/driverkit/pkg/driverbuilder/builder/builders.go), [`pkg/driverbuilder/builder/build.go:64-66`](../refs/falcosecurity/driverkit/pkg/driverbuilder/builder/build.go)
+**Source:** [`pkg/driverbuilder/builder/builders.go:37-52`](../refs/falcosecurity/driverkit/pkg/driverbuilder/builder/builders.go) (`cmakeCmdFmt`)
 
 ## Drivers Build Grid
 
-The Drivers Build Grid (DBG) is the infrastructure within [test-infra](https://github.com/falcosecurity/test-infra) that stores and manages the ~44,024 driverkit configuration files used to build pre-compiled drivers.
+The Drivers Build Grid (DBG) is the infrastructure within [test-infra](https://github.com/falcosecurity/test-infra) that stores and manages the ~59,995 driverkit configuration files used to build pre-compiled drivers.
 
 ### Driver Versions
 
-Four driver versions are currently maintained:
+Five driver versions are currently maintained:
 
 | Driver Version | x86_64 Configs | aarch64 Configs | Total |
 |---------------|----------------|-----------------|-------|
-| `8.0.0+driver` | 6,545 | 4,461 | 11,006 |
-| `8.1.0+driver` | 6,545 | 4,461 | 11,006 |
-| `9.0.0+driver` | 6,545 | 4,461 | 11,006 |
-| `9.1.0+driver` | 6,545 | 4,461 | 11,006 |
-| **Total** | **26,180** | **17,844** | **44,024** |
+| `9.0.0+driver` | 7,025 | 4,974 | 11,999 |
+| `9.1.0+driver` | 7,025 | 4,974 | 11,999 |
+| `10.0.0+driver` | 7,025 | 4,974 | 11,999 |
+| `10.1.0+driver` | 7,025 | 4,974 | 11,999 |
+| `10.2.0+driver` | 7,025 | 4,974 | 11,999 |
+| **Total** | **35,125** | **24,870** | **59,995** |
 
 ### Architectures
 

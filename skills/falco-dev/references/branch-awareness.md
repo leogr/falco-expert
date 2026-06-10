@@ -10,7 +10,7 @@ The `master` or `main` branches of all falcosecurity repositories are **developm
 
 - Contain work-in-progress that doesn't compile
 - Be temporarily inconsistent across repositories (e.g., `falco/master` may expect a libs API that only exists in a not-yet-merged libs PR)
-- Differ from the current knowledge base era (0.43) -- the latest `master` may be ahead of or behind what this knowledge base documents
+- Differ from the current knowledge base era (0.44) -- the latest `master` may be ahead of or behind what this knowledge base documents
 
 ## Era and Target Version Validation
 
@@ -47,7 +47,7 @@ docker exec -u dev $CONTAINER_NAME bash -c "
    - If the user says "add a feature" and the repo is on a release tag, clarify that development should happen on `master`
    - **If in doubt, ask the user** to confirm the target version before proceeding
 
-> **Why this matters:** The knowledge base documents the **current era** (0.43). If the repos being developed are already ahead (targeting 0.44), some APIs, configurations, or behaviors may have changed from what the knowledge base describes.
+> **Why this matters:** The knowledge base documents the **current era** (0.44). If the repos being developed are already ahead (targeting 0.45), some APIs, configurations, or behaviors may have changed from what the knowledge base describes.
 
 ---
 

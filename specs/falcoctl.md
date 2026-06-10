@@ -521,9 +521,9 @@ Falco exposes version info at `http://localhost:8765/versions`:
 {
   "falco_version": "0.44.0",
   "libs_version": "0.25.2",
-  "plugin_api_version": "3.6.0",
-  "driver_api_version": "9.1.0",
-  "driver_schema_version": "2.0.0",
+  "plugin_api_version": "3.12.0",
+  "driver_api_version": "10.1.0",
+  "driver_schema_version": "4.5.1",
   "default_driver_version": "10.2.0+driver",
   "engine_version": "62",
   "engine_version_semver": "0.62.0",
@@ -577,8 +577,8 @@ falcoctl:
 Install different rules (e.g., with incubating rules):
 ```bash
 helm install falco falcosecurity/falco \
-  --set "falcoctl.config.artifact.install.refs={falco-rules:5,falco-incubating-rules:5}" \
-  --set "falcoctl.config.artifact.follow.refs={falco-rules:5,falco-incubating-rules:5}"
+  --set "falcoctl.config.artifact.install.refs={falco-rules:5,falco-incubating-rules:6}" \
+  --set "falcoctl.config.artifact.follow.refs={falco-rules:5,falco-incubating-rules:6}"
 ```
 
 Install plugins for K8s audit:

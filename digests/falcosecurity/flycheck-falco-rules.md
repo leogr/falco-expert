@@ -10,13 +10,13 @@
 
 ## WARNING: OUTDATED AND POTENTIALLY BROKEN
 
-**Last updated:** October 2023 (~2.5 years before era 0.43)
+**Last updated:** October 2023 (~2.5 years before era 0.44)
 
 **This code may not work with current Falco versions due to:**
 - Changes in Falco's JSON validation output format
 - Changes in Docker image names or availability
 - Changes in Falco CLI argument syntax
-- Untested against Falco 0.43.x
+- Untested against Falco 0.44.x
 
 **Use for:** Historical context, ideas for similar integrations, or as a starting point that likely requires updates.
 

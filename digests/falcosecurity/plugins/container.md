@@ -577,9 +577,9 @@ plugins:
 | `container.host_ipc` | bool | Using host IPC namespace |
 | `container.label[key]` | string | Container label by key |
 | `container.labels` | string | All labels comma-separated |
-| `container.healthcheck` | string | Docker healthcheck command |
-| `container.liveness_probe` | string | K8s liveness probe |
-| `container.readiness_probe` | string | K8s readiness probe |
+| `container.healthcheck` | string | **[Deprecated in 0.7.0]** Docker healthcheck command — implementation dropped, returns empty; use `k8smeta` plugin |
+| `container.liveness_probe` | string | **[Deprecated in 0.7.0]** K8s liveness probe — implementation dropped, returns empty; use `k8smeta` plugin |
+| `container.readiness_probe` | string | **[Deprecated in 0.7.0]** K8s readiness probe — implementation dropped, returns empty; use `k8smeta` plugin |
 | `container.start_ts` | abstime | Container start timestamp |
 | `container.duration` | reltime | Time since start |
 
@@ -599,11 +599,13 @@ plugins:
 
 ### Process Health Check Fields
 
+> **Deprecated in container plugin 0.7.0 (bundled with Falco 0.44.0):** the implementation backing these fields was dropped — the field names remain registered but are marked `[Deprecated]` and return empty. They relied on a fragile Kubernetes-specific annotation and had been broken on CRI runtimes for years. Functionality is intended to move to the `k8smeta` plugin. Source: [`src/caps/extract/extract.cpp:304-314`](../../../refs/falcosecurity/plugins/plugins/container/src/caps/extract/extract.cpp).
+
 | Field | Type | Description |
 |-------|------|-------------|
-| `proc.is_container_healthcheck` | bool | Part of container healthcheck |
-| `proc.is_container_liveness_probe` | bool | Part of liveness probe |
-| `proc.is_container_readiness_probe` | bool | Part of readiness probe |
+| `proc.is_container_healthcheck` | bool | **[Deprecated]** Part of container healthcheck (returns empty) |
+| `proc.is_container_liveness_probe` | bool | **[Deprecated]** Part of liveness probe (returns empty) |
+| `proc.is_container_readiness_probe` | bool | **[Deprecated]** Part of readiness probe (returns empty) |
 
 ### Deprecated Fields
 

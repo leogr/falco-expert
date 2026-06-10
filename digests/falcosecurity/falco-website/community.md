@@ -1,6 +1,6 @@
 # Falco Community Digest
 
-> AI-optimized digest for Falco 0.43
+> AI-optimized digest for Falco 0.44
 
 ## [Overview](../../../refs/falcosecurity/falco-website/content/en/community/_index.md)
 

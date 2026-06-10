@@ -3,7 +3,7 @@
 Testing and demonstration tool for generating synthetic security events detected by Falco rules.
 
 **Repository:** [falcosecurity/event-generator](https://github.com/falcosecurity/event-generator)
-**Version:** v0.12.0
+**Version:** v0.13.0
 **Scope:** Ecosystem
 **Status:** Incubating
 **Compatibility:** Requires Falco 0.37.0 or newer
@@ -67,6 +67,7 @@ Actions can be registered with options:
 | `run` | Execute actions | [`docs/event-generator_run.md`](../../refs/falcosecurity/event-generator/docs/event-generator_run.md) |
 | `test` | Run and test actions against Falco | [`docs/event-generator_test.md`](../../refs/falcosecurity/event-generator/docs/event-generator_test.md) |
 | `bench` | Benchmark Falco performance | [`docs/event-generator_bench.md`](../../refs/falcosecurity/event-generator/docs/event-generator_bench.md) |
+| `suite` | Manage declaratively-specified (YAML) test suites grouped by rule (since v0.13.0); sub-commands `run`, `test`, `explain`, `yaml` | [`docs/event-generator_suite.md`](../../refs/falcosecurity/event-generator/docs/event-generator_suite.md) |
 
 ### Global Options
 
@@ -82,7 +83,7 @@ Actions can be registered with options:
 
 Syscall actions generate system call activity that triggers Falco's default ruleset. Each action is implemented as a Go function registered in the `syscall` package.
 
-### Available Actions (v0.12.0)
+### Available Actions (v0.13.0)
 
 | Action | Rule Triggered | Enabled by Default |
 |--------|----------------|-------------------|
@@ -268,14 +269,17 @@ helm install event-generator falcosecurity/event-generator \
 
 ## Testing Rules
 
-The `test` command runs actions and verifies they trigger the expected Falco alerts via gRPC:
+The `test` command runs actions and verifies they trigger the expected Falco alerts. As of v0.13.0 it retrieves alerts over Falco's **HTTP Output** (the gRPC-based path was removed, mirroring the gRPC output removal in Falco 0.44). The command starts a local HTTP server that Falco posts alerts to:
 
 ```bash
-# Test syscall actions locally (requires Falco with gRPC enabled)
+# Test syscall actions locally (requires Falco with the HTTP Output enabled)
 sudo event-generator test syscall
 
-# Test with specific Unix socket
-sudo event-generator test syscall --grpc-unix-socket unix:///run/falco/falco.sock
+# Bind the alert-retriever HTTP server to a custom address
+sudo event-generator test syscall --http-server-address localhost:8080
+
+# Use TLS/mTLS for the Falco -> event-generator alert channel
+sudo event-generator test syscall --http-server-security-mode mtls
 
 # Test in Kubernetes
 helm install event-generator falcosecurity/event-generator \
@@ -284,8 +288,10 @@ helm install event-generator falcosecurity/event-generator \
 ```
 
 **Requirements:**
-- Falco 0.24.0 or newer
-- [gRPC Output enabled](https://falco.org/docs/grpc/)
+- A running Falco instance with the [HTTP Output](https://falco.org/docs/outputs/channels/#http-output) enabled, configured to send alerts to the event-generator's HTTP server (`--http-server-address`, default `localhost:8080`)
+- Optional TLS/mTLS via `--http-server-security-mode` (`insecure`, `tls`, or `mtls`)
+
+> Note: Upstream README sections may still reference the gRPC Output for `test`; the gRPC path was removed and Falco 0.44 dropped the gRPC output entirely.
 
 **Source:** [`docs/event-generator_test.md`](../../refs/falcosecurity/event-generator/docs/event-generator_test.md)
 
@@ -325,11 +331,12 @@ The tool provides importable packages:
 
 | Dependency | Purpose |
 |------------|---------|
-| `falcosecurity/client-go` | Falco gRPC client for test/bench commands |
 | `k8s.io/client-go` | Kubernetes API client for k8saudit actions |
 | `k8s.io/cli-runtime` | Kubernetes resource building |
 | `spf13/cobra` | CLI framework |
 | `golang.org/x/sys` | System calls (for syscall actions) |
+
+> Note: `falcosecurity/client-go` (the Falco gRPC client) is no longer a dependency as of v0.13.0; the `test`/`suite` commands retrieve alerts over Falco's HTTP Output instead.
 
 **Source:** [`go.mod`](../../refs/falcosecurity/event-generator/go.mod)
 

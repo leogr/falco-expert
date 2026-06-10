@@ -312,9 +312,9 @@ The testing suite is used in Falco CI and must be kept in sync:
 
 **Source:** [`README.md`](../../refs/falcosecurity/testing/README.md)
 
-## Era 0.43 Changes
+## Era 0.44 Changes
 
-The latest commit (`2f1fba01`, February 5, 2026) removes all gRPC references; Falco 0.43.0 deprecated gRPC output and Falco 0.44.0 removed it entirely.
+The pinned commit (`2f1fba01`, February 5, 2026) removes all gRPC references; Falco 0.43.0 deprecated gRPC output and Falco 0.44.0 removed it entirely.
 
 **Source:** Git commit message `2f1fba01`
 

@@ -1,7 +1,7 @@
 # Driverkit Digest
 
 **Repository:** [falcosecurity/driverkit](https://github.com/falcosecurity/driverkit)
-**Version:** v0.22.1
+**Version:** v0.23.1
 **Status:** Ecosystem / Incubating
 **Era:** 0.44
 
@@ -381,7 +381,6 @@ cmake -Wno-dev \
   -DENABLE_DRIVERS_TESTS=Off \
   -DDRIVER_NAME=<name> \
   -DPROBE_NAME=<name> \
-  -DBUILD_BPF=On \
   -DDRIVER_VERSION=<version> \
   -DPROBE_VERSION=<version> \
   -DGIT_COMMIT=<commit> \
@@ -390,7 +389,9 @@ cmake -Wno-dev \
   ..
 ```
 
-**Source:** [`pkg/driverbuilder/builder/builders.go:36-51`](../../refs/falcosecurity/driverkit/pkg/driverbuilder/builder/builders.go)
+> Note: The legacy `-DBUILD_BPF=On` option is no longer emitted; legacy eBPF probe build support was dropped in driverkit v0.23.0 (the modern eBPF probe and kernel module are built without it).
+
+**Source:** [`pkg/driverbuilder/builder/builders.go:37-52`](../../refs/falcosecurity/driverkit/pkg/driverbuilder/builder/builders.go)
 
 ## Adding New Target Support
 
@@ -470,7 +471,7 @@ zcat /proc/config.gz | base64 -w0
 
 ## Version Note
 
-**v0.23.0** removes legacy eBPF support since it's deprecated in the current era. Use v0.22.1 for this era (0.43) as it maintains compatibility.
+The 0.44 era uses driverkit **v0.23.1**. Legacy eBPF probe build support was dropped in **v0.23.0** ([`024c972`](https://github.com/falcosecurity/driverkit/commit/024c972) "chore!: drop legacy eBPF probe build support"), consistent with Falco 0.44 removing the legacy eBPF probe. driverkit now builds only the kernel module and the modern eBPF probe.
 
 ## Sources
 

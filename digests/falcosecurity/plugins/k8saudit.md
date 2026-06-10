@@ -28,7 +28,7 @@ The `k8saudit` plugin extends Falco to support [Kubernetes Audit Events](https:/
 |----------|-------|
 | Plugin Name | `k8saudit` |
 | Plugin ID | 1 |
-| Plugin Version | 0.16.0 |
+| Plugin Version | 0.17.0 |
 | Event Source | `k8s_audit` |
 | Language | Go |
 | Minimum Falco Version | 0.32.0 |
@@ -113,7 +113,7 @@ func (k *Plugin) Info() *plugins.Info {
         Name:        "k8saudit",
         Description: "Read Kubernetes Audit Events and monitor Kubernetes Clusters",
         Contact:     "github.com/falcosecurity/plugins",
-        Version:     "0.16.0",
+        Version:     "0.17.0",
         EventSource: "k8s_audit",
     }
 }

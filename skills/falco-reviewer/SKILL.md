@@ -2,7 +2,7 @@
 name: falco-reviewer
 description: Review pull requests across falcosecurity repositories as a ghost writer for Falco maintainers. Performs code review, security review, and breaking change analysis using the falco-expert knowledge base. Generates a review report and a ready-to-run shell script that publishes a pending (draft) GitHub review with inline comments. Use this skill whenever the user asks to review a PR in any falcosecurity repository, or when terms like "review PR", "PR review", "code review" appear in the context of falcosecurity.
 metadata:
-  falco-version: "0.43"
+  falco-version: "0.44"
 ---
 
 # Falco Reviewer

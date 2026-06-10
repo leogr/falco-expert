@@ -69,23 +69,12 @@ public:
         unsigned long driver_buffer_bytes_dim = DEFAULT_DRIVER_BUFFER_BYTES_DIM,
         const libsinsp::events::set<ppm_sc_code>& ppm_sc_of_interest = {});
 
-    virtual void open_bpf(
-        const std::string& bpf_path,
-        unsigned long driver_buffer_bytes_dim = DEFAULT_DRIVER_BUFFER_BYTES_DIM,
-        const libsinsp::events::set<ppm_sc_code>& ppm_sc_of_interest = {});
-
     virtual void open_savefile(const std::string& filename, int fd = 0);
 
     virtual void open_plugin(
         const std::string& plugin_name,
         const std::string& plugin_open_params,
         sinsp_plugin_platform platform_type);
-
-    virtual void open_gvisor(
-        const std::string& config_path,
-        const std::string& root_path,
-        bool no_events = false,
-        int epoll_timeout = -1);
 
     virtual void open_nodriver(bool full_proc_scan = false);
 
@@ -130,9 +119,8 @@ public:
 
 | Method | Purpose |
 |--------|---------|
-| `open_modern_bpf()` | Open capture using the modern eBPF driver (default in 0.43) |
+| `open_modern_bpf()` | Open capture using the modern eBPF driver (default since 0.38) |
 | `open_kmod()` | Open capture using the kernel module driver |
-| `open_bpf()` | Open capture using the legacy eBPF driver |
 | `open_savefile()` | Replay events from a `.scap` capture file |
 | `open_plugin()` | Open a plugin-based event source |
 | `open_nodriver()` | Open without any driver (proc scan only) |

@@ -41,9 +41,9 @@ falco-lsp provides comprehensive language tooling for Falco security rules throu
 
 **Repository status:** Incubating (Ecosystem)
 **License:** Apache-2.0
-**Current version:** 0.1.1
+**Current version:** 0.1.0 (the era-pinned commit declares `0.1.0` in [`vscode-extension/package.json`](../refs/falcosecurity/falco-lsp/vscode-extension/package.json); HEAD is a development commit past the `v0.1.0` tag, `git describe = v0.1.0-13-gaa8c175`, so no clean release tag applies for this era)
 
-**Source:** [`README.md`](../refs/falcosecurity/falco-lsp/README.md), [`digests/falcosecurity/falco-lsp.md`](../digests/falcosecurity/falco-lsp.md)
+**Source:** [`README.md`](../refs/falcosecurity/falco-lsp/README.md), [`vscode-extension/package.json`](../refs/falcosecurity/falco-lsp/vscode-extension/package.json), [`digests/falcosecurity/falco-lsp.md`](../digests/falcosecurity/falco-lsp.md)
 
 ## 2. CLI Tool (falco-lang)
 

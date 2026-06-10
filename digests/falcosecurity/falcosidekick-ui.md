@@ -1,6 +1,6 @@
 # falcosidekick-ui Digest
 
-> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/falcosidekick-ui/`](../../refs/falcosecurity/falcosidekick-ui/) | **Commit:** `2fc51f2` (May 19, 2026)
+> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/falcosidekick-ui/`](../../refs/falcosecurity/falcosidekick-ui/) | **Commit:** `2fc51f2` (March 31, 2026; `git describe` = `v2.3.0`)
 
 **Repository:** [falcosecurity/falcosidekick-ui](https://github.com/falcosecurity/falcosidekick-ui)
 **Scope:** Ecosystem

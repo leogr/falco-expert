@@ -225,9 +225,9 @@ Default rules for detecting CI/CD-specific threats (tagged with `CI/CD`):
 | **Suspicious Process Reading GitHub Token** | Detects reading `.git/config` by non-git processes | WARNING |
 | **Grep Looking for GitHub Secrets** | Detects grep for `ghp_`, `gho_`, `ghu_`, `ghs_`, `ghr_` | WARNING |
 
-**Required engine version:** 0.44.0
+**Required engine version:** 0.43.0 (per the pinned `falco_cicd_rules.yaml`; falco-actions is a Sandbox project and may lag the latest Falco engine version)
 
-**Source:** [`rules/falco_cicd_rules.yaml`](../../refs/falcosecurity/falco-actions/rules/falco_cicd_rules.yaml)
+**Source:** [`rules/falco_cicd_rules.yaml:1`](../../refs/falcosecurity/falco-actions/rules/falco_cicd_rules.yaml)
 
 ## Report Contents
 

@@ -6,7 +6,7 @@ The modern eBPF driver is the **DEFAULT** driver since Falco 0.35, and the sole 
 
 **Location:** `driver/modern_bpf/`
 **Requirements:** Linux kernel >= 5.8 with BTF support
-**API Version:** 8.0.4 | **Schema Version:** 4.1.0
+**API Version:** 10.1.0 | **Schema Version:** 4.5.1
 
 ## Key Features
 

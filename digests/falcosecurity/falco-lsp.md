@@ -2,10 +2,10 @@
 
 Language Server Protocol implementation and VS Code extension for Falco rules development, providing real-time diagnostics, code completion, formatting, and cross-file analysis.
 
-**Applicable to**: Falco 0.43 era (current)
+**Applicable to**: Falco 0.44 era (current)
 **Repository status**: Incubating (Ecosystem)
 **License**: Apache-2.0
-**Current version**: 0.1.1 (released 2026-02-06)
+**Pinned version**: post-v0.1.0 (commit `aa8c175`, `git describe` = `v0.1.0-13-gaa8c175`, dated 2026-05-06). The latest released tag is 0.1.1 (2026-02-06), but the [`refs/`](../../refs/) submodule is pinned to a later commit on a different branch than the 0.1.1 tag, so the era reference is the commit, not a clean tag.
 
 ---
 

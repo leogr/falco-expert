@@ -271,7 +271,7 @@ The default set of filterchecks is registered by `sinsp_filter_check_list`:
 | 8 | `sinsp_filter_check_utils` | `util.*` | Utility fields | [`sinsp_filtercheck_utils.cpp`](../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_utils.cpp) |
 | 9 | `sinsp_filter_check_fdlist` | `fdlist.*` | Poll event FD list fields | [`sinsp_filtercheck_fdlist.cpp`](../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_fdlist.cpp) |
 
-> **Note:** Container fields (`container.*`) and Kubernetes fields (`k8s.*`) are **not** built-in libsinsp filterchecks. In Falco 0.43, they are provided by plugins (specifically the `container` and `k8smeta` plugins). See [Plugin Fields](#plugin-fields) below.
+> **Note:** Container fields (`container.*`) and Kubernetes fields (`k8s.*`) are **not** built-in libsinsp filterchecks. In Falco 0.44, they are provided by plugins (specifically the `container` and `k8smeta` plugins). See [Plugin Fields](#plugin-fields) below.
 
 #### Generic Event Fields (`evt.*` -- all event types)
 
@@ -579,7 +579,7 @@ These fields are available for `poll`/`ppoll` events.
 
 ### Container Fields (`container.*`) and Kubernetes Fields (`k8s.*`)
 
-In Falco 0.43, container and Kubernetes metadata fields are provided by **plugins** rather than built-in filterchecks:
+In Falco 0.44, container and Kubernetes metadata fields are provided by **plugins** rather than built-in filterchecks:
 
 - **Container fields** (`container.*`): Provided by the `container` plugin. See [`digests/falcosecurity/plugins/container.md`](../digests/falcosecurity/plugins/container.md).
 - **Kubernetes fields** (`k8s.*`): Provided by the `k8smeta` plugin. See [`digests/falcosecurity/plugins/k8smeta.md`](../digests/falcosecurity/plugins/k8smeta.md).
@@ -793,7 +793,7 @@ ss_plugin_rc extract_fields(ss_plugin_t* s,
                             const ss_plugin_field_extract_input* in);
 ```
 
-Key plugin-provided field classes in Falco 0.43:
+Key plugin-provided field classes in Falco 0.44:
 - `container.*` fields -- from the `container` plugin
 - `k8s.*` fields -- from the `k8smeta` plugin
 

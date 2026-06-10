@@ -4,7 +4,7 @@ This folder contains data sources used as input to construct the Falco knowledge
 
 ## Contents
 
-Git submodules and other reference materials pointing to correct versions for the current era (0.43).
+Git submodules and other reference materials pointing to correct versions for the current era (0.44).
 
 ### [`falcosecurity/`](falcosecurity/)
 

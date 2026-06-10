@@ -1,6 +1,6 @@
 # plugin-sdk-rs Digest
 
-> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/plugin-sdk-rs/`](../../refs/falcosecurity/plugin-sdk-rs/) | **Commit:** `f872262` (January 7, 2026)
+> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/plugin-sdk-rs/`](../../refs/falcosecurity/plugin-sdk-rs/) | **Commit:** `2a5228e` (`git describe`: `v0.5.0-61-g2a5228e`, May 25, 2026)
 
 **Repository:** [falcosecurity/plugin-sdk-rs](https://github.com/falcosecurity/plugin-sdk-rs)
 **Scope:** Ecosystem

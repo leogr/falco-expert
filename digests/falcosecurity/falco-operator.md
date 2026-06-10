@@ -2,9 +2,10 @@
 
 Kubernetes Operator for managing Falco deployments, auxiliary components, and runtime artifacts (rules, plugins, configuration).
 
-**Applicable to**: Falco 0.43 era (development version, main branch)
+**Applicable to**: Falco 0.44 era
 **Repository status**: Incubating
 **License**: Apache-2.0
+**Pinned version**: v0.2.2 (the 0.44.0 release announces operator 0.3.0 + a new `falco-operator` Helm chart 0.2.0; the [`refs/`](../../refs/) submodule is pinned one patch behind at v0.2.2)
 
 ---
 
@@ -185,7 +186,7 @@ metadata:
 spec:
   component:
     type: metacollector
-    version: "0.1.1"
+    version: "0.1.2"
   replicas: 1
 ```
 
@@ -281,7 +282,7 @@ spec:
   ociArtifact:
     image:
       repository: falcosecurity/plugins/plugin/container
-      tag: "0.2.4"
+      tag: "0.7.1"
     registry:
       name: ghcr.io
   config:
@@ -371,9 +372,9 @@ The operator applies type-specific defaults via the `InstanceDefaults` registry 
 | Probes | Liveness (60s delay), Readiness (30s delay) on `/healthz:8765` |
 | Tolerations | master + control-plane NoSchedule |
 | Update strategy | RollingUpdate |
-| Default Falco image | `docker.io/falcosecurity/falco:0.41.0` |
+| Default Falco image | `docker.io/falcosecurity/falco:0.43.0` (pinned v0.2.2 default; announced operator 0.3.0 bumps this to `0.44.0`) |
 
-**Source:** [resources/falco.go](../../refs/falcosecurity/falco-operator/internal/pkg/resources/falco.go)
+**Source:** [resources/falco.go](../../refs/falcosecurity/falco-operator/internal/pkg/resources/falco.go), [`image/const.go:28`](../../refs/falcosecurity/falco-operator/internal/pkg/image/const.go)
 
 ### Falco Deployment Mode
 
@@ -389,7 +390,7 @@ The operator applies type-specific defaults via the `InstanceDefaults` registry 
 |---------|-------|
 | Resource type | Deployment only |
 | Container | `meta-collector` command |
-| Default image | `docker.io/falcosecurity/k8s-metacollector:0.1.1` |
+| Default image | `docker.io/falcosecurity/k8s-metacollector:0.1.2` |
 | Ports | metrics (8080), health-probe (8081), broker-grpc (45000) |
 | Resources | Requests: 100m CPU, 128Mi; Limits: 250m CPU, 256Mi |
 | Security context | Non-root (UID 1000), drop ALL capabilities |
@@ -440,8 +441,8 @@ This creates: 5 CRDs, the `falco-operator` namespace, ServiceAccount, ClusterRol
 | Aspect | Detail |
 |--------|--------|
 | Language | Go 1.26.0 |
-| Framework | kubebuilder v4, controller-runtime 0.23.3 |
-| K8s API | k8s.io/api v0.35.2 |
+| Framework | kubebuilder v4, controller-runtime 0.24.0 |
+| K8s API | k8s.io/api v0.36.0 |
 | OCI client | oras-go/v2 2.6.0 |
 | Container base | `cgr.dev/chainguard/static` (non-root user 65532) |
 | Architectures | linux/amd64, linux/arm64 |

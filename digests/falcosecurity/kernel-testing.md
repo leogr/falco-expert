@@ -1,6 +1,6 @@
 # kernel-testing Digest
 
-> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/kernel-testing/`](../../refs/falcosecurity/kernel-testing/) | **Commit:** `deca9eb` (February 4, 2026)
+> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/kernel-testing/`](../../refs/falcosecurity/kernel-testing/) | **Commit:** `ba69d92` (`git describe`: `v0.4.0-5-gba69d92`, February 17, 2026)
 
 **Repository:** [falcosecurity/kernel-testing](https://github.com/falcosecurity/kernel-testing)
 **Scope:** Infra

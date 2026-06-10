@@ -4,7 +4,7 @@
 
 The `k8s-metacollector` is a centralized Kubernetes metadata collection service that gathers metadata from Kubernetes resources and streams it to Falco instances via gRPC. It addresses the scalability limitations of the traditional approach where each Falco instance connects directly to the Kubernetes API server.
 
-**Source:** [`refs/falcosecurity/k8s-metacollector/`](../../refs/falcosecurity/k8s-metacollector/) (v0.1.1)
+**Source:** [`refs/falcosecurity/k8s-metacollector/`](../../refs/falcosecurity/k8s-metacollector/) (v0.1.2)
 
 ## Table of Contents
 
@@ -27,8 +27,8 @@ The `k8s-metacollector` is a centralized Kubernetes metadata collection service 
 | Property | Value |
 |----------|-------|
 | Repository Status | Incubating |
-| Current Version | v0.1.1 |
-| Go Version | 1.21 |
+| Current Version | v0.1.2 |
+| Go Version | 1.26 |
 | gRPC Port | 45000 (default) |
 | Metrics Port | 8080 |
 | Health Probe Port | 8081 |

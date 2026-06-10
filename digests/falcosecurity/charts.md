@@ -28,10 +28,10 @@ helm repo update
 | Chart | Version | AppVersion | Purpose |
 |-------|---------|------------|---------|
 | [falco](../../refs/falcosecurity/charts/charts/falco/) | 9.0.0 | 0.44.0 | Core Falco deployment |
-| [falcosidekick](../../refs/falcosecurity/charts/charts/falcosidekick/) | 0.12.1 | 2.31.1 | Alert forwarding to 60+ outputs |
+| [falcosidekick](../../refs/falcosecurity/charts/charts/falcosidekick/) | 0.13.1 | 2.31.1 | Alert forwarding to 60+ outputs |
 | [falco-talon](../../refs/falcosecurity/charts/charts/falco-talon/) | 0.4.0 | 0.3.0 | Automated response actions |
-| [k8s-metacollector](../../refs/falcosecurity/charts/charts/k8s-metacollector/) | 0.2.0 | 0.1.1 | Kubernetes metadata enrichment |
-| [event-generator](../../refs/falcosecurity/charts/charts/event-generator/) | 0.3.4 | 0.10.0 | Test event generation |
+| [k8s-metacollector](../../refs/falcosecurity/charts/charts/k8s-metacollector/) | 0.3.0 | 0.1.2 | Kubernetes metadata enrichment |
+| [event-generator](../../refs/falcosecurity/charts/charts/event-generator/) | 0.4.0 | 0.13.0 | Test event generation |
 
 ## Falco Chart (Main)
 

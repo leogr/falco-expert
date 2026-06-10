@@ -1,6 +1,6 @@
 # syscalls-bumper Digest
 
-> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/syscalls-bumper/`](../../refs/falcosecurity/syscalls-bumper/) | **Commit:** `449feef` (November 24, 2025)
+> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/syscalls-bumper/`](../../refs/falcosecurity/syscalls-bumper/) | **Commit:** `449feef` (`git describe`: `v0.5.1-5-g449feef`, December 17, 2025)
 
 **Repository:** [falcosecurity/syscalls-bumper](https://github.com/falcosecurity/syscalls-bumper)
 **Scope:** Infra

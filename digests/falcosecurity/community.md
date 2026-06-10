@@ -267,9 +267,9 @@ From [February 2025 Core Maintainers Meeting](../../refs/falcosecurity/community
 | Component | Status | Alternative |
 |-----------|--------|-------------|
 | falco-exporter | Deprecated | Built-in Prometheus metrics |
-| Legacy probe | Deprecating | Modern eBPF probe |
-| gVisor libscap engine | Deprecating | - |
-| gRPC output | Deprecating | HTTP output, plugins |
+| Legacy eBPF probe | Removed in 0.44 (deprecated in 0.43) | Modern eBPF probe |
+| gVisor libscap engine | Removed in 0.44 (deprecated in 0.43) | - |
+| gRPC output | Removed in 0.44 (deprecated in 0.43) | HTTP output, plugins |
 | Chisels | Removed from libs | - |
 | Python regression tests | Removed | Go testing framework |
 

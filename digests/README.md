@@ -14,41 +14,42 @@ Digests for the [falcosecurity](https://github.com/falcosecurity) GitHub organiz
 
 | Repository | Digests | Total Size | Era |
 |------------|---------|------------|-----|
-| [`.github`](falcosecurity/.github.md) | 1 file | ~10KB | 0.43 |
-| [`charts`](falcosecurity/charts.md) | 1 file | ~15KB | 0.43 |
-| [`client-go`](falcosecurity/client-go.md) | 1 file | ~8KB | 0.43 |
-| [`community`](falcosecurity/community.md) | 1 file | ~17KB | 0.43 |
-| [`contrib`](falcosecurity/contrib.md) | 1 file | ~8KB | 0.43 |
-| [`dbg-go`](falcosecurity/dbg-go.md) | 1 file | ~13KB | 0.43 |
-| [`deploy-kubernetes`](falcosecurity/deploy-kubernetes.md) | 1 file | ~15KB | 0.43 |
-| [`driverkit`](falcosecurity/driverkit.md) | 1 file | ~20KB | 0.43 |
-| [`event-generator`](falcosecurity/event-generator.md) | 1 file | ~14KB | 0.43 |
-| [`evolution`](falcosecurity/evolution.md) | 1 file | ~24KB | 0.43 |
-| [`falco/`](falcosecurity/falco/) | 7 files | ~124KB | 0.43 |
-| [`falco-actions`](falcosecurity/falco-actions.md) | 1 file | ~15KB | 0.43 |
-| [`falco-lsp`](falcosecurity/falco-lsp.md) | 1 file | ~12KB | 0.43 |
-| [`falco-operator`](falcosecurity/falco-operator.md) | 1 file | ~10KB | 0.43 |
-| [`falco-playground`](falcosecurity/falco-playground.md) | 1 file | ~10KB | 0.43 |
-| [`falco-rustlings`](falcosecurity/falco-rustlings.md) | 1 file | ~10KB | 0.43 |
-| [`falco-talon`](falcosecurity/falco-talon.md) | 1 file | ~16KB | 0.43 |
-| [`falco-website/`](falcosecurity/falco-website/) | 6 files | ~120KB | 0.43 |
-| [`falcoctl`](falcosecurity/falcoctl.md) | 1 file | ~26KB | 0.43 |
-| [`falcosidekick/`](falcosecurity/falcosidekick/) | 2 files | ~32KB | 0.43 |
-| [`falcosidekick-ui`](falcosecurity/falcosidekick-ui.md) | 1 file | ~8KB | 0.43 |
-| [`flycheck-falco-rules`](falcosecurity/flycheck-falco-rules.md) | 1 file | ~6KB | 0.43 |
-| [`k8s-metacollector`](falcosecurity/k8s-metacollector.md) | 1 file | ~25KB | 0.43 |
-| [`kernel-crawler`](falcosecurity/kernel-crawler.md) | 1 file | ~13KB | 0.43 |
-| [`kernel-testing`](falcosecurity/kernel-testing.md) | 1 file | ~12KB | 0.43 |
-| [`libs/`](falcosecurity/libs/) | 12 files | ~208KB | 0.43 |
-| [`pigeon`](falcosecurity/pigeon.md) | 1 file | ~9KB | 0.43 |
-| [`plugin-sdk-cpp`](falcosecurity/plugin-sdk-cpp.md) | 1 file | ~25KB | 0.43 |
-| [`plugin-sdk-go`](falcosecurity/plugin-sdk-go.md) | 1 file | ~18KB | 0.43 |
-| [`plugin-sdk-rs`](falcosecurity/plugin-sdk-rs.md) | 1 file | ~18KB | 0.43 |
-| [`plugins`](falcosecurity/plugins.md) + [`plugins/`](falcosecurity/plugins/) | 5 files | ~108KB | 0.43 |
-| [`rules`](falcosecurity/rules.md) | 1 file | ~8KB | 0.43 |
-| [`syscalls-bumper`](falcosecurity/syscalls-bumper.md) | 1 file | ~9KB | 0.43 |
-| [`test-infra/`](falcosecurity/test-infra/) | 6 files | ~184KB | 0.43 |
-| [`testing`](falcosecurity/testing.md) | 1 file | ~13KB | 0.43 |
+| [`.github`](falcosecurity/.github.md) | 1 file | ~10KB | 0.44 |
+| [`charts`](falcosecurity/charts.md) | 1 file | ~15KB | 0.44 |
+| [`client-go`](falcosecurity/client-go.md) | 1 file | ~8KB | 0.44 |
+| [`community`](falcosecurity/community.md) | 1 file | ~17KB | 0.44 |
+| [`contrib`](falcosecurity/contrib.md) | 1 file | ~8KB | 0.44 |
+| [`dbg-go`](falcosecurity/dbg-go.md) | 1 file | ~13KB | 0.44 |
+| [`deploy-kubernetes`](falcosecurity/deploy-kubernetes.md) | 1 file | ~15KB | 0.44 |
+| [`driverkit`](falcosecurity/driverkit.md) | 1 file | ~20KB | 0.44 |
+| [`event-generator`](falcosecurity/event-generator.md) | 1 file | ~14KB | 0.44 |
+| [`evolution`](falcosecurity/evolution.md) | 1 file | ~24KB | 0.44 |
+| [`falco/`](falcosecurity/falco/) | 7 files | ~124KB | 0.44 |
+| [`falco-actions`](falcosecurity/falco-actions.md) | 1 file | ~15KB | 0.44 |
+| [`falco-lsp`](falcosecurity/falco-lsp.md) | 1 file | ~12KB | 0.44 |
+| [`falco-operator`](falcosecurity/falco-operator.md) | 1 file | ~10KB | 0.44 |
+| [`falco-playground`](falcosecurity/falco-playground.md) | 1 file | ~10KB | 0.44 |
+| [`falco-rustlings`](falcosecurity/falco-rustlings.md) | 1 file | ~10KB | 0.44 |
+| [`falco-talon`](falcosecurity/falco-talon.md) | 1 file | ~16KB | 0.44 |
+| [`falco-website/`](falcosecurity/falco-website/) | 6 files | ~120KB | 0.44 |
+| [`falcoctl`](falcosecurity/falcoctl.md) | 1 file | ~26KB | 0.44 |
+| [`falcosidekick/`](falcosecurity/falcosidekick/) | 2 files | ~32KB | 0.44 |
+| [`falcosidekick-ui`](falcosecurity/falcosidekick-ui.md) | 1 file | ~8KB | 0.44 |
+| [`flycheck-falco-rules`](falcosecurity/flycheck-falco-rules.md) | 1 file | ~6KB | 0.44 |
+| [`k8s-metacollector`](falcosecurity/k8s-metacollector.md) | 1 file | ~25KB | 0.44 |
+| [`kernel-crawler`](falcosecurity/kernel-crawler.md) | 1 file | ~13KB | 0.44 |
+| [`kernel-testing`](falcosecurity/kernel-testing.md) | 1 file | ~12KB | 0.44 |
+| [`libs/`](falcosecurity/libs/) | 12 files | ~208KB | 0.44 |
+| [`pigeon`](falcosecurity/pigeon.md) | 1 file | ~9KB | 0.44 |
+| [`plugin-sdk-cpp`](falcosecurity/plugin-sdk-cpp.md) | 1 file | ~25KB | 0.44 |
+| [`plugin-sdk-go`](falcosecurity/plugin-sdk-go.md) | 1 file | ~18KB | 0.44 |
+| [`plugin-sdk-rs`](falcosecurity/plugin-sdk-rs.md) | 1 file | ~18KB | 0.44 |
+| [`plugins`](falcosecurity/plugins.md) + [`plugins/`](falcosecurity/plugins/) | 5 files | ~108KB | 0.44 |
+| [`prempti`](falcosecurity/prempti.md) | 1 file | ~32KB | 0.44 |
+| [`rules`](falcosecurity/rules.md) | 1 file | ~8KB | 0.44 |
+| [`syscalls-bumper`](falcosecurity/syscalls-bumper.md) | 1 file | ~9KB | 0.44 |
+| [`test-infra/`](falcosecurity/test-infra/) | 6 files | ~184KB | 0.44 |
+| [`testing`](falcosecurity/testing.md) | 1 file | ~13KB | 0.44 |
 
 ### [`proposals/`](proposals/)
 
@@ -64,7 +65,7 @@ Static analysis of the Falco binary installation.
 
 | Report | Size | Era |
 |--------|------|-----|
-| [`falco-binary-report.md`](falco-binary-report.md) | ~8KB | 0.43 |
+| [`falco-binary-report.md`](falco-binary-report.md) | ~8KB | 0.44 |
 
 **Contents:** Version info, GLIBC requirements, library dependencies, plugin analysis, configuration defaults, system requirements, security features.
 

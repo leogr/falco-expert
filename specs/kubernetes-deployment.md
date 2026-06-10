@@ -21,11 +21,11 @@ helm repo update
 
 | Chart | Version | AppVersion | Purpose |
 |-------|---------|------------|---------|
-| [`falco`](../refs/falcosecurity/charts/charts/falco/) | 8.0.0 | 0.43.0 | Core Falco deployment (DaemonSet or Deployment) |
-| [`falcosidekick`](../refs/falcosecurity/charts/charts/falcosidekick/) | 0.12.1 | 2.31.1 | Alert forwarding to 60+ outputs |
+| [`falco`](../refs/falcosecurity/charts/charts/falco/) | 9.0.0 | 0.44.0 | Core Falco deployment (DaemonSet or Deployment) |
+| [`falcosidekick`](../refs/falcosecurity/charts/charts/falcosidekick/) | 0.13.1 | 2.31.1 | Alert forwarding to 60+ outputs |
 | [`falco-talon`](../refs/falcosecurity/charts/charts/falco-talon/) | 0.4.0 | 0.3.0 | Automated response actions |
-| [`k8s-metacollector`](../refs/falcosecurity/charts/charts/k8s-metacollector/) | 0.2.0 | 0.1.1 | Kubernetes metadata enrichment via gRPC |
-| [`event-generator`](../refs/falcosecurity/charts/charts/event-generator/) | 0.3.4 | 0.10.0 | Test event generation for rule validation |
+| [`k8s-metacollector`](../refs/falcosecurity/charts/charts/k8s-metacollector/) | 0.3.0 | 0.1.2 | Kubernetes metadata enrichment via gRPC |
+| [`event-generator`](../refs/falcosecurity/charts/charts/event-generator/) | 0.4.0 | 0.13.0 | Test event generation for rule validation |
 
 Pre-rendered Kubernetes manifests (generated from these charts with default values) are also available in [falcosecurity/deploy-kubernetes](../refs/falcosecurity/deploy-kubernetes/) for direct `kubectl apply -k` deployment without Helm.
 
@@ -46,7 +46,6 @@ The Falco chart supports two controller types based on the event source:
 | K8s Audit only | `false` | `deployment` | `false` |
 | Syscalls + K8s Audit | `true` | `daemonset` | `true` |
 | CloudTrail (plugin) | `false` | `deployment` | `false` |
-| gVisor (deprecated) | `true` (kind: gvisor) | `daemonset` | `true` |
 
 When `driver.enabled=true`, a DaemonSet is required so that each node has a Falco instance capturing kernel events. When `driver.enabled=false`, a Deployment is appropriate because events arrive via network endpoints (webhooks, APIs) rather than per-node kernel instrumentation.
 
@@ -63,22 +62,22 @@ Each Falco pod consists of **2 init containers** (run sequentially before the ma
 │  Init Containers (run sequentially):                                 │
 │  ┌──────────────────────────┐  ┌──────────────────────────────────┐ │
 │  │  falco-driver-loader     │  │  falcoctl-artifact-install       │ │
-│  │  image: falco-driver-    │  │  image: falcoctl:0.12.2          │ │
-│  │         loader:0.43.0    │  │                                  │ │
+│  │  image: falco-driver-    │  │  image: falcoctl:0.13.0          │ │
+│  │         loader:0.44.0    │  │                                  │ │
 │  │                          │  │  - Downloads rules + plugins     │ │
 │  │  - Downloads/builds      │  │  - Writes to emptyDir volumes    │ │
 │  │    kernel driver          │  │  - Uses falcoctl index           │ │
 │  │  - Writes driver config  │  │                                  │ │
 │  │    to emptyDir            │  │  Default refs:                   │ │
 │  │                          │  │    falco-rules:5                 │ │
-│  │  Skipped when driver     │  │    container plugin:0.6.1        │ │
+│  │  Skipped when driver     │  │    container plugin:0.7.1        │ │
 │  │  is not needed           │  │                                  │ │
 │  └──────────────────────────┘  └──────────────────────────────────┘ │
 ├──────────────────────────────────────────────────────────────────────┤
 │  Runtime Containers (run in parallel):                               │
 │  ┌──────────────────────────┐  ┌──────────────────────────────────┐ │
 │  │  falco                   │  │  falcoctl-artifact-follow        │ │
-│  │  image: falco:0.43.0     │  │  image: falcoctl:0.12.2          │ │
+│  │  image: falco:0.44.0     │  │  image: falcoctl:0.13.0          │ │
 │  │                          │  │                                  │ │
 │  │  - Main Falco process    │  │  - Watches for rule/plugin       │ │
 │  │  - Loads driver           │  │    updates from OCI registries   │ │
@@ -100,7 +99,9 @@ Each Falco pod consists of **2 init containers** (run sequentially before the ma
 
 **Health probes** (startup, liveness, readiness) all use `/healthz` on port 8765.
 
-**Source:** [`daemonset.yaml`](../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml)
+> **Note:** The image tags shown above reflect the current-era chart defaults from [`values.yaml`](../refs/falcosecurity/charts/charts/falco/values.yaml) (falco/falco-driver-loader default to the chart `appVersion` 0.44.0; `falcoctl.image.tag` is pinned to `0.13.0`). The pre-rendered manifests in [`deploy-kubernetes`](../refs/falcosecurity/deploy-kubernetes/) still carry older tags (e.g., `falco:0.43.1`, `falcoctl:0.12.2`) because they lag the chart.
+
+**Source:** [`daemonset.yaml`](../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml), [`values.yaml`](../refs/falcosecurity/charts/charts/falco/values.yaml)
 
 ## Driver Configuration
 
@@ -113,8 +114,8 @@ The `driver.kind` setting controls how Falco captures system events from the ker
 | Auto | `auto` | Automatically selects the best available driver (prefers modern_ebpf) | **Default** |
 | Modern eBPF | `modern_ebpf` | CO-RE eBPF probe embedded in the Falco binary; no loader needed | Stable, recommended |
 | Kernel Module | `kmod` | Traditional kernel module; requires compilation or pre-built download | Stable |
-| Legacy eBPF | `ebpf` | Legacy eBPF probe; requires loader | **Deprecated in 0.43** |
-| gVisor | `gvisor` | gVisor sandbox integration (GKE) | **Deprecated in 0.43** |
+| Legacy eBPF | `ebpf` | Legacy eBPF probe; requires loader | **Removed in 0.44** (deprecated in 0.43; the chart now rejects `driver.kind=ebpf`) |
+| gVisor | `gvisor` | gVisor sandbox integration (GKE) | **Removed in 0.44** (deprecated in 0.43; the chart now rejects `driver.kind=gvisor`) |
 
 ```bash
 # Explicit Modern eBPF
@@ -133,8 +134,6 @@ helm install falco falcosecurity/falco --set driver.kind=kmod
 | No driver (`driver.enabled=false`) | `{}` (no special privileges) |
 | `kmod` | `privileged: true` |
 | `modern_ebpf` | `privileged: true` |
-| `ebpf` (deprecated) | `privileged: true` (or least-privilege with capabilities) |
-| `ebpf` + `leastPrivileged` | `capabilities: [BPF, SYS_RESOURCE, PERFMON, SYS_PTRACE]` |
 
 For modern_ebpf, a least-privilege mode is also available:
 
@@ -164,7 +163,7 @@ args:
 
 **Default artifacts installed:**
 - `falco-rules:5` -- stable Falco detection rules
-- `ghcr.io/falcosecurity/plugins/plugin/container:0.6.1` -- container metadata plugin
+- `ghcr.io/falcosecurity/plugins/plugin/container:0.7.1` -- container metadata plugin
 
 ### Sidecar: `falcoctl-artifact-follow`
 
@@ -320,7 +319,7 @@ Custom rules files are mounted into `/etc/falco/rules.d/` and loaded after the s
 
 ## RBAC Model
 
-The Falco chart creates a namespace-scoped RBAC model. In the current era (chart 8.0.0), there are no ClusterRole or ClusterRoleBinding resources -- only a namespace-scoped Role is created.
+The Falco chart creates a namespace-scoped RBAC model. In the current era (chart 9.0.0), there are no ClusterRole or ClusterRoleBinding resources -- only a namespace-scoped Role is created.
 
 ### Resources Created
 

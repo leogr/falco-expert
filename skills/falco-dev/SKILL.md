@@ -2,7 +2,7 @@
 name: falco-dev
 description: Develop, build, test, and debug Falco and its core components (libs, rules) using a Docker-based devcontainer. Manages multi-repo workspaces, CMake builds, unit/integration testing, and debugging with graduated privilege modes (safe, least-privilege, privileged).
 metadata:
-  falco-version: "0.43"
+  falco-version: "0.44"
 ---
 
 # Falco Dev
@@ -314,7 +314,7 @@ Ensure the devcontainer is running ([Session Lifecycle](#session-lifecycle)).
 
 ### Step 2: Branch and Version Awareness
 
-Check what era/version each repo targets. The knowledge base documents era 0.43 — if repos are ahead (targeting 0.44+), APIs and behaviors may differ.
+Check what era/version each repo targets. The knowledge base documents era 0.44 — if repos are ahead (targeting 0.45+), APIs and behaviors may differ.
 
 ```bash
 docker exec -u dev $CONTAINER_NAME bash -c '
@@ -329,7 +329,7 @@ docker exec -u dev $CONTAINER_NAME bash -c '
 '
 ```
 
-If the user says "fix a bug in 0.43" but `master` targets 0.44, clarify whether they want a hotfix branch or a fix on `master`.
+If the user says "fix a bug in 0.44" but `master` targets 0.45, clarify whether they want a hotfix branch or a fix on `master`.
 
 For detailed version validation logic and cross-repo consistency rules, see [`references/branch-awareness.md`](references/branch-awareness.md).
 

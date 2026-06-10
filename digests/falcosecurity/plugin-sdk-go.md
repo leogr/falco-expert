@@ -1,6 +1,6 @@
 # plugin-sdk-go Digest
 
-> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/plugin-sdk-go/`](../../refs/falcosecurity/plugin-sdk-go/) | **Version:** v0.8.3
+> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/plugin-sdk-go/`](../../refs/falcosecurity/plugin-sdk-go/) | **Commit:** `683b118` (`git describe`: `v0.8.3-5-g683b118`, October 20, 2025)
 
 Go SDK for building [Falco plugins](https://falco.org/docs/plugins/). This SDK facilitates writing plugins that extend Falco's capabilities by providing new event sources or field extraction logic.
 

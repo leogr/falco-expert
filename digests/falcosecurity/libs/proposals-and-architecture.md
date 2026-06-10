@@ -41,8 +41,8 @@ This digest documents the design proposals and architectural decisions that shap
 - Backward compatibility maintained
 
 **Current Values (0.44 era):**
-- API_VERSION: 8.0.4
-- SCHEMA_VERSION: 4.1.0
+- API_VERSION: 10.1.0
+- SCHEMA_VERSION: 4.5.1
 
 ### Versioning Schema Amendment (20220203)
 

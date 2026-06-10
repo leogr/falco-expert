@@ -1,6 +1,6 @@
 # falco-talon Digest
 
-> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/falco-talon/`](../../refs/falcosecurity/falco-talon/) | **Commit:** `acb9e44` (September 23, 2025)
+> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/falco-talon/`](../../refs/falcosecurity/falco-talon/) | **Commit:** `6115a15` (April 28, 2026; post-v0.3.0, `git describe` = `v0.3.0-93-g6115a15`)
 
 **Repository:** [falcosecurity/falco-talon](https://github.com/falcosecurity/falco-talon)
 **Scope:** Ecosystem

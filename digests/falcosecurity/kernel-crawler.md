@@ -1,6 +1,6 @@
 # kernel-crawler Digest
 
-> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/kernel-crawler/`](../../refs/falcosecurity/kernel-crawler/) | **Commit:** `afc8224` (January 8, 2026)
+> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/kernel-crawler/`](../../refs/falcosecurity/kernel-crawler/) | **Commit:** `464fcb6` (February 16, 2026; post-0.18.0, `git describe` = `0.18.0-10-g464fcb6`)
 
 **Repository:** [falcosecurity/kernel-crawler](https://github.com/falcosecurity/kernel-crawler)
 **Scope:** Infra

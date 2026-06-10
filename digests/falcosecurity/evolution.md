@@ -2,7 +2,7 @@
 
 This digest provides a comprehensive overview of The Falco Project governance, organization structure, and repository ecosystem. It is derived from the [falcosecurity/evolution](https://github.com/falcosecurity/evolution) repository.
 
-**Applicable to**: Falco 0.43 era (current)
+**Applicable to**: Falco 0.44 era (current)
 
 ---
 
