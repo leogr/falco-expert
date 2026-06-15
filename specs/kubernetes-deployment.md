@@ -21,7 +21,8 @@ helm repo update
 
 | Chart | Version | AppVersion | Purpose |
 |-------|---------|------------|---------|
-| [`falco`](../refs/falcosecurity/charts/charts/falco/) | 9.0.0 | 0.44.0 | Core Falco deployment (DaemonSet or Deployment) |
+| [`falco`](../refs/falcosecurity/charts/charts/falco/) | 9.1.0 | 0.44.1 | Core Falco deployment (DaemonSet or Deployment) |
+| [`falco-operator`](../refs/falcosecurity/charts/charts/falco-operator/) | 0.2.0 | 0.3.0 | Kubernetes Operator for managing Falco instances |
 | [`falcosidekick`](../refs/falcosecurity/charts/charts/falcosidekick/) | 0.13.1 | 2.31.1 | Alert forwarding to 60+ outputs |
 | [`falco-talon`](../refs/falcosecurity/charts/charts/falco-talon/) | 0.4.0 | 0.3.0 | Automated response actions |
 | [`k8s-metacollector`](../refs/falcosecurity/charts/charts/k8s-metacollector/) | 0.3.0 | 0.1.2 | Kubernetes metadata enrichment via gRPC |
@@ -63,7 +64,7 @@ Each Falco pod consists of **2 init containers** (run sequentially before the ma
 │  ┌──────────────────────────┐  ┌──────────────────────────────────┐ │
 │  │  falco-driver-loader     │  │  falcoctl-artifact-install       │ │
 │  │  image: falco-driver-    │  │  image: falcoctl:0.13.0          │ │
-│  │         loader:0.44.0    │  │                                  │ │
+│  │         loader:0.44.1    │  │                                  │ │
 │  │                          │  │  - Downloads rules + plugins     │ │
 │  │  - Downloads/builds      │  │  - Writes to emptyDir volumes    │ │
 │  │    kernel driver          │  │  - Uses falcoctl index           │ │
@@ -77,7 +78,7 @@ Each Falco pod consists of **2 init containers** (run sequentially before the ma
 │  Runtime Containers (run in parallel):                               │
 │  ┌──────────────────────────┐  ┌──────────────────────────────────┐ │
 │  │  falco                   │  │  falcoctl-artifact-follow        │ │
-│  │  image: falco:0.44.0     │  │  image: falcoctl:0.13.0          │ │
+│  │  image: falco:0.44.1     │  │  image: falcoctl:0.13.0          │ │
 │  │                          │  │                                  │ │
 │  │  - Main Falco process    │  │  - Watches for rule/plugin       │ │
 │  │  - Loads driver           │  │    updates from OCI registries   │ │
@@ -99,7 +100,7 @@ Each Falco pod consists of **2 init containers** (run sequentially before the ma
 
 **Health probes** (startup, liveness, readiness) all use `/healthz` on port 8765.
 
-> **Note:** The image tags shown above reflect the current-era chart defaults from [`values.yaml`](../refs/falcosecurity/charts/charts/falco/values.yaml) (falco/falco-driver-loader default to the chart `appVersion` 0.44.0; `falcoctl.image.tag` is pinned to `0.13.0`). The pre-rendered manifests in [`deploy-kubernetes`](../refs/falcosecurity/deploy-kubernetes/) still carry older tags (e.g., `falco:0.43.1`, `falcoctl:0.12.2`) because they lag the chart.
+> **Note:** The image tags shown above reflect the current-era chart defaults from [`values.yaml`](../refs/falcosecurity/charts/charts/falco/values.yaml) (falco/falco-driver-loader default to the chart `appVersion` 0.44.1 in chart 9.1.0; `falcoctl.image.tag` is pinned to `0.13.0`). The pre-rendered manifests in [`deploy-kubernetes`](../refs/falcosecurity/deploy-kubernetes/) still carry older tags (e.g., `falco:0.43.1`, `falcoctl:0.12.2`) because they lag the chart.
 
 **Source:** [`daemonset.yaml`](../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml), [`values.yaml`](../refs/falcosecurity/charts/charts/falco/values.yaml)
 
@@ -145,6 +146,8 @@ driver:
 ```
 
 **Source:** [`digests/falcosecurity/charts.md`](../digests/falcosecurity/charts.md) (Security Contexts), [`values.yaml`](../refs/falcosecurity/charts/charts/falco/values.yaml)
+
+> **BPF iterators (`driver.modernEbpf.disableIterators`, since chart 9.1.0 / Falco 0.44.1):** the `modern_ebpf` driver uses BPF iterators to synchronously populate and heal Falco's process table from the kernel; setting `driver.modernEbpf.disableIterators: true` forces a procfs fallback. The chart wires this to the Falco config key `engine.modern_ebpf.disable_iterators`. See [`configuration.md`](configuration.md) for the option semantics.
 
 ## Artifact Management
 
@@ -319,7 +322,7 @@ Custom rules files are mounted into `/etc/falco/rules.d/` and loaded after the s
 
 ## RBAC Model
 
-The Falco chart creates a namespace-scoped RBAC model. In the current era (chart 9.0.0), there are no ClusterRole or ClusterRoleBinding resources -- only a namespace-scoped Role is created.
+The Falco chart creates a namespace-scoped RBAC model. In the current era (chart 9.1.0), there are no ClusterRole or ClusterRoleBinding resources -- only a namespace-scoped Role is created.
 
 ### Resources Created
 

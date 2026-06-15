@@ -95,7 +95,7 @@ See [Falco 0.44.0 release notes](https://github.com/falcosecurity/falco/releases
 
 ### Kubernetes Operator
 
-The Kubernetes operator received a Helm chart, artifact startup gating, and minor fixes. See [`falco-operator.md`](../falco-operator.md) (v0.2.2).
+The Kubernetes operator received a Helm chart, artifact startup gating, and minor fixes. See [`falco-operator.md`](../falco-operator.md) (now pinned at v0.3.0 for the 0.44 era).
 
 ---
 
@@ -378,7 +378,7 @@ The "Kubernetes Response Engine" blog series demonstrates integration patterns:
 ### Ecosystem Tools
 
 #### Falcosidekick
-- **Latest blog-announced release**: [2.31.0](../../../refs/falcosecurity/falco-website/content/en/blog/falcosidekick-2-31-0/index.md) (February 2025); the 0.44-era reference release is 2.34.0 (no dedicated blog post)
+- **Latest blog-announced release**: [2.31.0](../../../refs/falcosecurity/falco-website/content/en/blog/falcosidekick-2-31-0/index.md) (February 2025); the 0.44-era reference release is 2.34.1 (no dedicated blog post)
 - 60+ output integrations
 - AWS Security Lake, OTLP Metrics support
 - Recommended replacement for the removed gRPC output (removed in 0.44)

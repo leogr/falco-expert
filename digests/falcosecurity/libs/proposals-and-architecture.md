@@ -1,5 +1,5 @@
 # Proposals and Architectural Decisions
-> **Era:** 0.44 | **Version:** libs 0.25.2 | **Source:** [`refs/falcosecurity/libs/`](../../../refs/falcosecurity/libs/)
+> **Era:** 0.44 | **Version:** libs 0.25.4 | **Source:** [`refs/falcosecurity/libs/`](../../../refs/falcosecurity/libs/)
 
 ## Overview
 
@@ -316,7 +316,7 @@ Instrumentation Overhead Analysis (modern eBPF, Redis workload):
 Libs and drivers can release independently:
 
 ```
-Libs:     0.22.0 ──── 0.22.1 ──── 0.23.0 ──── 0.23.1 ──── 0.23.2 ──── 0.24.0 ──── 0.25.0 ──── 0.25.2
+Libs:     0.22.0 ──── 0.22.1 ──── 0.23.0 ──── 0.23.1 ──── 0.23.2 ──── 0.24.0 ──── 0.25.0 ──── 0.25.2 ──── 0.25.3 ──── 0.25.4
             │                       │                                  │                       │
 Drivers:  9.0.0+driver ────────── 9.1.0+driver ────────────────── 10.0.0+driver ─ 10.1.0+driver ─ 10.2.0+driver
 ```

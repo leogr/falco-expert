@@ -249,7 +249,7 @@ The `engine_params` field points to an engine-specific parameters struct. Each e
 
 | Engine | Params Struct | Key Fields |
 |--------|--------------|------------|
-| `modern_bpf` | `scap_modern_bpf_engine_params` | `buffer_bytes_dim`, `cpus_for_each_buffer`, `allocate_online_only` |
+| `modern_bpf` | `scap_modern_bpf_engine_params` | `buffer_bytes_dim`, `cpus_for_each_buffer`, `allocate_online_only`, `disable_iterators` |
 | `kmod` | `scap_kmod_engine_params` | `buffer_bytes_dim` |
 | `savefile` | `scap_savefile_engine_params` | `fname`, `fd`, `start_offset`, `fbuffer_size`, `platform` |
 | `source_plugin` | `scap_source_plugin_engine_params` | `input_plugin`, `input_plugin_params` |
@@ -259,7 +259,7 @@ The `engine_params` field points to an engine-specific parameters struct. Each e
 #### Modern eBPF Engine Parameters
 
 ```c
-// From engine/modern_bpf/modern_bpf_public.h:26-40
+// From engine/modern_bpf/modern_bpf_public.h:26-42
 struct scap_modern_bpf_engine_params {
     uint16_t cpus_for_each_buffer;  // Ring buffer allocation ratio
                                      // 0 = single shared buffer
@@ -267,6 +267,9 @@ struct scap_modern_bpf_engine_params {
     bool allocate_online_only;       // Only allocate for online CPUs
     unsigned long buffer_bytes_dim;  // Ring buffer size in bytes
                                      // Default: 8 * 1024 * 1024 (8MB)
+    bool disable_iterators;          // Since libs 0.25.4 / Falco 0.44.1:
+                                     // disable BPF iterators for synchronous
+                                     // state fetching, falling back to procfs
 };
 ```
 

@@ -42,9 +42,9 @@ Key capabilities:
 └─────────────┘     └─────────────┘     └─────────────┘
 ```
 
-Multiple Falco instances send JSON-formatted alerts as HTTP POST requests to Falcosidekick's main handler endpoint (`/`). Falcosidekick deserializes each event into its internal `FalcoPayload` struct, enriches it with custom fields/tags, evaluates per-output priority filters, and dispatches the event to every enabled output in parallel.
+Multiple Falco instances send JSON-formatted alerts as HTTP POST requests to Falcosidekick's main handler endpoint (`/`). Falcosidekick deserializes each event into its internal `FalcoPayload` struct, enriches it with custom fields/tags, evaluates per-output priority filters, and dispatches the event to every enabled output in parallel. Each dispatch runs in its own panic-recovering goroutine (`safeGo`), isolating the daemon from panics triggered by a malformed event or a misbehaving output: the panic is recovered and logged while the other outputs proceed.
 
-**Source:** [`digests/falcosecurity/falcosidekick/README.md`](../digests/falcosecurity/falcosidekick/README.md)
+**Source:** [`digests/falcosecurity/falcosidekick/README.md`](../digests/falcosecurity/falcosidekick/README.md), [`handlers.go:301`](../refs/falcosecurity/falcosidekick/handlers.go)
 
 ## 3. Falco Integration
 

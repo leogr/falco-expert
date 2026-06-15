@@ -23,15 +23,20 @@ helm repo add falcosecurity https://falcosecurity.github.io/charts
 helm repo update
 ```
 
+> **Chart source & release (0.44 era):** The Falco chart is developed in the [falco repository](../../refs/falcosecurity/falco/) under [`chart/falco/`](../../refs/falcosecurity/falco/chart/falco/) and synced into this `charts` repo by the `poiana` bot for release (e.g., tag `falco-9.1.0`, commit `53586de`, message `sync(charts/falco): v9.1.0`); this `charts` repo remains the published Helm/OCI distribution point. **This `charts` submodule, pinned at `falco-9.1.0`, is the canonical `9.1.0` / appVersion `0.44.1` chart.** Note: the `9.1.0` bump lives on the falco repo's `release/0.44.x` branch tip, which post-dates the pinned `0.44.1` tag — so the falco submodule's own `chart/falco/` (at the `0.44.1` tag) still reads `9.0.0` / appVersion `0.44.0`. The source chart release workflow was defined in the falco repo during the 0.44.x cycle (commit `e9cb2349`).
+
 ## Charts Summary
 
 | Chart | Version | AppVersion | Purpose |
 |-------|---------|------------|---------|
-| [falco](../../refs/falcosecurity/charts/charts/falco/) | 9.0.0 | 0.44.0 | Core Falco deployment |
+| [falco](../../refs/falcosecurity/charts/charts/falco/) | 9.1.0 | 0.44.1 | Core Falco deployment |
+| [falco-operator](../../refs/falcosecurity/charts/charts/falco-operator/) | 0.2.0 | 0.3.0 | Kubernetes Operator for managing Falco instances |
 | [falcosidekick](../../refs/falcosecurity/charts/charts/falcosidekick/) | 0.13.1 | 2.31.1 | Alert forwarding to 60+ outputs |
 | [falco-talon](../../refs/falcosecurity/charts/charts/falco-talon/) | 0.4.0 | 0.3.0 | Automated response actions |
 | [k8s-metacollector](../../refs/falcosecurity/charts/charts/k8s-metacollector/) | 0.3.0 | 0.1.2 | Kubernetes metadata enrichment |
 | [event-generator](../../refs/falcosecurity/charts/charts/event-generator/) | 0.4.0 | 0.13.0 | Test event generation |
+
+> **Chart `appVersion` vs. bundled component versions:** Each chart's `appVersion` is the application version that chart release ships by default; it is not always the latest upstream release of that component (e.g., the bundled `falcosidekick` chart appVersion is `2.31.1`, while the standalone falcosidekick app is at `2.34.1`).
 
 ## Falco Chart (Main)
 
@@ -359,6 +364,7 @@ Driver-dependent security contexts are auto-configured:
 | Setting | Default | Description |
 |---------|---------|-------------|
 | `driver.kind` | `auto` | Driver selection |
+| `driver.modernEbpf.disableIterators` | `false` | Disable BPF iterators; fall back to procfs (modern_ebpf only, since chart 9.1.0 / Falco 0.44.1) |
 | `controller.kind` | `daemonset` | DaemonSet or Deployment |
 | `collectors.enabled` | `true` | Container metadata |
 | `collectors.kubernetes.enabled` | `false` | Full K8s metadata |
@@ -367,6 +373,14 @@ Driver-dependent security contexts are auto-configured:
 | `metrics.enabled` | `false` | Prometheus metrics |
 | `falcosidekick.enabled` | `false` | Deploy falcosidekick |
 | `responseActions.enabled` | `false` | Deploy falco-talon |
+
+## Falco-Operator Chart
+
+Deploys the [Falco Operator](falco-operator.md) (Kubernetes Operator, Incubating) that manages Falco instances and their artifacts via Custom Resources. Chart version `0.2.0`, appVersion `0.3.0` at this pin.
+
+```bash
+helm install falco-operator falcosecurity/falco-operator --namespace falco
+```
 
 ## Falcosidekick Chart
 
@@ -488,8 +502,10 @@ helm install falco-gvisor falcosecurity/falco \
 
 - **Removal:** Legacy eBPF probe (`driver.kind=ebpf`) removed in 0.44 (deprecated in 0.43)
 - **Removal:** gVisor engine removed in 0.44 (deprecated in 0.43)
+- **Removal:** gRPC output and server support dropped in chart 9.0.0 (Falco 0.44)
 - **Default driver:** `auto` mode prefers Modern eBPF
 - **Container plugin:** Unified container metadata collection (since 0.40)
+- **Chart 9.1.0 (Falco 0.44.1):** Bumped `appVersion` to `0.44.1`; added `driver.modernEbpf.disableIterators` (default `false`) to opt out of BPF iterators and fall back to procfs, and exposed the missing `metrics.kernelIterEventCountersEnabled` (default `true`) for kernel-side iterator event/drop counters. See the Falco [`configuration`](falco/configuration.md) digest for the underlying `engine.modern_ebpf.disable_iterators` option.
 
 ## Sources
 
@@ -499,6 +515,8 @@ helm install falco-gvisor falcosecurity/falco \
 | Falco chart values | [`charts/falco/values.yaml`](../../refs/falcosecurity/charts/charts/falco/values.yaml) |
 | K8saudit values | [`charts/falco/values-k8saudit.yaml`](../../refs/falcosecurity/charts/charts/falco/values-k8saudit.yaml) |
 | Syscall + K8saudit values | [`charts/falco/values-syscall-k8saudit.yaml`](../../refs/falcosecurity/charts/charts/falco/values-syscall-k8saudit.yaml) |
+| Falco-operator chart | [`charts/falco-operator/`](../../refs/falcosecurity/charts/charts/falco-operator/) |
+| Falco chart CHANGELOG | [`charts/falco/CHANGELOG.md`](../../refs/falcosecurity/charts/charts/falco/CHANGELOG.md) |
 | Falcosidekick chart | [`charts/falcosidekick/`](../../refs/falcosecurity/charts/charts/falcosidekick/) |
 | Falco-talon chart | [`charts/falco-talon/`](../../refs/falcosecurity/charts/charts/falco-talon/) |
 | K8s-metacollector chart | [`charts/k8s-metacollector/`](../../refs/falcosecurity/charts/charts/k8s-metacollector/) |

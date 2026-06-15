@@ -1,5 +1,5 @@
 # Kernel Instrumentation
-> **Era:** 0.44 | **Version:** libs 0.25.2 | **Source:** [`refs/falcosecurity/libs/`](../../../refs/falcosecurity/libs/)
+> **Era:** 0.44 | **Version:** libs 0.25.4 | **Source:** [`refs/falcosecurity/libs/`](../../../refs/falcosecurity/libs/)
 
 ## Overview
 
@@ -173,6 +173,7 @@ Syscall Exit  ──→  │  sys_exit dispatcher       │
 | `tp_btf` | Kernel raw tracepoints | Main syscall/event capture with BTF access |
 | `kprobe` | Function entry | 32-bit compat syscall TOCTOU mitigation |
 | Tail-called | `BPF_MAP_TYPE_PROG_ARRAY` | Per-syscall event handlers |
+| `iter/task`, `iter/task_file` | BPF iterators | Synchronous kernel-state fetch to bootstrap/heal the process table (procfs fallback; opt-out via `engine.modern_ebpf.disable_iterators` since 0.44.1). See [modern-bpf.md](modern-bpf.md#bpf-iterators-state-synchronization) |
 
 ### Key BPF Maps
 

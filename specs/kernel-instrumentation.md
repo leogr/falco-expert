@@ -389,11 +389,16 @@ inspector.open_modern_bpf(
     8 * 1024 * 1024,    // driver_buffer_bytes_dim (8MB per buffer)
     1,                   // cpus_for_each_buffer (1 = one buffer per CPU)
     true,                // online_only (only allocate for online CPUs)
-    interesting_syscalls // set of syscalls to capture
+    interesting_syscalls,// set of syscalls to capture
+    false                // disable_iterators (since 0.44.1; true forces procfs fallback)
 );
 ```
 
 **Source:** [`digests/falcosecurity/libs/modern-bpf.md`](../digests/falcosecurity/libs/modern-bpf.md)
+
+### BPF Iterators for State Synchronization
+
+The modern eBPF driver uses BPF iterator programs (`iter/task`, `iter/task_file`) to **synchronously** fetch process and file-descriptor state from the kernel — populating the initial process table at startup and healing state after event drops, faster and more reliably than walking procfs. Falco 0.44.1 (libs 0.25.4) adds a `disable_iterators` parameter (exposed as the `engine.modern_ebpf.disable_iterators` config key) that globally disables BPF iterators and forces procfs fallback. libs also globally disables iterators when Falco runs outside the host (root) PID namespace because the iterator programs are PID-namespace-scoped. Missing `bpf_iter_link_info.task` support is narrower: it makes task-filtered fetch operations return `SCAP_NOT_SUPPORTED` and fall back to procfs, while full-table iterator dumps can still attach without link-info options when the union itself is unavailable. The earlier unguarded use of `bpf_iter_link_info.task.{pid,tid}` caused `E2BIG` on kernels without task-filtering support. See [`digests/falcosecurity/libs/modern-bpf.md`](../digests/falcosecurity/libs/modern-bpf.md).
 
 ## Kernel Module (kmod)
 

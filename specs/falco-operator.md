@@ -95,7 +95,9 @@ Runs as a native sidecar (Kubernetes 1.29+) in each Falco pod. Manages per-node 
 
 All controllers support a priority system (0-99, default 50) for deterministic ordering and an optional `selector` (label selector) for node targeting.
 
-**Source:** [`controllers/artifact/`](../refs/falcosecurity/falco-operator/controllers/artifact/), [`internal/pkg/mounts/consts.go`](../refs/falcosecurity/falco-operator/internal/pkg/mounts/consts.go)
+**Source-change detection (since v0.3.0):** OCI-backed artifacts carry a `SourceSignature` — a SHA-256 over the OCI reference, registry options, and the referenced auth-Secret credentials — and are re-pulled when it changes (including auth-Secret rotation). The Rulesfile and Plugin controllers watch referenced auth Secrets via a Secret→artifact index and re-reconcile on change; the generated Falco instance receives `secrets` (get/list/watch) via a namespaced Role — its ClusterRole grants only `nodes`. This is a source-identity fingerprint, not cryptographic signature verification.
+
+**Source:** [`controllers/artifact/`](../refs/falcosecurity/falco-operator/controllers/artifact/), [`internal/pkg/artifact/signature.go`](../refs/falcosecurity/falco-operator/internal/pkg/artifact/signature.go), [`internal/pkg/artifact/types.go`](../refs/falcosecurity/falco-operator/internal/pkg/artifact/types.go), [`internal/pkg/mounts/consts.go`](../refs/falcosecurity/falco-operator/internal/pkg/mounts/consts.go)
 
 ## 3. Custom Resource Definitions
 
@@ -231,7 +233,7 @@ Common ConfigMap/Secret keys: `rules.yaml`, `config.yaml`, `username`, `password
 | Resources | Requests: 100m CPU, 512Mi; Limits: 1000m CPU, 1024Mi |
 | Probes | Liveness (60s delay), Readiness (30s delay) on `/healthz:8765` |
 | Tolerations | master + control-plane NoSchedule |
-| Default image | `docker.io/falcosecurity/falco:0.43.0` (pinned operator v0.2.2; the announced operator 0.3.0 bumps this default to `0.44.0`) |
+| Default image | `docker.io/falcosecurity/falco:0.44.0` |
 
 **Source:** [`internal/pkg/image/const.go:28`](../refs/falcosecurity/falco-operator/internal/pkg/image/const.go) (`FalcoTag`), [`internal/pkg/resources/falco.go`](../refs/falcosecurity/falco-operator/internal/pkg/resources/falco.go) (`FalcoDefaults.ImageTag = image.FalcoTag`)
 
@@ -267,23 +269,32 @@ Common ConfigMap/Secret keys: `rules.yaml`, `config.yaml`, `username`, `password
 
 ## 6. Installation
 
-Single-manifest installation:
+As of v0.3.0, Helm is the recommended (first-class) install method:
+
+```bash
+helm repo add falcosecurity https://falcosecurity.github.io/charts
+helm repo update
+helm install falco-operator falcosecurity/falco-operator \
+  --namespace falco-operator --create-namespace
+```
+
+Alternatively, install from the single YAML manifest:
 
 ```bash
 kubectl apply -f https://github.com/falcosecurity/falco-operator/releases/latest/download/install.yaml
 ```
 
-Creates: 5 CRDs, `falco-operator` namespace, ServiceAccount, ClusterRole/Binding, and operator Deployment.
+Either method creates: 5 CRDs, `falco-operator` namespace, ServiceAccount, ClusterRole/Binding, and operator Deployment. A manifest-to-Helm migration guide is provided for existing installations.
 
-**Source:** [`README.md:97-133`](../refs/falcosecurity/falco-operator/README.md)
+**Source:** [`README.md`](../refs/falcosecurity/falco-operator/README.md), [`docs/installation.md`](../refs/falcosecurity/falco-operator/docs/installation.md), [`docs/migrations/manifest-to-helm.md`](../refs/falcosecurity/falco-operator/docs/migrations/manifest-to-helm.md)
 
 ## 7. Implementation Details
 
 | Aspect | Detail |
 |--------|--------|
 | Language | Go 1.26.0 |
-| Framework | kubebuilder v4, controller-runtime 0.24.0 |
-| K8s API | k8s.io/api v0.36.0 |
+| Framework | kubebuilder v4, controller-runtime 0.24.1 |
+| K8s API | k8s.io/api v0.36.1 |
 | OCI client | oras-go/v2 2.6.0 |
 | Container base | `cgr.dev/chainguard/static` (non-root user 65532) |
 | Architectures | linux/amd64, linux/arm64 |

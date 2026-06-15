@@ -367,6 +367,8 @@ otlp:
 
 **Docs:** [`docs/outputs/otlp_traces.md`](../../../refs/falcosecurity/falcosidekick/docs/outputs/otlp_traces.md)
 
+> **Robust field handling:** The OTLP Traces and Spyderbat outputs use checked type assertions when reading `output_fields`, so events whose fields are missing or of an unexpected type are handled gracefully (zero value or a returned error) instead of panicking. See [`outputs/otlp_traces.go:110-114`](../../../refs/falcosecurity/falcosidekick/outputs/otlp_traces.go) and [`outputs/spyderbat.go:152`](../../../refs/falcosecurity/falcosidekick/outputs/spyderbat.go).
+
 ## Response Engine
 
 | Output | Enable Config | Description |

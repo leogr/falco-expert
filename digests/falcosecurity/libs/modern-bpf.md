@@ -1,5 +1,5 @@
 # Modern eBPF Driver
-> **Era:** 0.44 | **Version:** libs 0.25.2 | **Source:** [`refs/falcosecurity/libs/`](../../../refs/falcosecurity/libs/)
+> **Era:** 0.44 | **Version:** libs 0.25.4 | **Source:** [`refs/falcosecurity/libs/`](../../../refs/falcosecurity/libs/)
 
 ## Overview
 
@@ -18,6 +18,7 @@ The modern eBPF driver is the **DEFAULT** driver since Falco 0.35, and the sole 
 | **Tail Calls** | Modular syscall handling via BPF_MAP_TYPE_PROG_ARRAY |
 | **Per-CPU Auxiliary Maps** | Temporary event staging before ring buffer push |
 | **No Kernel Headers** | BTF provides type information at runtime |
+| **BPF Iterators** | `iter/task`/`iter/task_file` programs synchronously fetch kernel state to bootstrap and heal the process table (with procfs fallback) |
 
 ## Architecture
 
@@ -294,6 +295,21 @@ The modern eBPF driver supports ~170 syscall handlers in `programs/tail_called/s
 - `chroot`
 - `mount`, `umount`, `umount2`
 
+## BPF Iterators (State Synchronization)
+
+Beyond per-syscall tracepoint programs, the modern eBPF driver ships **BPF iterator** programs (`iter/task` and `iter/task_file`) under [`driver/modern_bpf/programs/attached/iterators/`](../../../refs/falcosecurity/libs/driver/modern_bpf/programs/attached/iterators), driven from userspace by `libpman` ([`userspace/libpman/src/iterators.c`](../../../refs/falcosecurity/libs/userspace/libpman/src/iterators.c)).
+
+**Purpose:** iterators *synchronously* fetch process and file-descriptor state from the kernel to **populate the initial process table at startup** and to **heal the state after event drops** — faster and more reliable than walking procfs.
+
+**Opt-out (since Falco 0.44.1 / libs 0.25.4):** iterator use can be disabled, in which case scap falls back to procfs lookups. The flag is threaded from Falco's `engine.modern_ebpf.disable_iterators` config down through `sinsp::open_modern_bpf(..., disable_iterators)` → `pman_init_state(..., disable_iterators)` → the `scap_modern_bpf_engine_params.disable_iterators` engine param.
+
+**Disable and fallback behavior (libs 0.25.4):** iterator handling has two distinct fallback paths:
+
+1. **Global iterator disablement** — setting `engine.modern_ebpf.disable_iterators: true`, or running outside the host (root) PID namespace, disables BPF iterators in libpman. The PID-namespace guard exists because `iter/task` and `iter/task_file` programs are scoped by PID namespace, so inside a container they would not have full host-process visibility. Source: [`configuration.c:108-130`](../../../refs/falcosecurity/libs/userspace/libpman/src/configuration.c), [`support_probing.c:140-147`](../../../refs/falcosecurity/libs/userspace/libpman/src/support_probing.c).
+2. **Per-operation procfs fallback** — missing `bpf_iter_link_info.task` support is not a global iterator disable. Full-table iterator dumps can still attach without link-info options when the `bpf_iter_link_info` union itself is unavailable, but task-filtered fetches (`pman_iter_fetch_task()`, `pman_iter_fetch_proc_file()`, `pman_iter_fetch_proc_files()`) return `SCAP_NOT_SUPPORTED` when in-kernel task filtering is unavailable; libscap then falls back to procfs for those operations. Source: [`iterators.c:775-819, 872-953`](../../../refs/falcosecurity/libs/userspace/libpman/src/iterators.c), [`scap_procs.c:1620-1653, 1721-1742`](../../../refs/falcosecurity/libs/userspace/libscap/linux/scap_procs.c).
+
+**The 0.44.1 fix:** earlier code filled `bpf_iter_link_info.task.{pid,tid}` unconditionally; on kernels without task-filtering support the kernel rejected the iterator attachment with **`E2BIG`** (unsupported options provided). libs 0.25.4 first probes support (`bpf_iter_link_info_supp_info.is_available` / `.is_task_filtering_supported`), passes no attachment options when the union is unavailable, and uses procfs fallback for operations that need unavailable task filtering.
+
 ## Configuration
 
 ### Ring Buffer Configuration
@@ -321,7 +337,8 @@ inspector.open_modern_bpf(
     8 * 1024 * 1024,    // driver_buffer_bytes_dim (8MB per buffer)
     1,                   // cpus_for_each_buffer (1 = one buffer per CPU)
     true,                // online_only (only allocate for online CPUs)
-    interesting_syscalls // set of syscalls to capture
+    interesting_syscalls,// set of syscalls to capture
+    false                // disable_iterators (since 0.44.1; true forces procfs fallback)
 );
 ```
 
@@ -423,6 +440,8 @@ inspector.open_modern_bpf(buffer_size, 1, true, interesting);
 | Event building | [`driver/modern_bpf/helpers/interfaces/variable_size_event.h`](../../../refs/falcosecurity/libs/driver/modern_bpf/helpers/interfaces/variable_size_event.h) |
 | Syscall argument extraction | [`driver/modern_bpf/helpers/extract/extract_from_kernel.h`](../../../refs/falcosecurity/libs/driver/modern_bpf/helpers/extract/extract_from_kernel.h) |
 | Probe manager (libpman) | [`userspace/libpman/`](../../../refs/falcosecurity/libs/userspace/libpman/) |
+| BPF iterator programs | [`driver/modern_bpf/programs/attached/iterators/`](../../../refs/falcosecurity/libs/driver/modern_bpf/programs/attached/iterators) |
+| BPF iterators (libpman) | [`userspace/libpman/src/iterators.c`](../../../refs/falcosecurity/libs/userspace/libpman/src/iterators.c) |
 
 ## Related Digests
 

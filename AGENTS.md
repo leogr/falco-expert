@@ -93,10 +93,10 @@ How to verify the era/version for each repository in [`refs/`](refs/):
 
 | Repository | Verification method |
 |------------|---------------------|
-| `falco` | Git tag (e.g., `0.44.0`). Also: [`cmake/modules/falco-version.cmake`](refs/falcosecurity/falco/cmake/modules/falco-version.cmake) |
-| `libs` | Git tag (e.g., `0.25.2`). Also: [`cmake/modules/versions.cmake`](refs/falcosecurity/libs/cmake/modules/versions.cmake) |
+| `falco` | Git tag (e.g., `0.44.1`). Also: [`cmake/modules/falco-version.cmake`](refs/falcosecurity/falco/cmake/modules/falco-version.cmake) |
+| `libs` | Git tag (e.g., `0.25.4`). Also: [`cmake/modules/versions.cmake`](refs/falcosecurity/libs/cmake/modules/versions.cmake) |
 | `rules` | Git tag (e.g., `falco-incubating-rules-6.0.1`). Also: [`registry.yaml`](refs/falcosecurity/rules/registry.yaml) |
-| `charts` | Git tag (e.g., `falco-9.0.0`). Also: [`charts/falco/Chart.yaml`](refs/falcosecurity/charts/charts/falco/Chart.yaml) → `version` and `appVersion` |
+| `charts` | Git tag (e.g., `falco-9.1.0`). Also: [`charts/falco/Chart.yaml`](refs/falcosecurity/charts/charts/falco/Chart.yaml) → `version` and `appVersion` |
 | `falcoctl` | Git tag (e.g., `v0.13.0`) |
 | `plugins` | Git tag per plugin (e.g., `plugins/container/v0.7.1`). Also: individual plugin `CMakeLists.txt` or `go.mod` |
 | `falco-website` | Check [`config/_default/versions/params.yaml`](refs/falcosecurity/falco-website/config/_default/versions/params.yaml) → `version` field |

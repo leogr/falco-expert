@@ -1,6 +1,6 @@
 # falcosidekick Digest
 
-> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/falcosidekick/`](../../../refs/falcosecurity/falcosidekick/) | **Commit:** `1f8b740` (February 2, 2026)
+> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/falcosidekick/`](../../../refs/falcosecurity/falcosidekick/) | **Commit:** `03364bc` (2.34.1, June 3, 2026)
 
 **Repository:** [falcosecurity/falcosidekick](https://github.com/falcosecurity/falcosidekick)
 **Scope:** Ecosystem
@@ -48,7 +48,9 @@ A daemon that receives Falco events via HTTP and forwards them to multiple outpu
 └─────────────┘     └─────────────┘     └─────────────┘
 ```
 
-**Source:** [`README.md`](../../../refs/falcosecurity/falcosidekick/README.md)
+Each output is dispatched in its own panic-recovering goroutine (`safeGo`), so a malformed event or a misbehaving output cannot crash the daemon: the panic is recovered and logged while the remaining outputs continue.
+
+**Source:** [`README.md`](../../../refs/falcosecurity/falcosidekick/README.md), [`handlers.go:301`](../../../refs/falcosecurity/falcosidekick/handlers.go)
 
 ## Falco Integration
 

@@ -1,5 +1,5 @@
 # libs Architecture
-> **Era:** 0.44 | **Version:** libs 0.25.2 | **Source:** [`refs/falcosecurity/libs/`](../../../refs/falcosecurity/libs/)
+> **Era:** 0.44 | **Version:** libs 0.25.4 | **Source:** [`refs/falcosecurity/libs/`](../../../refs/falcosecurity/libs/)
 
 ## Component Overview
 
@@ -229,7 +229,7 @@ make sinsp
 
 ### Version Numbers
 
-- **Libs Version:** 0.25.2 (SemVer, major=0 indicates unstable API)
+- **Libs Version:** 0.25.4 (SemVer, major=0 indicates unstable API)
 - **Driver Version:** Uses `+driver` suffix (e.g., `10.2.0+driver`)
 - **API Version:** 10.1.0 (user/kernel boundary)
 - **Schema Version:** 4.5.1 (event data format)

@@ -1,6 +1,6 @@
 # Falco Configuration
 
-> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/falco/`](../../../refs/falcosecurity/falco/) | **Version:** 0.44.0
+> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/falco/`](../../../refs/falcosecurity/falco/) | **Version:** 0.44.1
 
 ## Overview
 
@@ -104,7 +104,10 @@ engine:
     cpus_for_each_buffer: 2   # CPUs per ring buffer (default: 2)
     buf_size_preset: 4        # Buffer index 0-10 (default: 4 = 8MB)
     drop_failed_exit: false
+    disable_iterators: false  # Disable BPF iterators; fall back to procfs (default: false)
 ```
+
+> **`disable_iterators`** (modern_ebpf only, since 0.44.1): by default the modern eBPF driver uses BPF iterators to synchronously fetch kernel state — populating the initial process table at startup and healing it after event drops — which is faster and more reliable than walking procfs. Set to `true` to disable the iterators and force a procfs fallback. BPF iterators are also automatically disabled whenever Falco runs outside the host (root) PID namespace, regardless of this setting. Source: [`falco.yaml:429-453`](../../../refs/falcosecurity/falco/falco.yaml), [`configuration.cpp:269-271`](../../../refs/falcosecurity/falco/userspace/falco/configuration.cpp), [`config_json_schema.h:409`](../../../refs/falcosecurity/falco/userspace/falco/config_json_schema.h).
 
 **Replay:**
 ```yaml

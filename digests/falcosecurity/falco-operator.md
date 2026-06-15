@@ -5,7 +5,7 @@ Kubernetes Operator for managing Falco deployments, auxiliary components, and ru
 **Applicable to**: Falco 0.44 era
 **Repository status**: Incubating
 **License**: Apache-2.0
-**Pinned version**: v0.2.2 (the 0.44.0 release announces operator 0.3.0 + a new `falco-operator` Helm chart 0.2.0; the [`refs/`](../../refs/) submodule is pinned one patch behind at v0.2.2)
+**Pinned version**: v0.3.0 (released 2026-05-28)
 
 ---
 
@@ -104,6 +104,8 @@ Runs as a **native sidecar** (Kubernetes 1.29+ feature) in each Falco pod. It ma
 - **Rulesfile Controller** — Downloads OCI rule artifacts, resolves inline rules (structured JSON), reads ConfigMaps, or combines all three; stores to filesystem with priority ordering
 - **Plugin Controller** — Downloads plugin `.so` files from OCI registries; manages plugin configuration
 - **Config Controller** — Writes YAML configuration fragments to filesystem with priority ordering; supports both inline config and ConfigMapRef
+
+**Source-change detection (since v0.3.0):** Each OCI-backed artifact records a `SourceSignature` — a SHA-256 fingerprint over the resolved OCI reference, registry options (plain-HTTP, TLS skip-verify), and the referenced auth Secret's credentials ([artifact/signature.go](../../refs/falcosecurity/falco-operator/internal/pkg/artifact/signature.go), [artifact/types.go](../../refs/falcosecurity/falco-operator/internal/pkg/artifact/types.go)). When the source identity changes — including a rotated auth Secret — the artifact is re-pulled. To react promptly, the Rulesfile and Plugin controllers **watch the auth Secrets** they reference (via a Secret→artifact index) and re-reconcile on change ([rulesfile/controller.go](../../refs/falcosecurity/falco-operator/controllers/artifact/rulesfile/controller.go), [plugin/controller.go](../../refs/falcosecurity/falco-operator/controllers/artifact/plugin/controller.go)). The generated Falco instance receives `secrets` get/list/watch through a **namespaced Role** (`RoleRules`), not its ClusterRole — the instance's ClusterRole grants only `nodes` get/list/watch ([resources/falco.go:128-145](../../refs/falcosecurity/falco-operator/internal/pkg/resources/falco.go)). This is a source-identity fingerprint for change detection, **not** cryptographic (e.g. cosign) signature verification.
 
 Artifacts are shared between the sidecar and the Falco container via `emptyDir` volumes at three mount paths ([mounts/consts.go](../../refs/falcosecurity/falco-operator/internal/pkg/mounts/consts.go)):
 - `/etc/falco/config.d` — Configuration fragments
@@ -372,7 +374,7 @@ The operator applies type-specific defaults via the `InstanceDefaults` registry 
 | Probes | Liveness (60s delay), Readiness (30s delay) on `/healthz:8765` |
 | Tolerations | master + control-plane NoSchedule |
 | Update strategy | RollingUpdate |
-| Default Falco image | `docker.io/falcosecurity/falco:0.43.0` (pinned v0.2.2 default; announced operator 0.3.0 bumps this to `0.44.0`) |
+| Default Falco image | `docker.io/falcosecurity/falco:0.44.0` |
 
 **Source:** [resources/falco.go](../../refs/falcosecurity/falco-operator/internal/pkg/resources/falco.go), [`image/const.go:28`](../../refs/falcosecurity/falco-operator/internal/pkg/image/const.go)
 
@@ -412,13 +414,22 @@ The operator applies type-specific defaults via the `InstanceDefaults` registry 
 
 ## Installation
 
-Single-manifest installation from the latest GitHub release ([README.md:97-133](../../refs/falcosecurity/falco-operator/README.md)):
+As of v0.3.0, the Helm chart is the **recommended (first-class) install method** ([README.md](../../refs/falcosecurity/falco-operator/README.md), [docs/installation.md](../../refs/falcosecurity/falco-operator/docs/installation.md)):
+
+```bash
+helm repo add falcosecurity https://falcosecurity.github.io/charts
+helm repo update
+helm install falco-operator falcosecurity/falco-operator \
+  --namespace falco-operator --create-namespace
+```
+
+Alternatively, install from the single YAML manifest of the latest GitHub release:
 
 ```bash
 kubectl apply -f https://github.com/falcosecurity/falco-operator/releases/latest/download/install.yaml
 ```
 
-This creates: 5 CRDs, the `falco-operator` namespace, ServiceAccount, ClusterRole/Binding, and the operator Deployment.
+Either method creates: 5 CRDs, the `falco-operator` namespace, ServiceAccount, ClusterRole/Binding, and the operator Deployment. A [manifest-to-Helm migration guide](../../refs/falcosecurity/falco-operator/docs/migrations/manifest-to-helm.md) is provided for existing installations.
 
 ### Required Permissions
 
@@ -441,8 +452,8 @@ This creates: 5 CRDs, the `falco-operator` namespace, ServiceAccount, ClusterRol
 | Aspect | Detail |
 |--------|--------|
 | Language | Go 1.26.0 |
-| Framework | kubebuilder v4, controller-runtime 0.24.0 |
-| K8s API | k8s.io/api v0.36.0 |
+| Framework | kubebuilder v4, controller-runtime 0.24.1 |
+| K8s API | k8s.io/api v0.36.1 |
 | OCI client | oras-go/v2 2.6.0 |
 | Container base | `cgr.dev/chainguard/static` (non-root user 65532) |
 | Architectures | linux/amd64, linux/arm64 |
@@ -497,4 +508,4 @@ This creates: 5 CRDs, the `falco-operator` namespace, ServiceAccount, ClusterRol
 
 ---
 
-*Last updated: 2026-03-12*
+*Last updated: 2026-06-15*

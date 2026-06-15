@@ -1,5 +1,5 @@
 # libscap (System CAPture Library)
-> **Era:** 0.44 | **Version:** libs 0.25.2 | **Source:** [`refs/falcosecurity/libs/`](../../../refs/falcosecurity/libs/)
+> **Era:** 0.44 | **Version:** libs 0.25.4 | **Source:** [`refs/falcosecurity/libs/`](../../../refs/falcosecurity/libs/)
 
 ## Overview
 
@@ -75,7 +75,7 @@ Platform-specific operations are in a separate vtable ([`scap_platform_impl.h:43
 
 ### Engine-Specific Parameters
 
-**Modern eBPF** ([`modern_bpf_public.h:26-40`](../../../refs/falcosecurity/libs/userspace/libscap/engine/modern_bpf/modern_bpf_public.h)): `uint16_t cpus_for_each_buffer` (0=shared, 1=per-CPU default), `bool allocate_online_only`, `unsigned long buffer_bytes_dim`.
+**Modern eBPF** ([`modern_bpf_public.h:26-42`](../../../refs/falcosecurity/libs/userspace/libscap/engine/modern_bpf/modern_bpf_public.h)): `uint16_t cpus_for_each_buffer` (0=shared, 1=per-CPU default), `bool allocate_online_only`, `unsigned long buffer_bytes_dim`, and `bool disable_iterators` (since libs 0.25.4 / Falco 0.44.1 — disables BPF iterators for synchronous state fetching, forcing a procfs fallback).
 
 **Kmod** ([`kmod_public.h:26-30`](../../../refs/falcosecurity/libs/userspace/libscap/engine/kmod/kmod_public.h)): `unsigned long buffer_bytes_dim`.
 

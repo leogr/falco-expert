@@ -471,7 +471,7 @@ In live mode, each event source gets its own inspector. The driver selection log
 | Plugin source (non-syscall) | `inspector->open_plugin(name, params, ...)` | Opens a plugin event source |
 | No driver (with plugin `id=0`) | `inspector->open_plugin(name, params, FULL)` | Plugin providing raw system events |
 | No driver (without plugin) | `inspector->open_nodriver()` | No kernel event capture |
-| Modern eBPF | `inspector->open_modern_bpf(buffer_size, cpus, true, sc_set)` | CO-RE eBPF (default driver) |
+| Modern eBPF | `inspector->open_modern_bpf(buffer_size, cpus, true, sc_set, disable_iterators)` | CO-RE eBPF (default driver); the final `disable_iterators` arg (since 0.44.1) forces a procfs fallback instead of BPF iterators |
 | Kernel module | `inspector->open_kmod(buffer_size, sc_set)` | Classic kernel module (auto-loads via modprobe on failure) |
 
 **Source:** [`helpers_inspector.cpp:43-149`](../refs/falcosecurity/falco/userspace/falco/app/actions/helpers_inspector.cpp)

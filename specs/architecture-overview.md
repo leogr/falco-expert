@@ -300,13 +300,13 @@ struct state {
 
 | Component | Version | Compatibility Scope |
 |-----------|---------|-------------------|
-| Falco | 0.44.0 | Application release |
-| Libs | 0.25.2 | Library API |
-| Driver API | 10.0.0 (required by Falco 0.44.0); libs 0.25.2 source publishes 10.1.0 | Kernel/userspace boundary |
-| Schema | 4.3.0 (required by Falco 0.44.0); libs 0.25.2 source publishes 4.5.1 | Event data format |
+| Falco | 0.44.1 | Application release |
+| Libs | 0.25.4 | Library API |
+| Driver API | 10.0.0 (minimum required by the Falco 0.44.x binary, measured on 0.44.0); libs 0.25.4 source publishes 10.1.0 | Kernel/userspace boundary |
+| Schema | 4.3.0 (minimum required by the Falco 0.44.x binary, measured on 0.44.0); libs 0.25.4 source publishes 4.5.1 | Event data format |
 | Plugin API | 3.12.0 | Plugin/host interface |
 
-> `falco --version` for the bundled 0.44.0 binary reports Driver API `10.0.0` and Schema `4.3.0` — these are the **minimum versions Falco 0.44.0 requires** of the drivers it talks to. The libs 0.25.2 source files [`driver/API_VERSION`](../refs/falcosecurity/libs/driver/API_VERSION) and [`driver/SCHEMA_VERSION`](../refs/falcosecurity/libs/driver/SCHEMA_VERSION) advertise newer numbers (`10.1.0`/`4.5.1`) because libs picked up backward-compatible additions after the Falco 0.44.0 release was cut.
+> `falco --version` for the bundled 0.44.0 binary reports Driver API `10.0.0` and Schema `4.3.0` — these are the **minimum versions Falco requires** of the drivers it talks to (the binary analyzed in the knowledge base is 0.44.0; the era pin now bundles libs 0.25.4 via Falco 0.44.1). The libs 0.25.4 source files [`driver/API_VERSION`](../refs/falcosecurity/libs/driver/API_VERSION) and [`driver/SCHEMA_VERSION`](../refs/falcosecurity/libs/driver/SCHEMA_VERSION) advertise newer numbers (`10.1.0`/`4.5.1`) because libs picked up backward-compatible additions; these source values are unchanged between libs 0.25.2 and 0.25.4.
 
 ### Compatibility Rules
 

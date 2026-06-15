@@ -1,6 +1,6 @@
 # falcosecurity/falco Digest
 
-> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/falco/`](../../../refs/falcosecurity/falco/) | **Version:** 0.44.0
+> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/falco/`](../../../refs/falcosecurity/falco/) | **Version:** 0.44.1
 
 **Repository:** https://github.com/falcosecurity/falco
 **Status:** Core / Stable (CNCF Graduated)
@@ -11,9 +11,9 @@ The main Falco repository providing the runtime security tool binary. Built on t
 
 | Property | Value |
 |----------|-------|
-| Falco Version | 0.44.0 |
+| Falco Version | 0.44.1 |
 | Engine Version | 0.62.0 |
-| Libs Version | 0.25.2 |
+| Libs Version | 0.25.4 |
 | Plugin API | 3.12.0 (from libs) |
 | Default Driver | modern_ebpf |
 | Architecture | x86-64, aarch64 |

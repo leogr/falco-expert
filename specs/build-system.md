@@ -207,8 +207,8 @@ Version information is embedded during CMake configuration:
 
 | Variable | Source | Example |
 |----------|--------|---------|
-| Falco version | `CMakeLists.txt` / git tag | `0.44.0` |
-| Libs version | Fetched from libs repo | `0.25.2` |
+| Falco version | `CMakeLists.txt` / git tag | `0.44.1` |
+| Libs version | Fetched from libs repo | `0.25.4` |
 | Driver API version | `driver/API_VERSION` | `10.1.0` |
 | Schema version | `driver/SCHEMA_VERSION` | `4.5.1` |
 | Plugin API version | `userspace/plugin/plugin_api.h` | `3.12.0` |
