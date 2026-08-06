@@ -271,13 +271,52 @@ type fetcher struct {
 }
 ```
 
-When a container ID is requested via `AskForContainerInfo()`:
-1. The ID is sent to `fetcherChan`
-2. Fetcher loops through all engines trying to `get()` the container
-3. If not found, retries every 30ms for up to 150ms
-4. On success, publishes event to output channel
+When a new-process event resolves a container ID whose matcher returned no
+metadata and whose ID is absent from `m_containers`, the live async path calls
+`AskForContainerInfo()` if `m_async_ctx` exists and the ID has not already been
+requested. If the Go worker accepts the non-blocking channel send, the C++ side
+inserts the ID into `m_asked_containers`; subsequent events with that ID do not
+submit another request.
 
-**Source:** [`go-worker/pkg/container/fetcher.go`](../../../refs/falcosecurity/plugins/plugins/container/go-worker/pkg/container/fetcher.go)
+**Sources:** [`src/plugin.cpp:341-413`](../../../refs/falcosecurity/plugins/plugins/container/src/plugin.cpp), [`src/matchers/matcher.h:7-29`](../../../refs/falcosecurity/plugins/plugins/container/src/matchers/matcher.h), [`src/plugin.h:121-130`](../../../refs/falcosecurity/plugins/plugins/container/src/plugin.h), [`go-worker/worker_api.go:121-137`](../../../refs/falcosecurity/plugins/plugins/container/go-worker/worker_api.go)
+
+For an accepted request, the fetcher tries each enabled engine. On a miss it
+queues a retry after 30 ms. At the start of a queued retry, if more than 150 ms
+has elapsed since first observation, it removes only the Go fetcher's local
+`firstSeen` timestamp and abandons that request; it does not publish a timeout
+or requeue the ID. A successful lookup instead publishes an `added` async
+event.
+
+**Source:** [`go-worker/pkg/container/fetcher.go:64-113`](../../../refs/falcosecurity/plugins/plugins/container/go-worker/pkg/container/fetcher.go)
+
+### Abandoned Metadata Requests
+
+The `added` async-event path is the only site that erases an ID from
+`m_asked_containers`: it first writes the returned metadata to `m_containers`,
+then erases the ID. The `removed` path erases only cached metadata. There is no
+TTL for `m_asked_containers`, and neither the fetcher's elapsed-time check nor
+process-exit handling erases from it.
+
+**Sources:** [`src/caps/parse/parse.cpp:79-106`](../../../refs/falcosecurity/plugins/plugins/container/src/caps/parse/parse.cpp), [`src/caps/parse/parse.cpp:196-257`](../../../refs/falcosecurity/plugins/plugins/container/src/caps/parse/parse.cpp), [`src/plugin.h:121-130`](../../../refs/falcosecurity/plugins/plugins/container/src/plugin.h)
+
+Consequently, after the fetcher abandons such a request, later syscall events
+for that container retain the cgroup-derived `container.id` but cannot trigger
+a fresh explicit metadata lookup. Its runtime container and Kubernetes metadata
+fields continue to return no value for the lifetime of that plugin instance,
+unless an independent runtime `added` event supplies the metadata or the plugin
+is recreated.
+
+**Sources:** [`src/plugin.cpp:341-413`](../../../refs/falcosecurity/plugins/plugins/container/src/plugin.cpp), [`src/caps/extract/extract.cpp:536-618`](../../../refs/falcosecurity/plugins/plugins/container/src/caps/extract/extract.cpp), [`src/caps/parse/parse.cpp:79-106`](../../../refs/falcosecurity/plugins/plugins/container/src/caps/parse/parse.cpp)
+
+This distinction matters to container-scoped rules. The standard `container`
+macro (`container.id != host`) can still classify the event as containerized,
+because `container.id` is available. A positive predicate on missing metadata,
+such as an image or Kubernetes field, evaluates false and can miss a detection;
+negating that failed predicate evaluates true and can also bypass a
+metadata-based exclusion. Alert output fields backed by the missing metadata
+are unavailable as well.
+
+**Sources:** [`falco_rules.yaml:223-225`](../../../refs/falcosecurity/rules/rules/falco_rules.yaml), [`plugin_filtercheck.cpp:161-181`](../../../refs/falcosecurity/libs/userspace/libsinsp/plugin_filtercheck.cpp), [`sinsp_filtercheck.cpp:1193-1212`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck.cpp), [`filter.cpp:52-107`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter.cpp)
 
 ### Worker Lifecycle
 
@@ -640,4 +679,6 @@ These fields are deprecated; use `k8smeta` plugin instead:
 | Go worker API | [`go-worker/worker_api.go`](../../../refs/falcosecurity/plugins/plugins/container/go-worker/worker_api.go) |
 | Engine interface | [`go-worker/pkg/container/engine.go`](../../../refs/falcosecurity/plugins/plugins/container/go-worker/pkg/container/engine.go) |
 | Fetcher engine | [`go-worker/pkg/container/fetcher.go`](../../../refs/falcosecurity/plugins/plugins/container/go-worker/pkg/container/fetcher.go) |
+| Missing plugin-field evaluation | [`plugin_filtercheck.cpp`](../../../refs/falcosecurity/libs/userspace/libsinsp/plugin_filtercheck.cpp), [`sinsp_filtercheck.cpp`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck.cpp), [`filter.cpp`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter.cpp) |
+| Standard container scope macro | [`falco_rules.yaml`](../../../refs/falcosecurity/rules/rules/falco_rules.yaml) |
 | Event constants | [`src/consts.h`](../../../refs/falcosecurity/plugins/plugins/container/src/consts.h) |

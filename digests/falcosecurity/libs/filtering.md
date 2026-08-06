@@ -31,14 +31,18 @@ Check               ::= Field Condition
                         | Identifier
                         | '(' Expr ')'
 FieldTransformer       ::= FieldTransformerType FieldTransformerTail
-FieldTransformerTail   ::= FieldTransformerArg ')'
+FieldTransformerTail   ::= FieldTransformerArg (',' FieldTransformerArg)* ')'
+                           ('[' FieldArg ']')?
 FieldTransformerArg    ::= FieldTransformer
-                        | Field
+                        | Field | QuotedStr | NumValue | TransformerList
+TransformerList        ::= '(' (TransformerListArg (',' TransformerListArg)*)? ')'
+TransformerListArg     ::= Field | FieldTransformer | QuotedStr | NumValue
 FieldTransformerOrVal  ::= FieldTransformer
                         | FieldTransformerVal Field ')'
 Condition           ::= UnaryOperator
                         | NumOperator (NumValue | FieldTransformerOrVal)
                         | StrOperator (StrValue | FieldTransformerOrVal)
+                        | StrOperator StrOperatorModifier ListValue
                         | ListOperator (ListValue | FieldTransformerOrVal)
 ListValue           ::= '(' (StrValue (',' StrValue)*)* ')'
                         | Identifier
@@ -58,9 +62,11 @@ StrOperator         ::= '==' | '=' | '!='
                         | 'contains' | 'endswith' | 'glob'
                         | 'icontains' | 'iglob'
                         | 'startswith' | 'regex'
+StrOperatorModifier ::= 'oneof' | 'anyof' | 'allof'
 ListOperator        ::= 'in' | 'intersects' | 'pmatch'
 FieldTransformerVal    ::= 'val('
 FieldTransformerType   ::= 'tolower(' | 'toupper(' | 'b64(' | 'basename(' | 'len('
+                        | 'join(' | 'concat(' | 'getopt('
 ```
 
 **Tokens:**
@@ -81,7 +87,7 @@ Key design details: the parser has configurable max recursion depth (default 100
 
 **Source:** [`filter/ast.h`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter/ast.h)
 
-The parser produces an Abstract Syntax Tree with 10 node types, all inheriting from `expr`:
+The parser produces an Abstract Syntax Tree with 11 node types, all inheriting from `expr`:
 
 | Node Type | Purpose | Key Members |
 |-----------|---------|-------------|
@@ -91,10 +97,11 @@ The parser produces an Abstract Syntax Tree with 10 node types, all inheriting f
 | `identifier_expr` | Bare identifier (macro reference) | `identifier: string` |
 | `value_expr` | Literal value | `value: string` |
 | `list_expr` | List of values | `values: vector<string>` |
+| `transformer_list_expr` | List passed as a transformer argument | `children: vector<unique_ptr<expr>>` |
 | `unary_check_expr` | Unary check (e.g. `exists`) | `left: unique_ptr<expr>`, `op: string` |
 | `binary_check_expr` | Binary check (e.g. `field = val`) | `left`, `right: unique_ptr<expr>`, `op: string` |
-| `field_expr` | Field reference | `field: string`, `arg: string` |
-| `field_transformer_expr` | Transformer wrapping a field | `transformer: string`, `value: unique_ptr<expr>` |
+| `field_expr` | Field reference | `field: string`, `arg: optional<string>` |
+| `field_transformer_expr` | Transformer call | `transformer: string`, `values: vector<unique_ptr<expr>>`, `arg: optional<string>` |
 
 Each node carries `pos_info` (idx, line, col) for error reporting. **Source:** [`filter/ast.h:49-78`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter/ast.h)
 
@@ -130,30 +137,39 @@ The core comparison function is `flt_compare()`. **Source:** [`filter_compare.h:
 
 ## Field Transformers
 
-**Source:** [`sinsp_filter_transformers/sinsp_filter_transformer.h:25-32`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filter_transformers/sinsp_filter_transformer.h)
+**Sources:** [`filter/parser.cpp:99-150`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter/parser.cpp), [`sinsp_filter_transformers/sinsp_filter_transformer.h:25-48`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filter_transformers/sinsp_filter_transformer.h), [`sinsp_filtercheck_multivalue_transformer.cpp:147-315`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_multivalue_transformer.cpp)
 
-Transformers modify field values before comparison. The syntax is **function-call style**, wrapping the field:
+Falco 0.44/libs 0.25.4 exposes eight public field transformers. Five are unary value transformers; three compile multiple fields, literals, or transformer lists into a multivalue filtercheck.
 
-| Transformer | Enum | Value | Description | Example |
-|-------------|------|-------|-------------|---------|
-| `toupper(...)` | `FTR_TOUPPER` | 0 | Converts to uppercase | `toupper(proc.name) = NGINX` |
-| `tolower(...)` | `FTR_TOLOWER` | 1 | Converts to lowercase | `tolower(proc.name) = nginx` |
-| `b64(...)` | `FTR_BASE64` | 2 | Base64 decode | `b64(evt.arg.data) contains secret` |
-| `val(...)` | `FTR_STORAGE` | 3 | Value storage (internal only) | Used for RHS field-to-field comparisons |
-| `basename(...)` | `FTR_BASENAME` | 4 | Path basename extraction | `basename(fd.name) = config.yaml` |
-| `len(...)` | `FTR_LEN` | 5 | Value length | `len(proc.cmdline) > 1000` |
+| Transformer | Kind / implementation | Result | Example |
+|-------------|-----------------------|--------|---------|
+| `toupper(value)` | Unary (`FTR_TOUPPER`) | Uppercase string | `toupper(proc.name) = NGINX` |
+| `tolower(value)` | Unary (`FTR_TOLOWER`) | Lowercase string | `tolower(proc.name) = nginx` |
+| `b64(value)` | Unary (`FTR_BASE64`) | Base64-decoded string or byte buffer | `b64(evt.arg.data) contains secret` |
+| `basename(value)` | Unary (`FTR_BASENAME`) | Bytes after the final `/` | `basename(fd.name) = config.yaml` |
+| `len(value)` | Unary (`FTR_LEN`) | `uint64`: list element count or scalar string/buffer length | `len(proc.cmdline) > 1000` |
+| `join(separator, list)` | Multivalue | Scalar string joining the list with `separator` | `join("-", ("a", "b")) = "a-b"` |
+| `concat(a, b, ...)` | Multivalue | Scalar string concatenating at least two scalar strings | `concat("a", "b") = "ab"` |
+| `getopt(argv, optstring)` | Multivalue | POSIX-style short-option result list; optional `[x]` selects the last `x` match as a scalar | `getopt(("-n", "-t", "hello"), "nt:")[t] = hello` |
 
-**Source for descriptions:** [`sinsp_filter_transformers/sinsp_filter_transformer.h:42-48`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filter_transformers/sinsp_filter_transformer.h)
+`val(field)` is an RHS-only identity wrapper for field-to-field comparisons, not one of the eight value-transforming functions. The compiler ignores it after compiling the child field. The separate internal `FTR_STORAGE` transformer is inserted when plugin-extracted values need stable backing memory.
 
-**Transformer chaining:** Transformers nest as function calls:
+**Source:** [`filter.cpp:310-355,583-633`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter.cpp)
+
+The multivalue framework first shipped in libs 0.24.0 with `join` and `concat`; `getopt` followed in libs 0.25.0. The pinned 0.25.4 parser test asserts the eight-name public set exactly.
+
+**Sources:** [libs 0.24.0 parser](https://github.com/falcosecurity/libs/blob/0.24.0/userspace/libsinsp/filter/parser.cpp#L93-L94), [libs 0.25.0 parser](https://github.com/falcosecurity/libs/blob/0.25.0/userspace/libsinsp/filter/parser.cpp#L99-L100), [`filter_parser.ut.cpp:132-153`](../../../refs/falcosecurity/libs/userspace/libsinsp/test/filter_parser.ut.cpp)
+
+**Transformer chaining:** Unary and multivalue transformers nest as function calls:
 
 ```
 toupper(basename(fd.name)) = CONFIG.YAML
+toupper(join("-", (proc.name, evt.arg.path))) contains INIT-
 ```
 
-**Factory:** [`sinsp_filter_transformers.h:26-52`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filter_transformers.h) -- maps `filter_transformer_type` to concrete implementations.
+**Factories:** [`sinsp_filter_transformers.h:26-52`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filter_transformers.h) maps unary enum values to concrete implementations; [`sinsp_filtercheck_multivalue_transformer.cpp:559-575`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_multivalue_transformer.cpp) constructs `join`, `concat`, and `getopt` filterchecks.
 
-**RHS field-to-field comparisons:** The `val()` transformer enables comparing two fields at runtime: `fd.name = val(proc.cwd)`. **Source:** [`parser.h:50-51`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter/parser.h)
+**RHS field-to-field comparisons:** The `val()` syntax enables comparing two fields at runtime: `fd.name = val(proc.cwd)`. **Source:** [`filter.cpp:333-355`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter.cpp)
 
 ## Filtercheck Architecture
 
@@ -515,7 +531,7 @@ For poll/select events:
 2. Visit each AST node, creating `sinsp_filter_check` instances via `sinsp_filter_factory::new_filtercheck()`
 3. Build a tree of `sinsp_filter_expression` nodes connected by `boolop` (BO_AND, BO_OR, BO_NOT)
 4. Set comparison operators and values on leaf checks
-5. Apply transformers to field checks
+5. Compile unary transformers into child filtercheck chains and multivalue transformers into synthetic filterchecks
 6. Return `sinsp_filter` with `run(sinsp_evt*)` method
 
 **Runtime execution:** `sinsp_filter::run(evt)` evaluates the expression tree by calling `compare(evt)` on each `sinsp_filter_expression`, which recursively evaluates child checks via `extract()` + `compare()`. **Source:** [`filter.h:76-91`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter.h)
@@ -543,6 +559,8 @@ See [`plugin-framework.md`](plugin-framework.md) for plugin field extraction det
 | Comparison operators | [`filter_compare.h`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter_compare.h) |
 | Transformer base class | [`sinsp_filter_transformers/sinsp_filter_transformer.h`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filter_transformers/sinsp_filter_transformer.h) |
 | Transformer factory | [`sinsp_filter_transformers.h`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filter_transformers.h) |
+| Multivalue transformers | [`sinsp_filtercheck_multivalue_transformer.cpp`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_multivalue_transformer.cpp) |
+| Transformer parser tests | [`filter_parser.ut.cpp`](../../../refs/falcosecurity/libs/userspace/libsinsp/test/filter_parser.ut.cpp) |
 | Base filtercheck | [`sinsp_filtercheck.h`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck.h) |
 | Field info and EPF flags | [`filter_field.h`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter_field.h) |
 | Filtercheck registry | [`filter_check_list.cpp`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter_check_list.cpp) |

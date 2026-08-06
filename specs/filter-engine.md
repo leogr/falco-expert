@@ -64,14 +64,18 @@ Productions (EBNF Syntax):
                             | Identifier
                             | '(' Expr ')'
     FieldTransformer       ::= FieldTransformerType FieldTransformerTail
-    FieldTransformerTail   ::= FieldTransformerArg ')'
+    FieldTransformerTail   ::= FieldTransformerArg (',' FieldTransformerArg)* ')'
+                               ('[' FieldArg ']')?
     FieldTransformerArg    ::= FieldTransformer
-                            | Field
+                            | Field | QuotedStr | NumValue | TransformerList
+    TransformerList        ::= '(' (TransformerListArg (',' TransformerListArg)*)? ')'
+    TransformerListArg     ::= Field | FieldTransformer | QuotedStr | NumValue
     FieldTransformerOrVal  ::= FieldTransformer
                             | FieldTransformerVal Field ')'
     Condition           ::= UnaryOperator
                             | NumOperator (NumValue | FieldTransformerOrVal)
                             | StrOperator (StrValue | FieldTransformerOrVal)
+                            | StrOperator StrOperatorModifier ListValue
                             | ListOperator (ListValue | FieldTransformerOrVal)
     ListValue           ::= '(' (StrValue (',' StrValue)*)* ')'
                             | Identifier
@@ -88,9 +92,11 @@ Supported Check Operators (EBNF Syntax):
                             | 'contains ' | 'endswith ' | 'glob '
                             | 'icontains ' | 'iglob '
                             | 'startswith ' | 'regex '
+    StrOperatorModifier ::= 'oneof ' | 'anyof ' | 'allof '
     ListOperator        ::= 'in' | 'intersects' | 'pmatch'
     FieldTransformerVal    ::= 'val('
     FieldTransformerType   ::= 'tolower(' | 'toupper(' | 'b64(' | 'basename(' | 'len('
+                            | 'join(' | 'concat(' | 'getopt('
 
 Tokens (Regular Expressions):
     Identifier          ::= [a-zA-Z]+[a-zA-Z0-9_]*
@@ -115,8 +121,9 @@ The parser produces an Abstract Syntax Tree with these node types, all defined i
 | `not_expr` | Negation of expression | `child: unique_ptr<expr>` |
 | `binary_check_expr` | Field comparison with value | `left: unique_ptr<expr>`, `op: string`, `right: unique_ptr<expr>` |
 | `unary_check_expr` | Unary field check (e.g., `exists`) | `left: unique_ptr<expr>`, `op: string` |
-| `field_expr` | Field reference | `field: string`, `arg: string` |
-| `field_transformer_expr` | Transformed field | `transformer: string`, `value: unique_ptr<expr>` |
+| `field_expr` | Field reference | `field: string`, `arg: optional<string>` |
+| `transformer_list_expr` | List passed as a transformer argument | `children: vector<unique_ptr<expr>>` |
+| `field_transformer_expr` | Transformer call | `transformer: string`, `values: vector<unique_ptr<expr>>`, `arg: optional<string>` |
 | `value_expr` | Literal value | `value: string` |
 | `list_expr` | List of values | `values: vector<string>` |
 | `identifier_expr` | Named identifier (macro/list reference) | `identifier: string` |
@@ -137,12 +144,17 @@ struct binary_check_expr : expr {
 
 struct field_expr : expr {
     std::string field;             // Full field name (e.g., "proc.name")
-    std::string arg;               // Optional argument (e.g., index or key)
+    std::optional<std::string> arg; // Optional argument (e.g., index or key)
+};
+
+struct transformer_list_expr : expr {
+    std::vector<std::unique_ptr<expr>> children;
 };
 
 struct field_transformer_expr : expr {
-    std::string transformer;       // Transformer name (e.g., "tolower")
-    std::unique_ptr<expr> value;   // Inner expression (field or nested transformer)
+    std::string transformer;                    // e.g., "tolower" or "getopt"
+    std::vector<std::unique_ptr<expr>> values;  // One or more arguments
+    std::optional<std::string> arg;             // Optional result selector, e.g. [t]
 };
 ```
 
@@ -212,26 +224,37 @@ bool flt_compare_ipv6net(cmpop op, const ipv6addr* operand1, const ipv6net* oper
 
 ### Field Transformers
 
-Transformers modify field values before comparison. They are applied as a chain between field extraction and comparison.
+Falco 0.44/libs 0.25.4 exposes eight public field transformers. Five are unary transformers applied to an extracted value; three are multivalue transformers that compile multiple fields, literals, or transformer lists into a synthetic filtercheck.
 
-**Source:** [`sinsp_filter_transformer.h`](../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filter_transformers/sinsp_filter_transformer.h)
+**Sources:** [`filter/parser.cpp:99-150`](../refs/falcosecurity/libs/userspace/libsinsp/filter/parser.cpp), [`sinsp_filter_transformer.h:25-48`](../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filter_transformers/sinsp_filter_transformer.h), [`sinsp_filtercheck_multivalue_transformer.cpp:147-315`](../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_multivalue_transformer.cpp)
 
-| Transformer | Enum | Value | Description | Example |
-|-------------|------|-------|-------------|---------|
-| `toupper(...)` | `FTR_TOUPPER` | 0 | Converts to uppercase | `toupper(proc.name) = NGINX` |
-| `tolower(...)` | `FTR_TOLOWER` | 1 | Converts to lowercase | `tolower(proc.name) = nginx` |
-| `b64(...)` | `FTR_BASE64` | 2 | Base64 decode | `b64(evt.arg.data) contains secret` |
-| `val(...)` | `FTR_STORAGE` | 3 | Value storage (internal only) | Used for RHS field references |
-| `basename(...)` | `FTR_BASENAME` | 4 | Extracts path basename | `basename(fd.name) = config.yaml` |
-| `len(...)` | `FTR_LEN` | 5 | Returns string length | `len(proc.cmdline) > 1000` |
+| Transformer | Kind / implementation | Result | Example |
+|-------------|-----------------------|--------|---------|
+| `toupper(value)` | Unary (`FTR_TOUPPER`) | Uppercase string | `toupper(proc.name) = NGINX` |
+| `tolower(value)` | Unary (`FTR_TOLOWER`) | Lowercase string | `tolower(proc.name) = nginx` |
+| `b64(value)` | Unary (`FTR_BASE64`) | Base64-decoded string or byte buffer | `b64(evt.arg.data) contains secret` |
+| `basename(value)` | Unary (`FTR_BASENAME`) | Bytes after the final `/` | `basename(fd.name) = config.yaml` |
+| `len(value)` | Unary (`FTR_LEN`) | `uint64`: list element count or scalar string/buffer length | `len(proc.cmdline) > 1000` |
+| `join(separator, list)` | Multivalue | Scalar string joining the list with `separator` | `join("-", ("a", "b")) = "a-b"` |
+| `concat(a, b, ...)` | Multivalue | Scalar string concatenating at least two scalar strings | `concat("a", "b") = "ab"` |
+| `getopt(argv, optstring)` | Multivalue | POSIX-style short-option result list; optional `[x]` selects the last `x` match as a scalar | `getopt(("-n", "-t", "hello"), "nt:")[t] = hello` |
+
+`val(field)` is a separate RHS-only identity wrapper for field-to-field comparisons, not one of the eight value-transforming functions. The compiler ignores the wrapper after compiling its field argument. The internal `FTR_STORAGE` enum member is unrelated: the compiler inserts it when extracted plugin values need stable backing memory.
+
+**Source:** [`filter.cpp:310-355,583-633`](../refs/falcosecurity/libs/userspace/libsinsp/filter.cpp)
+
+The multivalue framework first shipped in libs 0.24.0 with `join` and `concat`; `getopt` followed in libs 0.25.0. The pinned 0.25.4 parser and unit test enumerate all eight names exactly.
+
+**Sources:** [libs 0.24.0 parser](https://github.com/falcosecurity/libs/blob/0.24.0/userspace/libsinsp/filter/parser.cpp#L93-L94), [libs 0.25.0 parser](https://github.com/falcosecurity/libs/blob/0.25.0/userspace/libsinsp/filter/parser.cpp#L99-L100), [`filter_parser.ut.cpp:132-153`](../refs/falcosecurity/libs/userspace/libsinsp/test/filter_parser.ut.cpp)
 
 #### Transformer Chaining
 
-Transformers can be chained by nesting function calls (outermost applied last):
+Unary and multivalue transformers can be chained by nesting function calls (outermost applied last):
 
 ```
 basename(tolower(proc.name)) = nginx
 toupper(basename(fd.name)) = CONFIG.YAML
+toupper(join("-", (proc.name, evt.arg.path))) contains INIT-
 ```
 
 #### Transformer Base Class
@@ -653,7 +676,9 @@ public:
    │   ├─ Parse operator (str_to_cmpop)
    │   └─ Parse RHS value (constant, list, or field reference)
    ├─ For each field_transformer_expr:
-   │   └─ Add transformer to filtercheck chain
+   │   ├─ One argument: add a unary transformer to the child filtercheck
+   │   ├─ Multiple arguments: create a multivalue-transformer filtercheck
+   │   └─ Treat val(...) as an identity wrapper
    ├─ Build boolean expression tree
    └─ Emit compiler warnings (e.g., regex validity, field references)
 
@@ -828,6 +853,8 @@ See [`digests/falcosecurity/libs/plugin-framework.md`](../digests/falcosecurity/
 | AST nodes and visitors | [`filter/ast.h`](../refs/falcosecurity/libs/userspace/libsinsp/filter/ast.h) |
 | Comparison operators (`cmpop`) | [`filter_compare.h`](../refs/falcosecurity/libs/userspace/libsinsp/filter_compare.h) |
 | Field transformers | [`sinsp_filter_transformer.h`](../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filter_transformers/sinsp_filter_transformer.h) |
+| Multivalue transformers | [`sinsp_filtercheck_multivalue_transformer.cpp`](../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_multivalue_transformer.cpp) |
+| Transformer parser tests | [`filter_parser.ut.cpp`](../refs/falcosecurity/libs/userspace/libsinsp/test/filter_parser.ut.cpp) |
 | Base filtercheck class | [`sinsp_filtercheck.h`](../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck.h) |
 | Field info and flags | [`filter_field.h`](../refs/falcosecurity/libs/userspace/libsinsp/filter_field.h) |
 | Filter compilation and execution | [`filter.h`](../refs/falcosecurity/libs/userspace/libsinsp/filter.h) |

@@ -161,7 +161,7 @@ AI-optimized summaries of reference materials.
   - [`foundation.md`](digests/cncf/foundation.md) - CNCF IP policy, allowed licenses, container image guidance, copyright notices
 - [`falco-binary-report.md`](digests/falco-binary-report.md) - Static analysis of Falco binary (versions, dependencies, GLIBC, plugins)
 - [`proposals/`](digests/proposals/) - Cross-repository proposal digests
-  - [`multi-thread-falco.md`](digests/proposals/multi-thread-falco.md) - Multi-thread Falco initiative (post-0.43, not implemented, 3 proposals)
+  - [`multi-thread-falco.md`](digests/proposals/multi-thread-falco.md) - Multi-thread Falco initiative (0.44 architecture, pinned Folly proposal snapshot, and historical RCU design)
 
 ### Specifications ([`specs/`](specs/))
 
