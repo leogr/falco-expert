@@ -157,6 +157,7 @@ Documents following the [agentskills.io](https://agentskills.io/) specification.
 | [`falco-rules-author`](skills/falco-rules-author/SKILL.md) | Author, validate, test, and iteratively tune Falco detection rules with Docker-based feedback loops |
 | [`falco-triage`](skills/falco-triage/SKILL.md) | Triage GitHub issues and PRs across falcosecurity repositories with knowledge-base-backed analysis |
 | [`falco-reviewer`](skills/falco-reviewer/SKILL.md) | Review PRs as a ghost writer for Falco maintainers, with security review and breaking change analysis |
+| [`falco-dependabot`](skills/falco-dependabot/SKILL.md) | Clear a repository's open Dependabot PR backlog in bulk: rebase, wait for CI, approve when green |
 
 **Using `falco-cli`**: Agents working with this repository can use the `falco-cli` skill to:
 - Validate Falco rules files (`falco -V`)
@@ -196,6 +197,14 @@ To use, read [`skills/falco-triage/SKILL.md`](skills/falco-triage/SKILL.md) for 
 - Generate ready-to-run shell scripts that publish pending (draft) GitHub reviews
 
 To use, read [`skills/falco-reviewer/SKILL.md`](skills/falco-reviewer/SKILL.md) for complete instructions.
+
+**Using `falco-dependabot`**: Agents can use the `falco-dependabot` skill to:
+- Clear a repository's open Dependabot PR backlog in bulk, oldest to newest, batching PRs that are green and not expected to conflict, one at a time otherwise
+- Rebase each PR via `@dependabot rebase`, wait for the checks to settle, and approve only when green
+- Stop and escalate on a red PR instead of guessing, reproducing the failure locally to get the real error
+- Distinguish fixable dependency alerts from those with no patched version, so a downgrade is never mistaken for a fix
+
+Approving merges the PR: falcosecurity Prow sets `review_acts_as_lgtm: true`, so one approval satisfies tide. To use, read [`skills/falco-dependabot/SKILL.md`](skills/falco-dependabot/SKILL.md) for complete instructions.
 
 ### [`output/`](output/)
 

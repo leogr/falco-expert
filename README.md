@@ -198,6 +198,7 @@ Implementation-focused technical specifications (24 specs).
 AI agent skills following [agentskills.io](https://agentskills.io/) specification.
 
 - [`falco-cli/`](skills/falco-cli/) - Use Falco CLI for validation, introspection, and binary analysis without daemon mode
+- [`falco-dependabot/`](skills/falco-dependabot/) - Clear a repository's open Dependabot PR backlog in bulk: rebase, wait for CI, approve when green
 - [`falco-dev/`](skills/falco-dev/) - Develop, build, test, and debug Falco core components using a devcontainer
 - [`falco-rules-author/`](skills/falco-rules-author/) - Author, validate, test, and iteratively tune Falco detection rules with Docker-based feedback loops
 - [`falco-triage/`](skills/falco-triage/) - Triage GitHub issues and PRs across falcosecurity repositories with knowledge-base-backed analysis
@@ -216,6 +217,7 @@ Install individual skills by symlinking each skill directory:
 ```bash
 mkdir -p ~/.claude/skills
 ln -s "$(cd falco-expert && pwd)/skills/falco-cli" ~/.claude/skills/falco-cli
+ln -s "$(cd falco-expert && pwd)/skills/falco-dependabot" ~/.claude/skills/falco-dependabot
 ln -s "$(cd falco-expert && pwd)/skills/falco-dev" ~/.claude/skills/falco-dev
 ln -s "$(cd falco-expert && pwd)/skills/falco-rules-author" ~/.claude/skills/falco-rules-author
 ln -s "$(cd falco-expert && pwd)/skills/falco-triage" ~/.claude/skills/falco-triage
