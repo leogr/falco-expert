@@ -2,7 +2,7 @@
 name: falco-cli
 description: Use the Falco CLI for validation, introspection, and information gathering. Supports local binary, downloaded versions from download.falco.org, and container images (Docker/Podman). Validate rules files, list available fields, inspect plugins, get version info, analyze binary dependencies (GLIBC, shared libraries), and verify Falco knowledge. This skill enables CLI-mode operations and binary analysis without requiring elevated privileges or running Falco as a daemon.
 metadata:
-  falco-version: "0.44"
+  falco-version: "0.45"
 ---
 
 # Falco CLI
@@ -55,7 +55,7 @@ https://download.falco.org/packages/bin/{arch}/falco-{version}-{arch}.tar.gz
 
 ```bash
 # Set version and architecture
-VERSION="0.44.0"
+VERSION="0.45.0"
 ARCH="x86_64"
 
 # Create temp directory
@@ -106,46 +106,46 @@ docker --version || podman --version
 | Debian | `falcosecurity/falco:{version}-debian` | When Debian compatibility needed |
 | Architecture-specific | `falcosecurity/falco:{arch}-{version}` | Multi-arch builds |
 
-**Tag examples for version 0.44.0:**
-- `falcosecurity/falco:0.44.0` - Standard (Wolfi-based)
-- `falcosecurity/falco:0.44.0-debian` - Debian-based
-- `falcosecurity/falco:x86_64-0.44.0` - x86_64 specific
-- `falcosecurity/falco:aarch64-0.44.0` - ARM64 specific
+**Tag examples for version 0.45.0:**
+- `falcosecurity/falco:0.45.0` - Standard (Wolfi-based)
+- `falcosecurity/falco:0.45.0-debian` - Debian-based
+- `falcosecurity/falco:x86_64-0.45.0` - x86_64 specific
+- `falcosecurity/falco:aarch64-0.45.0` - ARM64 specific
 - `falcosecurity/falco:latest` - Latest release
 
 **Running CLI commands in container:**
 
 ```bash
 # Version info
-docker run --rm falcosecurity/falco:0.44.0 falco --version
+docker run --rm falcosecurity/falco:0.45.0 falco --version
 
 # List plugins
-docker run --rm falcosecurity/falco:0.44.0 falco --list-plugins
+docker run --rm falcosecurity/falco:0.45.0 falco --list-plugins
 
 # List fields
-docker run --rm falcosecurity/falco:0.44.0 falco --list
+docker run --rm falcosecurity/falco:0.45.0 falco --list
 
 # Validate rules (mount rules file)
 docker run --rm -v /path/to/rules.yaml:/rules.yaml:ro \
-  falcosecurity/falco:0.44.0 falco -V /rules.yaml
+  falcosecurity/falco:0.45.0 falco -V /rules.yaml
 
 # Get support info
-docker run --rm falcosecurity/falco:0.44.0 falco --support
+docker run --rm falcosecurity/falco:0.45.0 falco --support
 ```
 
 **Binary analysis in container:**
 ```bash
 # File info
-docker run --rm falcosecurity/falco:0.44.0 file /usr/bin/falco
+docker run --rm falcosecurity/falco:0.45.0 file /usr/bin/falco
 
 # Library dependencies
-docker run --rm falcosecurity/falco:0.44.0 ldd /usr/bin/falco
+docker run --rm falcosecurity/falco:0.45.0 ldd /usr/bin/falco
 
 # List plugins
-docker run --rm falcosecurity/falco:0.44.0 ls -la /usr/share/falco/plugins/
+docker run --rm falcosecurity/falco:0.45.0 ls -la /usr/share/falco/plugins/
 
 # Read config
-docker run --rm falcosecurity/falco:0.44.0 cat /etc/falco/falco.yaml
+docker run --rm falcosecurity/falco:0.45.0 cat /etc/falco/falco.yaml
 ```
 
 **When to use container images:**

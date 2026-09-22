@@ -2,7 +2,7 @@
 
 > Implementation-focused technical specifications of Falco, enabling the workflow: **modify spec → modify implementation**.
 
-**Era:** 0.44 (released May 26, 2026)
+**Era:** 0.45 (released September 21, 2026)
 
 ## Component Map
 
@@ -69,7 +69,7 @@ Follow the event pipeline from bottom to top, then application concerns:
 | 19 | [`falco-lsp.md`](falco-lsp.md) | Language Server, CLI tool, VS Code extension for rules |
 | 20 | [`falco-talon.md`](falco-talon.md) | Response Engine, actionners, automated threat response |
 | 21 | [`driver-distribution.md`](driver-distribution.md) | Pre-built driver pipeline, kernel-crawler, driverkit |
-| 22 | [`ci-cd-infrastructure.md`](ci-cd-infrastructure.md) | Prow components, AWS EKS, config, Tide, Pigeon |
+| 22 | [`ci-cd-infrastructure.md`](ci-cd-infrastructure.md) | Prow components, AWS EKS and OCI OKE, config, Tide, Pigeon |
 | 23 | [`ci-cd-jobs.md`](ci-cd-jobs.md) | Job catalog, org management, OWNERS workflow |
 | 24 | [`ci-cd-github-actions.md`](ci-cd-github-actions.md) | Falco Actions, CI/CD rules, testing suite |
 
@@ -98,7 +98,7 @@ Follow the event pipeline from bottom to top, then application concerns:
 | [`falco-lsp.md`](falco-lsp.md) | `falco-lsp` | [`falco-lsp/internal/`](../refs/falcosecurity/falco-lsp/falco-lsp/internal/), [`vscode-extension/`](../refs/falcosecurity/falco-lsp/vscode-extension/) | [`falco-lsp.md`](../digests/falcosecurity/falco-lsp.md) |
 | [`falco-talon.md`](falco-talon.md) | `falco-talon` | [`actionners/`](../refs/falcosecurity/falco-talon/actionners/), [`internal/rules/`](../refs/falcosecurity/falco-talon/internal/rules/) | [`falco-talon.md`](../digests/falcosecurity/falco-talon.md) |
 | [`driver-distribution.md`](driver-distribution.md) | `test-infra`, `driverkit`, `dbg-go`, `kernel-crawler` | [`driverkit/config/`](../refs/falcosecurity/test-infra/driverkit/config/) | [`driverkit.md`](../digests/falcosecurity/driverkit.md), [`dbg-go.md`](../digests/falcosecurity/dbg-go.md), [`test-infra/drivers-build-grid.md`](../digests/falcosecurity/test-infra/drivers-build-grid.md), [`kernel-crawler.md`](../digests/falcosecurity/kernel-crawler.md) |
-| [`ci-cd-infrastructure.md`](ci-cd-infrastructure.md) | `test-infra` | [`config/config.yaml`](../refs/falcosecurity/test-infra/config/config.yaml), [`config/plugins.yaml`](../refs/falcosecurity/test-infra/config/plugins.yaml) | [`test-infra/prow-infrastructure.md`](../digests/falcosecurity/test-infra/prow-infrastructure.md), [`test-infra/prow-config.md`](../digests/falcosecurity/test-infra/prow-config.md), [`pigeon.md`](../digests/falcosecurity/pigeon.md) |
+| [`ci-cd-infrastructure.md`](ci-cd-infrastructure.md) | `test-infra` | [`config/prow/aws/config.yaml`](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml), [`config/prow/aws/plugins.yaml`](../refs/falcosecurity/test-infra/config/prow/aws/plugins.yaml) | [`test-infra/prow-infrastructure.md`](../digests/falcosecurity/test-infra/prow-infrastructure.md), [`test-infra/prow-config.md`](../digests/falcosecurity/test-infra/prow-config.md), [`pigeon.md`](../digests/falcosecurity/pigeon.md) |
 | [`ci-cd-jobs.md`](ci-cd-jobs.md) | `test-infra` | [`config/jobs/`](../refs/falcosecurity/test-infra/config/jobs/), [`config/org.yaml`](../refs/falcosecurity/test-infra/config/org.yaml) | [`test-infra/prow-jobs.md`](../digests/falcosecurity/test-infra/prow-jobs.md), [`test-infra/github-org-management.md`](../digests/falcosecurity/test-infra/github-org-management.md) |
 | [`ci-cd-github-actions.md`](ci-cd-github-actions.md) | `falco-actions`, `testing` | [`start/action.yaml`](../refs/falcosecurity/falco-actions/start/action.yaml), [`action.yml`](../refs/falcosecurity/testing/action.yml) | [`falco-actions.md`](../digests/falcosecurity/falco-actions.md), [`testing.md`](../digests/falcosecurity/testing.md) |
 

@@ -2,7 +2,7 @@
 name: falco-rules-author
 description: Author, validate, and iteratively tune Falco detection rules. Covers the complete rule language (conditions, macros, lists, priorities, output templates, overrides), the filter expression language (19 operators, 5 transformers, all field classes), rule engine optimization (event type indexing), and practical Docker-based testing workflows with structured feedback loops for false-positive reduction. Supports modern_ebpf (live), replay (.scap), nodriver (plugins-only), and plugin event sources.
 metadata:
-  falco-version: "0.44"
+  falco-version: "0.45"
 ---
 
 # Falco Rules Author
@@ -383,7 +383,7 @@ falco -V /path/to/my_rules.yaml
 # Or in Docker
 docker run --rm \
   -v /path/to/my_rules.yaml:/my_rules.yaml:ro \
-  falcosecurity/falco:0.44.0 \
+  falcosecurity/falco:0.45.0 \
   falco -V /my_rules.yaml
 ```
 
@@ -409,7 +409,7 @@ Choose the appropriate engine:
 docker run --rm --name falco-rule-test \
   -v /path/to/capture.scap:/capture.scap:ro \
   -v /path/to/my_rules.yaml:/etc/falco/my_rules.yaml:ro \
-  falcosecurity/falco:0.44.0 \
+  falcosecurity/falco:0.45.0 \
   falco \
     -o "engine.kind=replay" \
     -o "engine.replay.capture_file=/capture.scap" \
@@ -423,7 +423,7 @@ docker run -d --name falco-rule-test \
   --privileged \
   -v /proc:/host/proc:ro -v /etc:/host/etc:ro \
   -v /path/to/my_rules.yaml:/etc/falco/my_rules.yaml:ro \
-  falcosecurity/falco:0.44.0 \
+  falcosecurity/falco:0.45.0 \
   falco \
     -r /etc/falco/falco_rules.yaml \
     -r /etc/falco/my_rules.yaml \

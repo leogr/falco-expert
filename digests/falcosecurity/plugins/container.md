@@ -1,6 +1,6 @@
 # Container Plugin - Design and Architecture
 
-**Era:** 0.44 | **Status:** Stable | **Scope:** Core | **Version:** 0.7.1 (bundled with Falco 0.44.0)
+**Era:** 0.45 | **Status:** Stable | **Scope:** Core | **Version:** 0.7.4 (bundled with Falco 0.45.0)
 
 The `container` plugin is a critical component shipped with Falco that provides container metadata enrichment for syscall events. It is a hybrid C++/Go plugin that retrieves container information from various container runtimes.
 
@@ -106,7 +106,7 @@ The plugin implements four capabilities:
 | `parsing` | Parse async and container events, process clone/fork/execve | [`caps/parse/parse.cpp`](../../../refs/falcosecurity/plugins/plugins/container/src/caps/parse/parse.cpp) |
 | `async` | Generate container added/removed events, dump cache state | [`caps/async/async.cpp`](../../../refs/falcosecurity/plugins/plugins/container/src/caps/async/async.cpp) |
 
-**Source:** [`src/plugin.h:55-102`](../../../refs/falcosecurity/plugins/plugins/container/src/plugin.h)
+**Source:** [`src/plugin.h:55-102`](../../../refs/falcosecurity/plugins/plugins/container/src/plugin.h#L55-L102)
 
 ---
 
@@ -127,7 +127,7 @@ class my_plugin
     std::pair<uint64_t, std::shared_ptr<const container_info>> m_last_container;
 
     // Cache of container IDs already requested from Go worker
-    std::unordered_set<std::string> m_asked_containers;
+    asked_containers m_asked_containers; // Requests expire after 10 seconds
 
     // Cgroup matcher manager
     std::unique_ptr<matcher_manager> m_mgr;
@@ -139,7 +139,7 @@ class my_plugin
 };
 ```
 
-**Source:** [`src/plugin.h:121-169`](../../../refs/falcosecurity/plugins/plugins/container/src/plugin.h)
+**Source:** [`src/plugin.h:121-170`](../../../refs/falcosecurity/plugins/plugins/container/src/plugin.h#L121-L170)
 
 ### Container Info Structure
 
@@ -174,7 +174,7 @@ class container_info {
 };
 ```
 
-**Source:** [`src/container_info.h:90-167`](../../../refs/falcosecurity/plugins/plugins/container/src/container_info.h)
+**Source:** [`src/container_info.h:90-167`](../../../refs/falcosecurity/plugins/plugins/container/src/container_info.h#L90-L167)
 
 ### Container Types
 
@@ -195,7 +195,7 @@ Defined in [`src/container_type.h`](../../../refs/falcosecurity/plugins/plugins/
 | `CT_HOST` | 0xfffe | Host (not a container) |
 | `CT_UNKNOWN` | 0xffff | Unknown type |
 
-**Source:** [`src/container_type.h:5-23`](../../../refs/falcosecurity/plugins/plugins/container/src/container_type.h)
+**Source:** [`src/container_type.h:5-23`](../../../refs/falcosecurity/plugins/plugins/container/src/container_type.h#L5-L23)
 
 ### Thread Category Classification
 
@@ -211,7 +211,7 @@ enum command_category {
 };
 ```
 
-**Source:** [`src/plugin.h:24-31`](../../../refs/falcosecurity/plugins/plugins/container/src/plugin.h)
+**Source:** [`src/plugin.h:24-31`](../../../refs/falcosecurity/plugins/plugins/container/src/plugin.h#L24-L31)
 
 ---
 
@@ -246,7 +246,7 @@ Additionally, engines implement:
 - `getter` - Fetch single container by ID
 - `copier` - Create engine copy for the fetcher
 
-**Source:** [`go-worker/pkg/container/engine.go:97-104`](../../../refs/falcosecurity/plugins/plugins/container/go-worker/pkg/container/engine.go)
+**Source:** [`go-worker/pkg/container/engine.go:168-175`](../../../refs/falcosecurity/plugins/plugins/container/go-worker/pkg/container/engine.go#L168-L175)
 
 ### Supported Engines
 
@@ -257,75 +257,36 @@ Additionally, engines implement:
 | CRI | `cri` | `/run/containerd/containerd.sock`, `/run/crio/crio.sock` |
 | Containerd | `containerd` | `/run/host-containerd/containerd.sock` |
 
-**Source:** [`go-worker/pkg/container/engine.go:28-33`](../../../refs/falcosecurity/plugins/plugins/container/go-worker/pkg/container/engine.go)
+**Source:** [`go-worker/pkg/container/engine.go:28-33`](../../../refs/falcosecurity/plugins/plugins/container/go-worker/pkg/container/engine.go#L28-L33)
 
-### Fetcher Engine
+### Fetcher Engine and Metadata Retries
 
-The fetcher is a special "engine" that handles on-demand container lookups:
+A qualifying new-process event with a resolved container ID but no cached metadata asks the Go worker for a lookup. Accepted requests suppress duplicate requests for 10 seconds, using a monotonic clock. Both `added` and `removed` events clear the pending ID. After expiry, a later qualifying event can ask again; a missed lookup no longer suppresses metadata requests for the lifetime of the plugin. Expired bookkeeping is purged lazily, so TTL is not a hard bound on retained entries.
 
-```go
-type fetcher struct {
-    getters     []getter       // All enabled engines
-    ctx         context.Context
-    fetcherChan chan string    // Channel for container ID requests
-}
-```
+**Sources:** [`src/plugin.cpp:370-413`](../../../refs/falcosecurity/plugins/plugins/container/src/plugin.cpp#L370-L413), [`src/asked_containers.h:27-100`](../../../refs/falcosecurity/plugins/plugins/container/src/asked_containers.h#L27-L100), [`src/caps/parse/parse.cpp:79-109`](../../../refs/falcosecurity/plugins/plugins/container/src/caps/parse/parse.cpp#L79-L109).
 
-When a new-process event resolves a container ID whose matcher returned no
-metadata and whose ID is absent from `m_containers`, the live async path calls
-`AskForContainerInfo()` if `m_async_ctx` exists and the ID has not already been
-requested. If the Go worker accepts the non-blocking channel send, the C++ side
-inserts the ID into `m_asked_containers`; subsequent events with that ID do not
-submit another request.
+The fetcher schedules retries after 125 ms, 250 ms, 500 ms, 1 second and 2 seconds, with at most 1,024 containers waiting for retry. One serving goroutine and timer manage retries; deferred startup lookups run behind requests from events. Successful lookup publishes metadata through an `added` event. These retries improve eventual enrichment but do not guarantee that the first events for a container have metadata.
 
-**Sources:** [`src/plugin.cpp:341-413`](../../../refs/falcosecurity/plugins/plugins/container/src/plugin.cpp), [`src/matchers/matcher.h:7-29`](../../../refs/falcosecurity/plugins/plugins/container/src/matchers/matcher.h), [`src/plugin.h:121-130`](../../../refs/falcosecurity/plugins/plugins/container/src/plugin.h), [`go-worker/worker_api.go:121-137`](../../../refs/falcosecurity/plugins/plugins/container/go-worker/worker_api.go)
+**Source:** [`fetcher.go:22-82`](../../../refs/falcosecurity/plugins/plugins/container/go-worker/pkg/container/fetcher.go#L22-L82).
 
-For an accepted request, the fetcher tries each enabled engine. On a miss it
-queues a retry after 30 ms. At the start of a queued retry, if more than 150 ms
-has elapsed since first observation, it removes only the Go fetcher's local
-`firstSeen` timestamp and abandons that request; it does not publish a timeout
-or requeue the ID. A successful lookup instead publishes an `added` async
-event.
+### Startup Timeout and Runtime Recovery
 
-**Source:** [`go-worker/pkg/container/fetcher.go:64-113`](../../../refs/falcosecurity/plugins/plugins/container/go-worker/pkg/container/fetcher.go)
+`engine_timeout` is a nonnegative integer in seconds, defaulting to 10; zero disables the timeout. Startup connects and lists containers per enabled socket. Unresponsive engines are skipped with a warning; engines with partial listing results remain enabled, with unfinished lookups deferred to background work. Containerd namespaces whose listing was interrupted or not started are retried in the background until success or capture shutdown, using the same timeout for each attempt. Metadata is unavailable until those lookups complete. Podman's fixed client retries can exceed the configured timeout by about 0.6 seconds.
 
-### Abandoned Metadata Requests
+**Source:** [`README.md:137-171`](../../../refs/falcosecurity/plugins/plugins/container/README.md#L137-L171).
 
-The `added` async-event path is the only site that erases an ID from
-`m_asked_containers`: it first writes the returned metadata to `m_containers`,
-then erases the ID. The `removed` path erases only cached metadata. There is no
-TTL for `m_asked_containers`, and neither the fetcher's elapsed-time check nor
-process-exit handling erases from it.
+The CRI listener retries ended event subscriptions with exponential backoff from 1 to 30 seconds. A subscription lasting over 30 seconds resets the next delay to the minimum. Capture cancellation stops resubscription; an initial subscription failure is still reported to the caller.
 
-**Sources:** [`src/caps/parse/parse.cpp:79-106`](../../../refs/falcosecurity/plugins/plugins/container/src/caps/parse/parse.cpp), [`src/caps/parse/parse.cpp:196-257`](../../../refs/falcosecurity/plugins/plugins/container/src/caps/parse/parse.cpp), [`src/plugin.h:121-130`](../../../refs/falcosecurity/plugins/plugins/container/src/plugin.h)
-
-Consequently, after the fetcher abandons such a request, later syscall events
-for that container retain the cgroup-derived `container.id` but cannot trigger
-a fresh explicit metadata lookup. Its runtime container and Kubernetes metadata
-fields continue to return no value for the lifetime of that plugin instance,
-unless an independent runtime `added` event supplies the metadata or the plugin
-is recreated.
-
-**Sources:** [`src/plugin.cpp:341-413`](../../../refs/falcosecurity/plugins/plugins/container/src/plugin.cpp), [`src/caps/extract/extract.cpp:536-618`](../../../refs/falcosecurity/plugins/plugins/container/src/caps/extract/extract.cpp), [`src/caps/parse/parse.cpp:79-106`](../../../refs/falcosecurity/plugins/plugins/container/src/caps/parse/parse.cpp)
-
-This distinction matters to container-scoped rules. The standard `container`
-macro (`container.id != host`) can still classify the event as containerized,
-because `container.id` is available. A positive predicate on missing metadata,
-such as an image or Kubernetes field, evaluates false and can miss a detection;
-negating that failed predicate evaluates true and can also bypass a
-metadata-based exclusion. Alert output fields backed by the missing metadata
-are unavailable as well.
-
-**Sources:** [`falco_rules.yaml:223-225`](../../../refs/falcosecurity/rules/rules/falco_rules.yaml), [`plugin_filtercheck.cpp:161-181`](../../../refs/falcosecurity/libs/userspace/libsinsp/plugin_filtercheck.cpp), [`sinsp_filtercheck.cpp:1193-1212`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck.cpp), [`filter.cpp:52-107`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter.cpp)
+**Source:** [`cri.go:477-540`](../../../refs/falcosecurity/plugins/plugins/container/go-worker/pkg/container/cri.go#L477-L540).
 
 ### Worker Lifecycle
 
 1. **Startup** (`StartWorker`):
    - Parse init config
    - Generate engines for enabled sockets
-   - List all existing containers from each engine
+   - List existing containers within each engine timeout; defer unfinished inspection
    - Call `goCb` for each pre-existing container (with `initialState=true`)
-   - Create fetcher engine
+   - Create fetcher engine with unfinished startup lookups
    - Start worker goroutine loop
 
 2. **Runtime** (`workerLoop`):
@@ -338,7 +299,7 @@ are unavailable as well.
    - Wait for goroutines
    - Close fetcher channel
 
-**Source:** [`go-worker/worker_api.go:32-138`](../../../refs/falcosecurity/plugins/plugins/container/go-worker/worker_api.go)
+**Source:** [`go-worker/worker_api.go:32-123`](../../../refs/falcosecurity/plugins/plugins/container/go-worker/worker_api.go#L32-L123)
 
 ---
 
@@ -377,7 +338,7 @@ std::string my_plugin::compute_container_id_for_thread(
 }
 ```
 
-**Source:** [`src/plugin.cpp:179-216`](../../../refs/falcosecurity/plugins/plugins/container/src/plugin.cpp)
+**Source:** [`src/plugin.cpp:179-216`](../../../refs/falcosecurity/plugins/plugins/container/src/plugin.cpp#L179-L216)
 
 ---
 
@@ -426,7 +387,7 @@ Matchers are added based on configuration:
 6. libvirt_lxc (if enabled)
 7. bpm (if enabled)
 
-**Source:** [`src/matchers/matcher.cpp:11-57`](../../../refs/falcosecurity/plugins/plugins/container/src/matchers/matcher.cpp)
+**Source:** [`src/matchers/matcher.cpp:11-57`](../../../refs/falcosecurity/plugins/plugins/container/src/matchers/matcher.cpp#L11-L57)
 
 ### Available Matchers
 
@@ -495,7 +456,7 @@ The plugin parses these event types:
 | `PPME_SYSCALL_CHROOT_X` | `parse_new_process_event` | chroot - re-evaluate container_id |
 | `PPME_PROCEXIT_1_E` | `parse_exit_process_event` | Process exit - cleanup if vpid==1 |
 
-**Source:** [`src/consts.h:24-38`](../../../refs/falcosecurity/plugins/plugins/container/src/consts.h), [`src/caps/parse/parse.cpp:297-331`](../../../refs/falcosecurity/plugins/plugins/container/src/caps/parse/parse.cpp)
+**Source:** [`src/consts.h:24-38`](../../../refs/falcosecurity/plugins/plugins/container/src/consts.h#L24-L38), [`src/caps/parse/parse.cpp:298-332`](../../../refs/falcosecurity/plugins/plugins/container/src/caps/parse/parse.cpp#L298-L332)
 
 ### Async Event Generation
 
@@ -522,13 +483,14 @@ struct PluginConfig {
     int label_max_len;    // Default: 100
     bool with_size;       // Default: false (slow operation)
     uint8_t hooks;        // HOOK_CREATE (1) or HOOK_START (2)
+    int engine_timeout;  // Default: 10 seconds; 0 disables startup timeout
     std::string host_root; // From HOST_ROOT env var
     std::string log_level; // Default: "info"
     Engines engines;
 };
 ```
 
-**Source:** [`src/plugin_config.h:59-78`](../../../refs/falcosecurity/plugins/plugins/container/src/plugin_config.h)
+**Source:** [`src/plugin_config.h:62-83`](../../../refs/falcosecurity/plugins/plugins/container/src/plugin_config.h#L62-L83)
 
 ### Engine Configuration
 
@@ -545,7 +507,7 @@ struct Engines {
 };
 ```
 
-**Source:** [`src/plugin_config.h:47-57`](../../../refs/falcosecurity/plugins/plugins/container/src/plugin_config.h)
+**Source:** [`src/plugin_config.h:50-60`](../../../refs/falcosecurity/plugins/plugins/container/src/plugin_config.h#L50-L60)
 
 ### Default Socket Paths
 
@@ -638,7 +600,7 @@ plugins:
 
 ### Process Health Check Fields
 
-> **Deprecated in container plugin 0.7.0 (bundled with Falco 0.44.0):** the implementation backing these fields was dropped — the field names remain registered but are marked `[Deprecated]` and return empty. They relied on a fragile Kubernetes-specific annotation and had been broken on CRI runtimes for years. Functionality is intended to move to the `k8smeta` plugin. Source: [`src/caps/extract/extract.cpp:304-314`](../../../refs/falcosecurity/plugins/plugins/container/src/caps/extract/extract.cpp).
+> **Deprecated in container plugin 0.7.0 (bundled with Falco 0.44.0):** the implementation backing these fields was dropped — the field names remain registered but are marked `[Deprecated]` and return empty. They relied on a fragile Kubernetes-specific annotation and had been broken on CRI runtimes for years. Functionality is intended to move to the `k8smeta` plugin. Source: [`src/caps/extract/extract.cpp:304-314`](../../../refs/falcosecurity/plugins/plugins/container/src/caps/extract/extract.cpp#L304-L314).
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -655,7 +617,7 @@ These fields are deprecated; use `k8smeta` plugin instead:
 - `k8s.rs.*` - ReplicaSet
 - `k8s.deployment.*` - Deployment
 
-**Source:** [`src/caps/extract/extract.cpp:9-74`](../../../refs/falcosecurity/plugins/plugins/container/src/caps/extract/extract.cpp)
+**Source:** [`src/caps/extract/extract.cpp:9-74`](../../../refs/falcosecurity/plugins/plugins/container/src/caps/extract/extract.cpp#L9-L74)
 
 ---
 

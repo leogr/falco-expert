@@ -1,10 +1,10 @@
 # k8s-metacollector - Kubernetes Metadata Collector
 
-**Era:** 0.44 | **Status:** Incubating | **Scope:** Ecosystem
+**Era:** 0.45 | **Status:** Incubating | **Scope:** Ecosystem
 
 The `k8s-metacollector` is a centralized Kubernetes metadata collection service that gathers metadata from Kubernetes resources and streams it to Falco instances via gRPC. It addresses the scalability limitations of the traditional approach where each Falco instance connects directly to the Kubernetes API server.
 
-**Source:** [`refs/falcosecurity/k8s-metacollector/`](../../refs/falcosecurity/k8s-metacollector/) (v0.1.2)
+**Source:** [`refs/falcosecurity/k8s-metacollector/`](../../refs/falcosecurity/k8s-metacollector/) (v0.1.4)
 
 ## Table of Contents
 
@@ -27,7 +27,7 @@ The `k8s-metacollector` is a centralized Kubernetes metadata collection service 
 | Property | Value |
 |----------|-------|
 | Repository Status | Incubating |
-| Current Version | v0.1.2 |
+| Current Version | v0.1.4 |
 | Go Version | 1.26 |
 | gRPC Port | 45000 (default) |
 | Metrics Port | 8080 |
@@ -41,7 +41,7 @@ In traditional Falco deployments, every Falco instance (one per node in a Daemon
 - **Redundant Data Transfer**: Each instance receives full cluster-wide events even though it only needs node-local data
 - **Resource Waste**: Each instance processes and caches duplicate metadata
 
-**Source:** [`README.md:11-18`](../../refs/falcosecurity/k8s-metacollector/README.md), [libs issue #987](https://github.com/falcosecurity/libs/issues/987)
+**Source:** [`README.md:11-18`](../../refs/falcosecurity/k8s-metacollector/README.md#L11-L18), [libs issue #987](https://github.com/falcosecurity/libs/issues/987)
 
 ### Solution
 
@@ -72,7 +72,7 @@ The k8s-metacollector introduces a centralized architecture:
 3. **Pre-Processed Metadata**: Data is ready for use without further processing by subscribers
 4. **Intelligent Filtering**: Only resources running on or related to a specific node are sent
 
-**Source:** [`README.md:20-38`](../../refs/falcosecurity/k8s-metacollector/README.md)
+**Source:** [`README.md:20-38`](../../refs/falcosecurity/k8s-metacollector/README.md#L20-L38)
 
 ---
 
@@ -118,13 +118,13 @@ The k8s-metacollector uses the Kubernetes controller-runtime framework to watch 
               (Falco Node A)   (Falco Node B)   (Falco Node C)
 ```
 
-**Source:** [`cmd/collector/run/run.go:114-404`](../../refs/falcosecurity/k8s-metacollector/cmd/collector/run/run.go)
+**Source:** [`cmd/collector/run/run.go:114-397`](../../refs/falcosecurity/k8s-metacollector/cmd/collector/run/run.go)
 
 ### Core Components
 
 | Component | Purpose | Source |
 |-----------|---------|--------|
-| **Manager** | Controller-runtime manager handling all collectors | [`run.go:125-164`](../../refs/falcosecurity/k8s-metacollector/cmd/collector/run/run.go) |
+| **Manager** | Controller-runtime manager handling all collectors | [`run.go:131-177`](../../refs/falcosecurity/k8s-metacollector/cmd/collector/run/run.go#L131-L177) |
 | **Collectors** | Watch Kubernetes resources and generate events | [`collectors/`](../../refs/falcosecurity/k8s-metacollector/collectors/) |
 | **Queue** | Blocking channel for event buffering | [`broker/queue.go`](../../refs/falcosecurity/k8s-metacollector/broker/queue.go) |
 | **Broker** | gRPC server that routes events to subscribers | [`broker/broker.go`](../../refs/falcosecurity/k8s-metacollector/broker/broker.go) |
@@ -148,7 +148,7 @@ The k8s-metacollector watches and collects metadata for the following Kubernetes
 | `EndpointSlice` | discovery.k8s.io/v1 | Pod-to-Service mapping |
 | `Endpoints` | core/v1 | Legacy pod-to-service mapping |
 
-**Source:** [`pkg/resource/kind.go:18-37`](../../refs/falcosecurity/k8s-metacollector/pkg/resource/kind.go)
+**Source:** [`pkg/resource/kind.go:18-37`](../../refs/falcosecurity/k8s-metacollector/pkg/resource/kind.go#L18-L37)
 
 ### Node Filtering Logic
 
@@ -159,7 +159,7 @@ A Falco instance on Node X receives metadata only for:
 3. **Deployments/ReplicaSets/DaemonSets/ReplicationControllers** associated with pods on Node X
 4. **Services** serving pods running on Node X
 
-**Source:** [`README.md:29-34`](../../refs/falcosecurity/k8s-metacollector/README.md)
+**Source:** [`README.md:29-34`](../../refs/falcosecurity/k8s-metacollector/README.md#L29-L34)
 
 ---
 
@@ -209,7 +209,7 @@ message References {
 }
 ```
 
-**Source:** [`metadata/metadata.proto:1-52`](../../refs/falcosecurity/k8s-metacollector/metadata/metadata.proto)
+**Source:** [`metadata/metadata.proto:1-51`](../../refs/falcosecurity/k8s-metacollector/metadata/metadata.proto)
 
 ### Event Types
 
@@ -219,7 +219,7 @@ message References {
 | `Update` | Existing resource fields changed |
 | `Delete` | Resource no longer relevant (deleted or subscriber unsubscribed) |
 
-**Source:** [`pkg/events/event.go:25-32`](../../refs/falcosecurity/k8s-metacollector/pkg/events/event.go)
+**Source:** [`pkg/events/event.go:25-32`](../../refs/falcosecurity/k8s-metacollector/pkg/events/event.go#L25-L32)
 
 ---
 
@@ -238,7 +238,7 @@ The Pod Collector is the primary collector - all other collectors exist to provi
 3. **namespaceRefsHandler**: Fetches namespace UID
 4. **objFieldsHandler**: Marshals pod metadata/status to JSON
 
-**Source:** [`collectors/pod.go:46-467`](../../refs/falcosecurity/k8s-metacollector/collectors/pod.go)
+**Source:** [`collectors/pod.go:239-379`](../../refs/falcosecurity/k8s-metacollector/collectors/pod.go#L239-L379)
 
 ### Reconciliation Flow
 
@@ -280,7 +280,7 @@ Pod Event from API Server
     └───────────────────┘
 ```
 
-**Source:** [`collectors/pod.go:97-236`](../../refs/falcosecurity/k8s-metacollector/collectors/pod.go)
+**Source:** [`collectors/pod.go:99-238`](../../refs/falcosecurity/k8s-metacollector/collectors/pod.go#L99-L238)
 
 ### Object Meta Collector
 
@@ -303,7 +303,7 @@ When a subscriber connects:
 3. Notify all relevant collectors about new subscriber
 4. Stream events until context canceled or error
 
-**Source:** [`metadata/server.go:63-119`](../../refs/falcosecurity/k8s-metacollector/metadata/server.go)
+**Source:** [`metadata/server.go:64-120`](../../refs/falcosecurity/k8s-metacollector/metadata/server.go#L64-L120)
 
 ### Event Dispatch Loop
 
@@ -324,7 +324,7 @@ for {
 }
 ```
 
-**Source:** [`broker/broker.go:106-131`](../../refs/falcosecurity/k8s-metacollector/broker/broker.go)
+**Source:** [`broker/broker.go:106-138`](../../refs/falcosecurity/k8s-metacollector/broker/broker.go#L106-L138)
 
 ### TLS Support
 
@@ -335,7 +335,7 @@ The broker supports TLS for secure gRPC connections:
 --broker-server-key <path>   # Key file
 ```
 
-**Source:** [`broker/broker.go:57-68`](../../refs/falcosecurity/k8s-metacollector/broker/broker.go)
+**Source:** [`broker/broker.go:58-69`](../../refs/falcosecurity/k8s-metacollector/broker/broker.go#L58-L69)
 
 ---
 
@@ -356,7 +356,7 @@ rules:
     verbs: [get, list, watch]
 ```
 
-**Source:** [`manifests/meta-collector.yaml:91-130`](../../refs/falcosecurity/k8s-metacollector/manifests/meta-collector.yaml)
+**Source:** [`manifests/meta-collector.yaml:91-130`](../../refs/falcosecurity/k8s-metacollector/manifests/meta-collector.yaml#L91-L130)
 
 ### Kubernetes Manifests
 
@@ -379,7 +379,7 @@ helm install k8s-metacollector falcosecurity/k8s-metacollector \
     --create-namespace
 ```
 
-**Source:** [`README.md:74-88`](../../refs/falcosecurity/k8s-metacollector/README.md)
+**Source:** [`README.md:74-88`](../../refs/falcosecurity/k8s-metacollector/README.md#L74-L88)
 
 ### Resource Requirements
 
@@ -390,7 +390,7 @@ Default resource limits from manifest:
 | CPU | 10m | 500m |
 | Memory | 64Mi | 256Mi |
 
-**Source:** [`manifests/meta-collector.yaml:68-76`](../../refs/falcosecurity/k8s-metacollector/manifests/meta-collector.yaml)
+**Source:** [`manifests/meta-collector.yaml:68-76`](../../refs/falcosecurity/k8s-metacollector/manifests/meta-collector.yaml#L68-L76)
 
 ### Container Image
 
@@ -398,7 +398,7 @@ Default resource limits from manifest:
 docker.io/falcosecurity/k8s-metacollector:latest
 ```
 
-**Source:** [`manifests/meta-collector.yaml:49`](../../refs/falcosecurity/k8s-metacollector/manifests/meta-collector.yaml)
+**Source:** [`manifests/meta-collector.yaml:49`](../../refs/falcosecurity/k8s-metacollector/manifests/meta-collector.yaml#L49)
 
 ---
 
@@ -417,8 +417,9 @@ docker.io/falcosecurity/k8s-metacollector:latest
 | `--broker-bind-address` | `:45000` | gRPC broker endpoint |
 | `--broker-server-cert` | (none) | TLS certificate file path |
 | `--broker-server-key` | (none) | TLS key file path |
+| `--watch-idle-timeout` | `0` (disabled) | Close and re-establish a silent Kubernetes API watch after this duration |
 
-**Source:** [`cmd/collector/run/run.go:65-71`](../../refs/falcosecurity/k8s-metacollector/cmd/collector/run/run.go)
+**Source:** [`cmd/collector/run/run.go:68-76`](../../refs/falcosecurity/k8s-metacollector/cmd/collector/run/run.go#L68-L76)
 
 ### Health Endpoints
 
@@ -427,7 +428,7 @@ docker.io/falcosecurity/k8s-metacollector:latest
 | `/healthz` | 8081 | Liveness probe |
 | `/readyz` | 8081 | Readiness probe |
 
-**Source:** [`cmd/collector/run/run.go:389-396`](../../refs/falcosecurity/k8s-metacollector/cmd/collector/run/run.go)
+**Source:** [`cmd/collector/run/run.go:382-390`](../../refs/falcosecurity/k8s-metacollector/cmd/collector/run/run.go#L382-L390)
 
 ---
 
@@ -441,7 +442,7 @@ All metrics use the namespace `meta_collector`.
 |--------|------|-------------|
 | `meta_collector_server_subscribers` | Gauge | Current number of connected subscribers |
 
-**Source:** [`metadata/metrics.go:29-36`](../../refs/falcosecurity/k8s-metacollector/metadata/metrics.go)
+**Source:** [`metadata/metrics.go:30-37`](../../refs/falcosecurity/k8s-metacollector/metadata/metrics.go#L30-L37)
 
 ### Broker Metrics
 
@@ -451,7 +452,7 @@ All metrics use the namespace `meta_collector`.
 | `meta_collector_broker_queue_adds` | Counter | `name`, `type` | Events added to queue |
 | `meta_collector_broker_dispatched_events` | Counter | `kind`, `type` | Events sent to subscribers |
 
-**Source:** [`broker/metrics.go:28-64`](../../refs/falcosecurity/k8s-metacollector/broker/metrics.go)
+**Source:** [`broker/metrics.go:29-65`](../../refs/falcosecurity/k8s-metacollector/broker/metrics.go#L29-L65)
 
 ### Collector Metrics
 
@@ -459,13 +460,13 @@ All metrics use the namespace `meta_collector`.
 |--------|------|--------|-------------|
 | `meta_collector_collector_event_api_server_received` | Counter | `name`, `source`, `type` | Events received from API server |
 
-**Source:** [`collectors/metrics.go:39-52`](../../refs/falcosecurity/k8s-metacollector/collectors/metrics.go)
+**Source:** [`collectors/metrics.go:40-53`](../../refs/falcosecurity/k8s-metacollector/collectors/metrics.go#L40-L53)
 
 ### Grafana Dashboard
 
 A pre-built Grafana dashboard is available at [`grafana/meta-collector-metrics.json`](../../refs/falcosecurity/k8s-metacollector/grafana/meta-collector-metrics.json).
 
-**Source:** [`README.md:103`](../../refs/falcosecurity/k8s-metacollector/README.md)
+**Source:** [`README.md:103`](../../refs/falcosecurity/k8s-metacollector/README.md#L103)
 
 ---
 
@@ -494,7 +495,7 @@ plugins:
       nodeName: "${FALCO_K8S_NODE_NAME}"
 ```
 
-**Source:** [`README.md:12-16`](../../refs/falcosecurity/k8s-metacollector/README.md), [`plugins/k8smeta/README.md`](../../refs/falcosecurity/plugins/plugins/k8smeta/README.md)
+**Source:** [`README.md:12-16`](../../refs/falcosecurity/k8s-metacollector/README.md#L12-L16), [`plugins/k8smeta/README.md`](../../refs/falcosecurity/plugins/plugins/k8smeta/README.md)
 
 ### Relationship to Container Plugin
 
@@ -520,7 +521,7 @@ Fields provided by k8smeta plugin via k8s-metacollector:
 | ReplicaSet | `k8smeta.rs.name`, `k8smeta.rs.uid`, `k8smeta.rs.label[key]`, `k8smeta.rs.labels` |
 | ReplicationController | `k8smeta.rc.name`, `k8smeta.rc.uid`, `k8smeta.rc.label[key]`, `k8smeta.rc.labels` |
 
-**Source:** [`plugins/k8smeta/README.md:24-54`](../../refs/falcosecurity/plugins/plugins/k8smeta/README.md)
+**Source:** [`plugins/k8smeta/README.md:24-54`](../../refs/falcosecurity/plugins/plugins/k8smeta/README.md#L24-L54)
 
 ---
 
@@ -534,7 +535,7 @@ The k8s-metacollector provides the following guarantees:
 4. **Delete Events**: Sent when a resource is no longer relevant
 5. **Node Filtering**: Only node-relevant metadata is sent to each subscriber
 
-**Source:** [`README.md:42-52`](../../refs/falcosecurity/k8s-metacollector/README.md)
+**Source:** [`README.md:42-52`](../../refs/falcosecurity/k8s-metacollector/README.md#L42-L52)
 
 ---
 
@@ -550,6 +551,14 @@ The k8s-metacollector provides the following guarantees:
 **Source:** [`OWNERS`](../../refs/falcosecurity/k8s-metacollector/OWNERS)
 
 ---
+
+## Era 0.45 Reliability Changes
+
+Version 0.1.4 preserves `resourceVersion` in informer-cached objects, while Pod, Service and partial-metadata collectors remove it from the metadata serialized to subscribers. Thus informer update detection retains Kubernetes version information without emitting metadata updates merely because that version changed. Collector metrics also assign update and delete events to their matching labels.
+
+The optional `--watch-idle-timeout` wraps successful API-server watch responses and closes the stream after the configured period without data, allowing the reflector to reconnect. It defaults to disabled; it does not time out subscriber gRPC streams. The transport resets its timer after successful reads and stops it on close.
+
+**Source:** [`transformers.go:103-120`](../../refs/falcosecurity/k8s-metacollector/collectors/transformers.go), [`pod.go:316-355`](../../refs/falcosecurity/k8s-metacollector/collectors/pod.go), [`services.go:199-237`](../../refs/falcosecurity/k8s-metacollector/collectors/services.go), [`partialObjectMetadata.go:225-263`](../../refs/falcosecurity/k8s-metacollector/collectors/partialObjectMetadata.go), [`metrics.go:62-102`](../../refs/falcosecurity/k8s-metacollector/collectors/metrics.go), [`run.go:64-79,126-138`](../../refs/falcosecurity/k8s-metacollector/cmd/collector/run/run.go), [`idle_timeout.go:41-112`](../../refs/falcosecurity/k8s-metacollector/pkg/transport/idle_timeout.go).
 
 ## Sources
 

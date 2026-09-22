@@ -2,7 +2,7 @@
 name: falco-maintainer
 description: Help a Falco maintainer discover and rank worthwhile sub-projects, investigate connected issues, advance approved work, and keep a lightweight ongoing watch. Use for daily maintenance, strategic backlog planning, cross-repository priorities, and continuing maintainer sessions. Route an isolated PR review or release task directly to its specialist skill.
 metadata:
-  falco-version: "0.44"
+  falco-version: "0.45"
 ---
 
 # Falco Maintainer

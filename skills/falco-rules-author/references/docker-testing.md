@@ -8,8 +8,8 @@ Complete reference for running Falco in Docker containers for rule testing.
 
 | Variant | Image Tag | Base | Use Case |
 |---------|-----------|------|----------|
-| Default | `falcosecurity/falco:0.44.0` | Wolfi distroless | Production, CI, minimal footprint |
-| Debian | `falcosecurity/falco:0.44.0-debian` | Debian | **Recommended for testing** -- has shell, package manager, debugging tools |
+| Default | `falcosecurity/falco:0.45.0` | Wolfi distroless | Production, CI, minimal footprint |
+| Debian | `falcosecurity/falco:0.45.0-debian` | Debian | **Recommended for testing** -- has shell, package manager, debugging tools |
 
 Use the **Debian variant** for iterative rule testing. It includes a full shell and `apt-get`, which makes in-container diagnostics (BPF debugging, field inspection, plugin troubleshooting) possible. The distroless default is not designed for interactive use.
 
@@ -33,7 +33,7 @@ docker run -d \
   -v /proc:/host/proc:ro \
   -v /etc:/host/etc:ro \
   -v /path/to/my_rules.yaml:/etc/falco/my_rules.yaml:ro \
-  falcosecurity/falco:0.44.0 \
+  falcosecurity/falco:0.45.0 \
   falco \
     -r /etc/falco/falco_rules.yaml \
     -r /etc/falco/my_rules.yaml \
@@ -92,7 +92,7 @@ docker run --rm \
   -v /proc:/host/proc:ro \
   -v /etc:/host/etc:ro \
   -v /path/to/my_rules.yaml:/etc/falco/my_rules.yaml:ro \
-  falcosecurity/falco:0.44.0 \
+  falcosecurity/falco:0.45.0 \
   falco \
     -r /etc/falco/falco_rules.yaml \
     -r /etc/falco/my_rules.yaml \
@@ -135,7 +135,7 @@ For testing plugin-only rules without kernel access:
 docker run --rm \
   --name falco-rule-test \
   -v /path/to/my_rules.yaml:/etc/falco/my_rules.yaml:ro \
-  falcosecurity/falco:0.44.0 \
+  falcosecurity/falco:0.45.0 \
   falco \
     -o "engine.kind=nodriver" \
     -r /etc/falco/my_rules.yaml \
@@ -151,7 +151,7 @@ docker run --rm \
   --name falco-rule-test \
   -v /path/to/capture.scap:/capture.scap:ro \
   -v /path/to/my_rules.yaml:/etc/falco/my_rules.yaml:ro \
-  falcosecurity/falco:0.44.0 \
+  falcosecurity/falco:0.45.0 \
   falco \
     -o "engine.kind=replay" \
     -o "engine.replay.capture_file=/capture.scap" \
@@ -185,7 +185,7 @@ docker run -d --name falco-rule-test \
   --privileged \
   -v /proc:/host/proc:ro -v /etc:/host/etc:ro \
   -v /path/to/my_rules.yaml:/etc/falco/my_rules.yaml:ro \
-  falcosecurity/falco:0.44.0 \
+  falcosecurity/falco:0.45.0 \
   falco -r /etc/falco/my_rules.yaml \
     -o json_output=true \
     -o json_include_output_fields_property=true \

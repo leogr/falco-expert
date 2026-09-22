@@ -1,6 +1,6 @@
 # falcosidekick-ui Digest
 
-> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/falcosidekick-ui/`](../../refs/falcosecurity/falcosidekick-ui/) | **Commit:** `2fc51f2` (March 31, 2026; `git describe` = `v2.3.0`)
+> **Era Relevance:** 0.45 | **Source:** [`refs/falcosecurity/falcosidekick-ui/`](../../refs/falcosecurity/falcosidekick-ui/) | **Commit:** `3a550c5` (`v2.3.1`)
 
 **Repository:** [falcosecurity/falcosidekick-ui](https://github.com/falcosecurity/falcosidekick-ui)
 **Scope:** Ecosystem
@@ -201,7 +201,7 @@ See [`falcosidekick/outputs.md`](falcosidekick/outputs.md) for full output confi
 | Build | Make, yarn |
 
 **Requirements for development:**
-- Go >= 1.18
+- Go 1.26 (module directive; the README still says >=1.25)
 - Node.js >= v14
 - yarn >= 1.22
 
@@ -250,6 +250,12 @@ Format: `X<unit>` where unit is:
 `0` = no expiration (default)
 
 **Source:** [`README.md`](../../refs/falcosecurity/falcosidekick-ui/README.md)
+
+## Era 0.45 Snapshot
+
+The UI is pinned to v2.3.1. Compared with v2.3.0, application Go implementations are unchanged; changes concern dependencies, packaging/build automation, and test cleanup. The module declares Go 1.26, while the README minimum is 1.25.
+
+**Source:** [release comparison](https://github.com/falcosecurity/falcosidekick-ui/compare/v2.3.0...v2.3.1), [`go.mod:1-3`](../../refs/falcosecurity/falcosidekick-ui/go.mod), [`README.md:118-125`](../../refs/falcosecurity/falcosidekick-ui/README.md).
 
 ## Sources
 

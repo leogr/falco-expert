@@ -1,5 +1,5 @@
 # State Management
-> **Era:** 0.44 | **Version:** libs 0.25.4 | **Source:** [`refs/falcosecurity/libs/`](../../../refs/falcosecurity/libs/)
+> **Era:** 0.45 | **Version:** libs 0.26.0 | **Source:** [`refs/falcosecurity/libs/`](../../../refs/falcosecurity/libs/)
 
 ## Overview
 
@@ -125,8 +125,7 @@ Each thread has an FD table (shared with main thread if `PPM_CL_CLONE_FILES`).
 | `m_fd` | int64_t | File descriptor number |
 | `m_type` | scap_fd_type | FD type (see below) |
 | `m_name` | string | Human-readable name |
-| `m_name_raw` | string | Raw path (minimal sanitization) |
-| `m_oldname` | string | Previous name (change detection) |
+| `m_name_raw` | string | Unresolved raw path bytes |
 
 **FD Types (scap_fd_type):**
 
@@ -184,7 +183,6 @@ Each thread has an FD table (shared with main thread if `PPM_CL_CLONE_FILES`).
 | `FLAGS_SOCKET_CONNECTED` | Socket connected |
 | `FLAGS_CONNECTION_PENDING` | Connection in progress |
 | `FLAGS_CONNECTION_FAILED` | Connection failed |
-| `FLAGS_IS_CLONED` | FD is cloned |
 | `FLAGS_OVERLAY_UPPER` | On overlay upper layer |
 | `FLAGS_OVERLAY_LOWER` | On overlay lower layer |
 
@@ -233,6 +231,14 @@ Created by container plugins, accessible via plugin API.
 | `user` | string | Container user |
 | `ip` | string | Container IP address |
 | (dynamic) | various | Plugin-defined fields |
+
+### FD Sharing and Writable Access (libs 0.26)
+
+Forked processes have distinct FD-table owners whose contents initially share a `shared_ptr` map. A write detaches the map shallowly, then copies only the entry being modified; ordinary read lookups preserve sharing. This is separate from `CLONE_FILES`, which uses the main thread's FD table. The initial process scan also deduplicates content-identical FD entries; equality checks include dynamic state before sharing.
+
+Read through `sinsp_fdtable::find()`, `sinsp_threadinfo::get_fd()` and `sinsp_evt::get_fd_info()`, which return const FD information. Writers use `find_mut()`, `get_fd_mut()` or `get_fd_info_mut()` so copy-on-write runs. Reacquire handles after table mutation; the event tracks its own original FD name for `fd.name_changed`. The old `sinsp_fdinfo::m_oldname` and `FLAGS_IS_CLONED` are removed.
+
+**Sources:** [fdtable.h:62-159,247-270](../../../refs/falcosecurity/libs/userspace/libsinsp/fdtable.h#L62-L159), [fdtable.cpp:77-121](../../../refs/falcosecurity/libs/userspace/libsinsp/fdtable.cpp#L77-L121), [parsers.cpp:842-854](../../../refs/falcosecurity/libs/userspace/libsinsp/parsers.cpp#L842-L854), [sinsp.cpp:387](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp.cpp#L387), [event.h:445-489](../../../refs/falcosecurity/libs/userspace/libsinsp/event.h#L445-L489).
 
 ## Plugin State Table API
 
@@ -432,119 +438,13 @@ public:
 };
 ```
 
-### Static Fields
+#### Field Accessors and Table Entries (libs 0.26)
 
-**Location:** `userspace/libsinsp/state/static_struct.h`
+Static and dynamic fields share `libsinsp::state::accessor`, which stores type metadata and reader/writer function pointers. Static fields use member-access lambdas instead of byte offsets. `dynamic_field_infos` owns accessors in a `std::deque` to keep their addresses stable as fields are added, checks conflicting field types, and indexes per-entry values. `accessor::as<T>()` checks the type before returning a typed reference; `table_entry::read_field()` and `write_field()` route access through it.
 
-Compile-time defined fields with fixed memory layout:
+`table_entry` is the common interface; `extensible_struct` adds static/dynamic field storage. `built_in_table<KeyType>` exposes `get_field()` and `add_field()` as `const accessor&`; `extensible_table<KeyType>` supplies the extensible implementation used by thread and FD tables. The former nested `static_struct::field_info`, `dynamic_struct::field_accessor`, and offset-based API examples do not describe libs 0.26. The plugin C table API remains compatible.
 
-```cpp
-struct static_struct {
-    struct field_info {
-        bool readonly() const;
-        const char* name() const;
-        const typeinfo& info() const;
-        size_t offset() const;
-        bool valid() const;
-    };
-
-    template<typename T>
-    struct field_accessor {
-        // Bound to specific field_info
-        // Used with get_static_field/set_static_field
-    };
-
-    struct field_infos {
-        // Hash map: field name -> field_info
-        // Immutable after construction
-    };
-
-    virtual const field_infos* static_fields() const = 0;
-};
-```
-
-### Dynamic Fields
-
-**Location:** `userspace/libsinsp/state/dynamic_struct.h`
-
-Runtime-extensible fields:
-
-```cpp
-struct dynamic_struct {
-    struct field_info {
-        uint32_t index() const;     // Position in array
-        uint64_t defs_id() const;   // Field definition set ID
-        bool readonly() const;
-        const char* name() const;
-        const typeinfo& info() const;
-    };
-
-    template<typename T>
-    struct field_accessor {
-        // Bound to specific field_info
-    };
-
-    struct field_infos {
-        // Shared via shared_ptr
-        // Can add fields at runtime
-        template<typename T>
-        field_accessor<T> add_field(const char* name);
-    };
-};
-```
-
-**Key Differences from Static:**
-- Can be extended at runtime
-- Shared across all instances via `shared_ptr`
-- Fields stored in separate memory blocks
-- Used for plugin-defined fields
-
-### Table Entry
-
-```cpp
-// From state/table.h
-struct table_entry : public static_struct, public dynamic_struct {
-    // Combines both field systems
-    // Unified access to static and dynamic fields
-};
-```
-
-### Table Interface
-
-```cpp
-// Non-templated base
-class base_table {
-public:
-    const typeinfo& key_info() const;
-    virtual const char* name() const = 0;
-    virtual uint64_t get_size() = 0;
-    virtual std::unique_ptr<table_entry> new_entry() = 0;
-    virtual std::shared_ptr<table_entry> get_entry(key) = 0;
-    virtual std::shared_ptr<table_entry> add_entry(key, entry) = 0;
-    virtual bool erase_entry(key) = 0;
-    virtual void clear_entries() = 0;
-    virtual bool foreach_entry(predicate) = 0;
-};
-
-// Templated interface
-template<typename KeyType>
-class table : public base_table {
-public:
-    virtual std::shared_ptr<table_entry> get_entry(const KeyType& key) = 0;
-    virtual std::shared_ptr<table_entry> add_entry(const KeyType& key,
-                                                    entry) = 0;
-    virtual bool erase_entry(const KeyType& key) = 0;
-};
-
-// Built-in table implementation
-template<typename KeyType>
-class built_in_table : public table<KeyType> {
-public:
-    const char* name() const override;
-    virtual const static_struct::field_infos* static_fields() const;
-    const std::shared_ptr<dynamic_struct::field_infos>& dynamic_fields();
-};
-```
+**Sources:** [table_entry.h:27-200](../../../refs/falcosecurity/libs/userspace/libsinsp/state/table_entry.h#L27-L200), [static_struct.h:33-79](../../../refs/falcosecurity/libs/userspace/libsinsp/state/static_struct.h#L33-L79), [dynamic_struct.h:120-177](../../../refs/falcosecurity/libs/userspace/libsinsp/state/dynamic_struct.h#L120-L177), [table.h:185-216,334-396](../../../refs/falcosecurity/libs/userspace/libsinsp/state/table.h#L185-L216), [extensible_struct.h](../../../refs/falcosecurity/libs/userspace/libsinsp/state/extensible_struct.h).
 
 ### Table Registry
 

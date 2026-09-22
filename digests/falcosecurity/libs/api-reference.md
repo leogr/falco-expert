@@ -1,5 +1,5 @@
 # API Reference
-> **Era:** 0.44 | **Version:** libs 0.25.4 | **Source:** [`refs/falcosecurity/libs/`](../../../refs/falcosecurity/libs/)
+> **Era:** 0.45 | **Version:** libs 0.26.0 | **Source:** [`refs/falcosecurity/libs/`](../../../refs/falcosecurity/libs/)
 
 ## Event Types
 
@@ -27,7 +27,7 @@ Events are identified by `ppm_event_type` codes defined in [`ppm_events_public.h
 
 ### File Open Flags (PPM_O_*)
 
-**Source:** [`ppm_events_public.h:92-113`](../../../refs/falcosecurity/libs/driver/ppm_events_public.h)
+**Source:** [`ppm_events_public.h:92-113`](../../../refs/falcosecurity/libs/driver/ppm_events_public.h#L92-L113)
 
 ```c
 #define PPM_O_NONE 0
@@ -53,7 +53,7 @@ Events are identified by `ppm_event_type` codes defined in [`ppm_events_public.h
 
 ### File Modes (PPM_S_*)
 
-**Source:** [`ppm_events_public.h:131-143`](../../../refs/falcosecurity/libs/driver/ppm_events_public.h)
+**Source:** [`ppm_events_public.h:131-143`](../../../refs/falcosecurity/libs/driver/ppm_events_public.h#L131-L143)
 
 ```c
 #define PPM_S_NONE 0
@@ -73,7 +73,7 @@ Events are identified by `ppm_event_type` codes defined in [`ppm_events_public.h
 
 ### Clone Flags (PPM_CL_*)
 
-**Source:** [`ppm_events_public.h:166-204`](../../../refs/falcosecurity/libs/driver/ppm_events_public.h)
+**Source:** [`ppm_events_public.h:166-204`](../../../refs/falcosecurity/libs/driver/ppm_events_public.h#L166-L204)
 
 ```c
 #define PPM_CL_NONE 0
@@ -112,7 +112,7 @@ Events are identified by `ppm_event_type` codes defined in [`ppm_events_public.h
 
 ### Socket Families (PPM_AF_*)
 
-**Source:** [`ppm_events_public.h:48-88`](../../../refs/falcosecurity/libs/driver/ppm_events_public.h)
+**Source:** [`ppm_events_public.h:48-88`](../../../refs/falcosecurity/libs/driver/ppm_events_public.h#L48-L88)
 
 ```c
 #define PPM_AF_UNSPEC 0
@@ -259,7 +259,7 @@ typedef enum scap_fd_type {
 
 ## Event Header Structure
 
-**Source:** [`ppm_events_public.h:2182-2191`](../../../refs/falcosecurity/libs/driver/ppm_events_public.h)
+**Source:** [`ppm_events_public.h:2182-2191`](../../../refs/falcosecurity/libs/driver/ppm_events_public.h#L2182-L2191)
 
 ```c
 struct ppm_evt_hdr {
@@ -334,18 +334,18 @@ typedef enum {
 **Sources:**
 - [`driver/API_VERSION`](../../../refs/falcosecurity/libs/driver/API_VERSION) - Driver API version
 - [`driver/SCHEMA_VERSION`](../../../refs/falcosecurity/libs/driver/SCHEMA_VERSION) - Event schema version
-- [`plugin_api.h:31-33`](../../../refs/falcosecurity/libs/userspace/plugin/plugin_api.h) - Plugin API version
+- [`plugin_api.h:31-33`](../../../refs/falcosecurity/libs/userspace/plugin/plugin_api.h#L31-L33) - Plugin API version
 
 ```c
 // From driver/API_VERSION
-#define PPM_API_CURRENT_VERSION_MAJOR 8
+#define PPM_API_CURRENT_VERSION_MAJOR 11
 #define PPM_API_CURRENT_VERSION_MINOR 0
-#define PPM_API_CURRENT_VERSION_PATCH 4
+#define PPM_API_CURRENT_VERSION_PATCH 0
 
 // From driver/SCHEMA_VERSION
 #define PPM_SCHEMA_CURRENT_VERSION_MAJOR 4
-#define PPM_SCHEMA_CURRENT_VERSION_MINOR 1
-#define PPM_SCHEMA_CURRENT_VERSION_PATCH 0
+#define PPM_SCHEMA_CURRENT_VERSION_MINOR 5
+#define PPM_SCHEMA_CURRENT_VERSION_PATCH 2
 
 // From userspace/plugin/plugin_api.h
 #define PLUGIN_API_VERSION_MAJOR 3
@@ -355,7 +355,7 @@ typedef enum {
 
 ## Limits
 
-**Source:** [`ppm_events_public.h:42-43`](../../../refs/falcosecurity/libs/driver/ppm_events_public.h)
+**Source:** [`ppm_events_public.h:42-43`](../../../refs/falcosecurity/libs/driver/ppm_events_public.h#L42-L43)
 
 ```c
 #define PPM_MAX_EVENT_PARAMS (1 << 5)  // 32 parameters max

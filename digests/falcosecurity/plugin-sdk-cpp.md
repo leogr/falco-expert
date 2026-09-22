@@ -1,6 +1,6 @@
 # plugin-sdk-cpp Digest
 
-> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/plugin-sdk-cpp/`](../../refs/falcosecurity/plugin-sdk-cpp/) | **Commit:** `9e8332e` (tag `v0.4.1`, May 4, 2026)
+> **Era Relevance:** 0.45 | **Source:** [`refs/falcosecurity/plugin-sdk-cpp/`](../../refs/falcosecurity/plugin-sdk-cpp/) | **Commit:** `9e8332e` (tag `v0.4.1`, May 4, 2026)
 
 **Repository:** [falcosecurity/plugin-sdk-cpp](https://github.com/falcosecurity/plugin-sdk-cpp)
 **Scope:** Ecosystem
@@ -71,7 +71,7 @@ namespace falcosecurity {
 }
 ```
 
-**Source:** [`include/falcosecurity/types.h:32`](../../refs/falcosecurity/plugin-sdk-cpp/include/falcosecurity/types.h)
+**Source:** [`include/falcosecurity/types.h:32`](../../refs/falcosecurity/plugin-sdk-cpp/include/falcosecurity/types.h#L32)
 
 ### Field Value Types
 
@@ -86,7 +86,7 @@ field_value_type::FTYPE_IPADDR   // IPv4 or IPv6 address
 field_value_type::FTYPE_IPNET    // IPv4 or IPv6 network
 ```
 
-**Source:** [`include/falcosecurity/types.h:315-337`](../../refs/falcosecurity/plugin-sdk-cpp/include/falcosecurity/types.h)
+**Source:** [`include/falcosecurity/types.h:315-337`](../../refs/falcosecurity/plugin-sdk-cpp/include/falcosecurity/types.h#L315-L337)
 
 ### State Value Types
 
@@ -100,7 +100,7 @@ state_value_type::SS_PLUGIN_ST_STRING  state_value_type::SS_PLUGIN_ST_BOOL
 state_value_type::SS_PLUGIN_ST_TABLE   // Subtable reference
 ```
 
-**Source:** [`include/falcosecurity/types.h:339-367`](../../refs/falcosecurity/plugin-sdk-cpp/include/falcosecurity/types.h)
+**Source:** [`include/falcosecurity/types.h:339-367`](../../refs/falcosecurity/plugin-sdk-cpp/include/falcosecurity/types.h#L339-L367)
 
 ### Logger
 
@@ -113,7 +113,7 @@ struct logger {
 };
 ```
 
-**Source:** [`include/falcosecurity/types.h:52-108`](../../refs/falcosecurity/plugin-sdk-cpp/include/falcosecurity/types.h)
+**Source:** [`include/falcosecurity/types.h:52-108`](../../refs/falcosecurity/plugin-sdk-cpp/include/falcosecurity/types.h#L52-L108)
 
 ### Field Info
 
@@ -130,7 +130,7 @@ struct field_info {
 };
 ```
 
-**Source:** [`include/falcosecurity/types.h:152-183`](../../refs/falcosecurity/plugin-sdk-cpp/include/falcosecurity/types.h)
+**Source:** [`include/falcosecurity/types.h:152-183`](../../refs/falcosecurity/plugin-sdk-cpp/include/falcosecurity/types.h#L152-L183)
 
 ### Metric
 
@@ -150,7 +150,7 @@ struct metric {
 };
 ```
 
-**Source:** [`include/falcosecurity/types.h:210-279`](../../refs/falcosecurity/plugin-sdk-cpp/include/falcosecurity/types.h)
+**Source:** [`include/falcosecurity/types.h:210-279`](../../refs/falcosecurity/plugin-sdk-cpp/include/falcosecurity/types.h#L210-L279)
 
 ## Building Plugins
 
@@ -490,7 +490,7 @@ uint32_t len = 0;
 const char* data = (const char*)dec.get_data(len);
 ```
 
-**Source:** [`include/falcosecurity/events/encoders.h:32-101`](../../refs/falcosecurity/plugin-sdk-cpp/include/falcosecurity/events/encoders.h), [`include/falcosecurity/events/decoders.h`](../../refs/falcosecurity/plugin-sdk-cpp/include/falcosecurity/events/decoders.h)
+**Source:** [`include/falcosecurity/events/encoders.h:32-101`](../../refs/falcosecurity/plugin-sdk-cpp/include/falcosecurity/events/encoders.h#L32-L101), [`include/falcosecurity/events/decoders.h`](../../refs/falcosecurity/plugin-sdk-cpp/include/falcosecurity/events/decoders.h)
 
 ### Async Events
 
@@ -510,7 +510,7 @@ uint32_t len = 0;
 char* data = (char*)dec.get_data(len);
 ```
 
-**Source:** [`include/falcosecurity/events/encoders.h:103-181`](../../refs/falcosecurity/plugin-sdk-cpp/include/falcosecurity/events/encoders.h)
+**Source:** [`include/falcosecurity/events/encoders.h:103-181`](../../refs/falcosecurity/plugin-sdk-cpp/include/falcosecurity/events/encoders.h#L103-L181)
 
 ## Input Types
 
@@ -524,7 +524,7 @@ class init_input {
 };
 ```
 
-**Source:** [`include/falcosecurity/inputs.h:162-194`](../../refs/falcosecurity/plugin-sdk-cpp/include/falcosecurity/inputs.h)
+**Source:** [`include/falcosecurity/inputs.h:162-194`](../../refs/falcosecurity/plugin-sdk-cpp/include/falcosecurity/inputs.h#L162-L194)
 
 ### parse_event_input
 
@@ -536,7 +536,7 @@ class parse_event_input {
 };
 ```
 
-**Source:** [`include/falcosecurity/inputs.h:196-238`](../../refs/falcosecurity/plugin-sdk-cpp/include/falcosecurity/inputs.h)
+**Source:** [`include/falcosecurity/inputs.h:196-238`](../../refs/falcosecurity/plugin-sdk-cpp/include/falcosecurity/inputs.h#L196-L238)
 
 ### extract_fields_input
 
@@ -548,7 +548,7 @@ class extract_fields_input {
 };
 ```
 
-**Source:** [`include/falcosecurity/inputs.h:240-287`](../../refs/falcosecurity/plugin-sdk-cpp/include/falcosecurity/inputs.h)
+**Source:** [`include/falcosecurity/inputs.h:240-287`](../../refs/falcosecurity/plugin-sdk-cpp/include/falcosecurity/inputs.h#L240-L287)
 
 ### capture_listen_input
 
@@ -559,7 +559,7 @@ class capture_listen_input {
 };
 ```
 
-**Source:** [`include/falcosecurity/inputs.h:312-348`](../../refs/falcosecurity/plugin-sdk-cpp/include/falcosecurity/inputs.h)
+**Source:** [`include/falcosecurity/inputs.h:312-348`](../../refs/falcosecurity/plugin-sdk-cpp/include/falcosecurity/inputs.h#L312-L348)
 
 ## Installation
 

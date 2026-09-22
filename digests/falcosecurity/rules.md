@@ -1,7 +1,7 @@
 # falcosecurity/rules Digest
 
 **Repository:** https://github.com/falcosecurity/rules
-**Era:** 0.44
+**Era:** 0.45
 **Status:** Core / Stable
 
 The official repository for Falco detection rules - predefined detections for security threats, abnormal behaviors, and compliance monitoring.
@@ -96,15 +96,15 @@ Rules requiring high-volume syscalls (configured via `base_syscalls.all` since 0
 
 ```bash
 helm install falco falcosecurity/falco \
-  --set "falcoctl.config.artifact.install.refs={falco-rules:2,falco-incubating-rules:2,falco-sandbox-rules:2}" \
-  --set "falcoctl.config.artifact.follow.refs={falco-rules:2,falco-incubating-rules:2,falco-sandbox-rules:2}" \
-  --set "falco.rules_file={/etc/falco/k8s_audit_rules.yaml,/etc/falco/rules.d,/etc/falco/falco_rules.yaml,/etc/falco/falco-incubating_rules.yaml,/etc/falco/falco-sandbox_rules.yaml}"
+  --set "falcoctl.config.artifact.install.refs={falco-rules:5,falco-incubating-rules:6,falco-sandbox-rules:6}" \
+  --set "falcoctl.config.artifact.follow.refs={falco-rules:5,falco-incubating-rules:6,falco-sandbox-rules:6}" \
+  --set "falco.rules_files={/etc/falco/falco_rules.yaml,/etc/falco/falco-incubating_rules.yaml,/etc/falco/falco-sandbox_rules.yaml,/etc/falco/rules.d}"
 ```
 
 Options:
 - `falcoctl.config.artifact.install.refs` - Rules downloaded at startup
 - `falcoctl.config.artifact.follow.refs` - Rules automatically updated
-- `falco.rules_file` - Rules loaded by engine
+- `falco.rules_files` - Rules loaded by engine
 
 ### Host Installation
 
@@ -204,6 +204,12 @@ rulesfiles:
 - Network monitoring via syscalls (connect, accept, etc.), not deep packet inspection
 - Application-level monitoring requires plugins (k8saudit, cloudtrail, etc.)
 - Rule-based detection; no built-in ML anomaly detection
+
+## Era 0.45 Rule Content
+
+The selected rules snapshot contains stable `falco-rules` 5.2.0, incubating 6.0.1, and sandbox 6.2.0. Stable rules exclude specific systemd helper processes from `Read sensitive file untrusted` using both parent name and executable path. Sandbox rules add `Container Accessing GPU Device` and `GPU Management Tool Run in Container`; both are disabled by default and use the `user_known_gpu_workloads` tuning hook. They observe device opens and management-tool execution, not proof that mining occurred.
+
+**Source:** [`falco_rules.yaml:412-446`](../../refs/falcosecurity/rules/rules/falco_rules.yaml), [`falco-sandbox_rules.yaml:1976-2067`](../../refs/falcosecurity/rules/rules/falco-sandbox_rules.yaml), [stable release](https://github.com/falcosecurity/rules/releases/tag/falco-rules-5.2.0), [incubating release](https://github.com/falcosecurity/rules/releases/tag/falco-incubating-rules-6.0.1), [sandbox release](https://github.com/falcosecurity/rules/releases/tag/falco-sandbox-rules-6.2.0).
 
 ## Sources
 

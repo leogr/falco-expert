@@ -2,7 +2,7 @@
 name: falco-dependabot
 description: Clear the open Dependabot PR backlog in a falcosecurity repository in bulk - rebase each PR, wait for CI, approve when green, stop when red. Use when asked to process Dependabot PRs, bump dependencies in bulk, clear the dependency backlog, or handle dependency security alerts in a falcosecurity repo.
 metadata:
-  falco-version: "0.44"
+  falco-version: "0.45"
 ---
 
 # Falco Dependabot

@@ -2,7 +2,7 @@
 
 > GitHub Actions for CI/CD security and testing: falco-actions for supply chain protection, CI/CD-specific detection rules, and the falcosecurity/testing regression suite.
 
-**Era:** 0.44 | **Source:** [`refs/falcosecurity/falco-actions/`](../refs/falcosecurity/falco-actions/), [`refs/falcosecurity/testing/`](../refs/falcosecurity/testing/)
+**Era:** 0.45 | **Source:** [`refs/falcosecurity/falco-actions/`](../refs/falcosecurity/falco-actions/), [`refs/falcosecurity/testing/`](../refs/falcosecurity/testing/)
 
 ## Overview
 
@@ -88,11 +88,11 @@ Live mode provides real-time protection within a single GitHub Actions job. Falc
 ### Technical Details
 
 - Uses the `falcosecurity/falco-no-driver` Docker image
-- Runs with the `--privileged` flag (required for `modern_ebpf`)
+- Runs with the `--privileged` flag in this action
 - Mounts `/proc`, `/etc`, `/var/run/docker.sock` from the host
 - Outputs JSON events to `/tmp/falco_events.json`
 
-**Source:** [`start/action.yaml:73-91`](../refs/falcosecurity/falco-actions/start/action.yaml)
+**Source:** [`start/action.yaml:73-91`](../refs/falcosecurity/falco-actions/start/action.yaml#L73-L91)
 
 ### Workflow Pattern
 
@@ -137,7 +137,7 @@ Analyze mode separates event capture from analysis across two jobs, enabling det
 - Applies syscall filters from a configuration file to reduce capture size
 - The stop action uploads the `.scap` file as a GitHub Actions artifact
 
-**Source:** [`start/action.yaml:107-185`](../refs/falcosecurity/falco-actions/start/action.yaml)
+**Source:** [`start/action.yaml:107-184`](../refs/falcosecurity/falco-actions/start/action.yaml)
 
 ### Analysis Phase
 
@@ -202,7 +202,7 @@ jobs:
 
 ## CI/CD Detection Rules
 
-Seven detection rules ship with falco-actions, all tagged `CI/CD` with `WARNING` priority. They require engine version 0.43.0 (the falco-actions repo has not yet been bumped to the 0.44 engine version 0.62.0; rules remain compatible).
+Seven detection rules ship with falco-actions, all tagged `CI/CD` with `WARNING` priority. They declare a minimum engine version of 0.43.0. This is a minimum rule requirement, distinct from the engine bundled in Falco 0.45; it does not by itself verify the complete action against that release.
 
 | Rule | Description |
 |------|-------------|
@@ -273,7 +273,7 @@ The [falcosecurity/testing](https://github.com/falcosecurity/testing) repository
 | `dummy.test` | dummy plugin | Dummy plugin tests |
 | `falco-driver-loader.test` | drivers | Driver loader tests (requires kernel headers) |
 
-**Source:** [`README.md`](../refs/falcosecurity/testing/README.md), [`action.yml:88-111`](../refs/falcosecurity/testing/action.yml)
+**Source:** [`README.md`](../refs/falcosecurity/testing/README.md), [`action.yml:88-111`](../refs/falcosecurity/testing/action.yml#L88-L111)
 
 ### Runner Interface
 
@@ -293,7 +293,7 @@ type Runner interface {
 
 Runner options include `WithFiles()`, `WithArgs()`, `WithStdout()`, `WithStderr()`, and `WithEnvVars()`.
 
-**Source:** [`pkg/run/runner.go:39-47`](../refs/falcosecurity/testing/pkg/run/runner.go), [`pkg/run/executable.go`](../refs/falcosecurity/testing/pkg/run/executable.go), [`pkg/run/docker.go`](../refs/falcosecurity/testing/pkg/run/docker.go)
+**Source:** [`pkg/run/runner.go:39-47`](../refs/falcosecurity/testing/pkg/run/runner.go#L39-L47), [`pkg/run/executable.go`](../refs/falcosecurity/testing/pkg/run/executable.go), [`pkg/run/docker.go`](../refs/falcosecurity/testing/pkg/run/docker.go)
 
 ## Test Harness
 
@@ -305,7 +305,7 @@ func Test(runner run.Runner, options ...TestOption) *TestOutput
 
 Default behaviors: uses `/etc/falco/falco.yaml` as config, enforces debug logging on stderr, enables stdout output, and sets a 5-minute maximum duration.
 
-**Source:** [`pkg/falco/tester.go:69-115`](../refs/falcosecurity/testing/pkg/falco/tester.go)
+**Source:** [`pkg/falco/tester.go:69-115`](../refs/falcosecurity/testing/pkg/falco/tester.go#L69-L115)
 
 ### TestOptions
 
@@ -334,7 +334,8 @@ Default behaviors: uses `/etc/falco/falco.yaml` as config, enforces debug loggin
 ```go
 // Error handling
 Err() error                    // Returns error if Falco run failed
-ExitCode() int                 // Returns Falco exit code
+ExitCode() int                 // Executable exit code, -1 for signal termination
+ExitDesc() string              // Description from a recorded run.ExitError
 DurationExceeded() bool        // True if context deadline exceeded
 
 // Output access
@@ -344,6 +345,11 @@ StdoutJSON() map[string]interface{}  // Parsed JSON stdout
 ```
 
 **Source:** [`pkg/falco/tester_output.go`](../refs/falcosecurity/testing/pkg/falco/tester_output.go)
+
+
+The executable runner converts process failures into `run.ExitError`, preserving both the numeric code and the exit description. Falco and falcoctl output helpers use `errors.As` to find that error. Always check `Err()` as well: when no typed exit error is recorded, `ExitCode()` returns zero and `ExitDesc()` returns an empty string. The Docker runner streams container output and does not implement the executable runner's exit-status conversion. **Sources:** [executable runner](../refs/falcosecurity/testing/pkg/run/executable.go#L116-L121), [Falco output helpers](../refs/falcosecurity/testing/pkg/falco/tester_output.go#L58-L78), [Docker runner](../refs/falcosecurity/testing/pkg/run/docker.go#L120-L134).
+
+The 0.45 regression suite includes capture-based checks for raw invalid UTF-8 matching, replacement in rendered output, escaped control characters, and byte-oriented versus regex behavior. These are test definitions, not evidence that a particular build passed. **Source:** [UTF-8 regression tests](../refs/falcosecurity/testing/tests/falco/utf8_test.go).
 
 ### Detection Assertions
 

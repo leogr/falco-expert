@@ -1,5 +1,5 @@
 # libs Architecture
-> **Era:** 0.44 | **Version:** libs 0.25.4 | **Source:** [`refs/falcosecurity/libs/`](../../../refs/falcosecurity/libs/)
+> **Era:** 0.45 | **Version:** libs 0.26.0 | **Source:** [`refs/falcosecurity/libs/`](../../../refs/falcosecurity/libs/)
 
 ## Component Overview
 
@@ -66,7 +66,7 @@ struct ppm_evt_hdr {
 
 ## Driver Architecture
 
-### Modern eBPF (DEFAULT since Falco 0.35)
+### Modern eBPF (DEFAULT since Falco 0.38)
 
 The modern eBPF driver uses CO-RE (Compile Once, Run Everywhere) technology:
 
@@ -96,7 +96,7 @@ driver/modern_bpf/
 
 **BPF Maps:**
 - `syscall_exit_tail_table` - Tail call dispatch table
-- `auxiliary_maps` - Per-CPU event staging
+- `auxiliary_maps` - Per-CPU pools of task-owned event staging segments
 - `counter_maps` - Per-CPU statistics
 - `ringbuf_maps` - Ring buffers for event delivery
 - `interesting_syscalls_table_64bit` - Syscall filtering
@@ -138,6 +138,7 @@ struct scap_vtable {
 | `modern_bpf` | Modern eBPF probe |
 | `kmod` | Kernel module |
 | `savefile` | Capture file replay |
+| `raw_block` | Whole-file or incremental `.scap` blocks in caller-owned memory |
 | `source_plugin` | Plugin-provided events |
 | `nodriver` | No driver (proc scan only) |
 | `test_input` | Testing |
@@ -229,10 +230,10 @@ make sinsp
 
 ### Version Numbers
 
-- **Libs Version:** 0.25.4 (SemVer, major=0 indicates unstable API)
-- **Driver Version:** Uses `+driver` suffix (e.g., `10.2.0+driver`)
-- **API Version:** 10.1.0 (user/kernel boundary)
-- **Schema Version:** 4.5.1 (event data format)
+- **Libs Version:** 0.26.0 (SemVer, major=0 indicates unstable API)
+- **Driver Version:** Uses `+driver` suffix (e.g., `11.0.0+driver`)
+- **API Version:** 11.0.0 (user/kernel boundary)
+- **Schema Version:** 4.5.2 (event data format)
 - **Plugin API Version:** 3.12.0
 
 ### Compatibility Rules
@@ -253,7 +254,7 @@ Plugins can implement one or more capabilities (flags are OR-ed together):
 | **Async** | `CAP_ASYNC` (1 << 3) | Send asynchronous events | `get_async_events`, `set_async_event_handler` |
 | **Capture Listening** | `CAP_CAPTURE_LISTENING` (1 << 4) | React to capture lifecycle (start/stop) | `capture_open`, `capture_close` |
 
-**Source:** [`plugin_loader.h:40-48`](../../../refs/falcosecurity/libs/userspace/plugin/plugin_loader.h)
+**Source:** [`plugin_loader.h:40-48`](../../../refs/falcosecurity/libs/userspace/plugin/plugin_loader.h#L40-L48)
 
 See [plugin-framework.md](plugin-framework.md) for full Plugin API details.
 

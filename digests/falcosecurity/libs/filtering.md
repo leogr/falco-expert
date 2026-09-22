@@ -1,5 +1,5 @@
 # Filtering Language
-> **Era:** 0.44 | **Version:** libs 0.25.4 | **Source:** [`refs/falcosecurity/libs/`](../../../refs/falcosecurity/libs/)
+> **Era:** 0.45 | **Version:** libs 0.26.0 | **Source:** [`refs/falcosecurity/libs/`](../../../refs/falcosecurity/libs/)
 
 ## Overview
 
@@ -11,7 +11,7 @@ The filtering language is the core expression language used in Falco rule `condi
 
 ## Grammar
 
-**Source:** [`filter/parser.h:32-87`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter/parser.h)
+**Source:** [`filter/parser.h:32-87`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter/parser.h#L32-L87)
 
 The filter language is a context-free grammar parsed by a recursive descent parser. The exact EBNF from the source:
 
@@ -81,7 +81,7 @@ QuotedStr           ::= "(?:\\"|.)*?"|'(?:\\'|.)*?'
 BareStr             ::= [^ \b\t\n\r\(\),="']+
 ```
 
-Key design details: the parser has configurable max recursion depth (default 100) and supports partial parsing via `set_parse_partial()`. **Source:** [`filter/parser.h:128-139`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter/parser.h)
+Key design details: the parser has configurable max recursion depth (default 100) and supports partial parsing via `set_parse_partial()`. **Source:** [`filter/parser.h:128-139`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter/parser.h#L128-L139)
 
 ## AST Structure
 
@@ -103,13 +103,13 @@ The parser produces an Abstract Syntax Tree with 11 node types, all inheriting f
 | `field_expr` | Field reference | `field: string`, `arg: optional<string>` |
 | `field_transformer_expr` | Transformer call | `transformer: string`, `values: vector<unique_ptr<expr>>`, `arg: optional<string>` |
 
-Each node carries `pos_info` (idx, line, col) for error reporting. **Source:** [`filter/ast.h:49-78`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter/ast.h)
+Each node carries `pos_info` (idx, line, col) for error reporting. **Source:** [`filter/ast.h:49-78`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter/ast.h#L49-L78)
 
-The AST supports the visitor pattern with four visitor interfaces: `expr_visitor`, `const_expr_visitor`, `base_expr_visitor` (traversal-only default), and `const_base_expr_visitor`. A `string_visitor` converts ASTs back to filter strings. **Source:** [`filter/ast.h:85-199`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter/ast.h)
+The AST supports the visitor pattern with four visitor interfaces: `expr_visitor`, `const_expr_visitor`, `base_expr_visitor` (traversal-only default), and `const_base_expr_visitor`. A `string_visitor` converts ASTs back to filter strings. **Source:** [`filter/ast.h:85-199`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter/ast.h#L85-L199)
 
 ## Comparison Operators
 
-**Source:** [`filter_compare.h:31-52`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter_compare.h)
+**Source:** [`filter_compare.h:31-52`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter_compare.h#L31-L52)
 
 | Operator | Enum | Value | Description | Example |
 |----------|------|-------|-------------|---------|
@@ -133,13 +133,21 @@ The AST supports the visitor pattern with four visitor interfaces: `expr_visitor
 | `iglob` | `CO_IGLOB` | 18 | Case-insensitive glob | `proc.name iglob Java*` |
 | `regex` | `CO_REGEX` | 19 | Regular expression (RE2) | `proc.cmdline regex "pass(word)?"` |
 
-The core comparison function is `flt_compare()`. **Source:** [`filter_compare.h:62-67`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter_compare.h)
+The core comparison function is `flt_compare()`. **Source:** [`filter_compare.h:62-67`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter_compare.h#L62-L67)
+
+### Raw Bytes, Escapes, and UTF-8 (libs 0.26)
+
+String extraction preserves raw bytes. The `sanitize_strings` argument has been removed from filtercheck extraction APIs; transformations run on the extracted values. Ordinary comparisons therefore operate on those bytes, while `regex` sanitizes invalid UTF-8 to U+FFFD before RE2 full matching (including regex with operator modifiers). Sanitization preserves valid control characters and follows Unicode maximal-subpart substitution for invalid sequences.
+
+Quoted filter strings accept `\xHH` byte escapes with exactly two hexadecimal digits; truncated or non-hex escapes fail parsing. JSON output recursively sanitizes string values before serialization, including values inside arrays and objects. Filtering and rendered JSON may therefore represent an invalid-byte value differently.
+
+**Sources:** [sinsp_filtercheck.h:137-158](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck.h#L137-L158), [sinsp_filtercheck.cpp:880-947,1098-1178](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck.cpp#L880-L947), [escaping.cpp:139-156](../../../refs/falcosecurity/libs/userspace/libsinsp/filter/escaping.cpp#L139-L156), [utils.h:190-264,313-435](../../../refs/falcosecurity/libs/userspace/libsinsp/utils.h#L190-L264), [eventformatter.cpp:27-44,223-242](../../../refs/falcosecurity/libs/userspace/libsinsp/eventformatter.cpp#L27-L44).
 
 ## Field Transformers
 
-**Sources:** [`filter/parser.cpp:99-150`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter/parser.cpp), [`sinsp_filter_transformers/sinsp_filter_transformer.h:25-48`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filter_transformers/sinsp_filter_transformer.h), [`sinsp_filtercheck_multivalue_transformer.cpp:147-315`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_multivalue_transformer.cpp)
+**Sources:** [`filter/parser.cpp:99-150`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter/parser.cpp#L99-L150), [`sinsp_filter_transformers/sinsp_filter_transformer.h:25-48`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filter_transformers/sinsp_filter_transformer.h#L25-L48), [`sinsp_filtercheck_multivalue_transformer.cpp:145-311`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_multivalue_transformer.cpp#L145-L311)
 
-Falco 0.44/libs 0.25.4 exposes eight public field transformers. Five are unary value transformers; three compile multiple fields, literals, or transformer lists into a multivalue filtercheck.
+Falco 0.45/libs 0.26.0 exposes eight public field transformers. Five are unary value transformers; three compile multiple fields, literals, or transformer lists into a multivalue filtercheck.
 
 | Transformer | Kind / implementation | Result | Example |
 |-------------|-----------------------|--------|---------|
@@ -154,11 +162,11 @@ Falco 0.44/libs 0.25.4 exposes eight public field transformers. Five are unary v
 
 `val(field)` is an RHS-only identity wrapper for field-to-field comparisons, not one of the eight value-transforming functions. The compiler ignores it after compiling the child field. The separate internal `FTR_STORAGE` transformer is inserted when plugin-extracted values need stable backing memory.
 
-**Source:** [`filter.cpp:310-355,583-633`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter.cpp)
+**Source:** [`filter.cpp:310-355,583-633`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter.cpp#L310-L355)
 
-The multivalue framework first shipped in libs 0.24.0 with `join` and `concat`; `getopt` followed in libs 0.25.0. The pinned 0.25.4 parser test asserts the eight-name public set exactly.
+The multivalue framework first shipped in libs 0.24.0 with `join` and `concat`; `getopt` followed in libs 0.25.0. The pinned 0.26.0 parser test asserts the eight-name public set exactly.
 
-**Sources:** [libs 0.24.0 parser](https://github.com/falcosecurity/libs/blob/0.24.0/userspace/libsinsp/filter/parser.cpp#L93-L94), [libs 0.25.0 parser](https://github.com/falcosecurity/libs/blob/0.25.0/userspace/libsinsp/filter/parser.cpp#L99-L100), [`filter_parser.ut.cpp:132-153`](../../../refs/falcosecurity/libs/userspace/libsinsp/test/filter_parser.ut.cpp)
+**Sources:** [libs 0.24.0 parser](https://github.com/falcosecurity/libs/blob/0.24.0/userspace/libsinsp/filter/parser.cpp#L93-L94), [libs 0.25.0 parser](https://github.com/falcosecurity/libs/blob/0.25.0/userspace/libsinsp/filter/parser.cpp#L99-L100), [`filter_parser.ut.cpp:147-168`](../../../refs/falcosecurity/libs/userspace/libsinsp/test/filter_parser.ut.cpp#L147-L168)
 
 **Transformer chaining:** Unary and multivalue transformers nest as function calls:
 
@@ -167,20 +175,20 @@ toupper(basename(fd.name)) = CONFIG.YAML
 toupper(join("-", (proc.name, evt.arg.path))) contains INIT-
 ```
 
-**Factories:** [`sinsp_filter_transformers.h:26-52`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filter_transformers.h) maps unary enum values to concrete implementations; [`sinsp_filtercheck_multivalue_transformer.cpp:559-575`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_multivalue_transformer.cpp) constructs `join`, `concat`, and `getopt` filterchecks.
+**Factories:** [`sinsp_filter_transformers.h:26-52`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filter_transformers.h#L26-L52) maps unary enum values to concrete implementations; [`sinsp_filtercheck_multivalue_transformer.cpp:553-569`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_multivalue_transformer.cpp#L553-L569) constructs `join`, `concat`, and `getopt` filterchecks.
 
-**RHS field-to-field comparisons:** The `val()` syntax enables comparing two fields at runtime: `fd.name = val(proc.cwd)`. **Source:** [`filter.cpp:333-355`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter.cpp)
+**RHS field-to-field comparisons:** The `val()` syntax enables comparing two fields at runtime: `fd.name = val(proc.cwd)`. **Source:** [`filter.cpp:333-355`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter.cpp#L333-L355)
 
 ## Filtercheck Architecture
 
 ### Base Class
 
-**Source:** [`sinsp_filtercheck.h:59-281`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck.h)
+**Source:** [`sinsp_filtercheck.h:59-278`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck.h#L59-L278)
 
 `sinsp_filter_check` is the base class for all field extractors. Key interface:
 
 - `parse_field_name(string_view, alloc_state, needed_for_filtering)` -- resolve field name, return parsed length
-- `extract(sinsp_evt*, vector<extract_value_t>&, sanitize_strings)` -- extract values from event
+- `extract(sinsp_evt*, vector<extract_value_t>&)` -- extract values from event
 - `compare(sinsp_evt*)` -- compare extracted value against filter RHS
 - `add_filter_value(const char*, len, i)` -- set compile-time constant for comparison
 - `add_filter_value(unique_ptr<sinsp_filter_check>)` -- set RHS filter check for field-to-field comparison
@@ -189,7 +197,7 @@ toupper(join("-", (proc.name, evt.arg.path))) contains INIT-
 
 ### Field Descriptor
 
-**Source:** [`filter_field.h:59-114`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter_field.h)
+**Source:** [`filter_field.h:59-114`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter_field.h#L59-L114)
 
 ```cpp
 struct filtercheck_field_info {
@@ -204,7 +212,7 @@ struct filtercheck_field_info {
 
 ### Field Flags (EPF_*)
 
-**Source:** [`filter_field.h:31-54`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter_field.h)
+**Source:** [`filter_field.h:31-54`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter_field.h#L31-L54)
 
 | Flag | Value | Description |
 |------|-------|-------------|
@@ -227,7 +235,9 @@ struct filtercheck_field_info {
 
 ### Field Class Info
 
-**Source:** [`filter_field.h:119-134`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter_field.h)
+`FL_GENERIC` identifies field classes applicable to every event source; the generic event filtercheck sets it. Source: [`filter_field.h:130-134`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter_field.h#L130-L134), [`sinsp_filtercheck_gen_event.cpp:142-152`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_gen_event.cpp#L142-L152).
+
+**Source:** [`filter_field.h:125-144`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter_field.h#L125-L144)
 
 ```cpp
 class filter_check_info {
@@ -237,35 +247,35 @@ class filter_check_info {
     std::string m_desc;       // Full description
     int32_t m_nfields;        // Number of fields
     const filtercheck_field_info* m_fields;  // Field array
-    uint32_t m_flags;         // FL_NONE or FL_HIDDEN
+    uint32_t m_flags;         // FL_NONE, FL_HIDDEN, FL_GENERIC
 };
 ```
 
 ## Default Filtercheck Registry
 
-**Source:** [`filter_check_list.cpp:89-102`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter_check_list.cpp)
+**Source:** [`filter_check_list.cpp:89-102`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter_check_list.cpp#L89-L102)
 
 The `sinsp_filter_check_list` constructor registers exactly 9 built-in filtercheck classes:
 
 | # | Class | Field Class Name | Field Prefix | Source |
 |---|-------|-----------------|--------------|--------|
-| 1 | `sinsp_filter_check_gen_event` | `evt` (All event types) | `evt.num`, `evt.time`, `evt.hostname`, etc. | [`sinsp_filtercheck_gen_event.cpp:47-161`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_gen_event.cpp) |
-| 2 | `sinsp_filter_check_event` | `evt` (Syscall events only) | `evt.latency`, `evt.type`, `evt.args`, etc. | [`sinsp_filtercheck_event.cpp:60-426`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_event.cpp) |
-| 3 | `sinsp_filter_check_thread` | `process` | `proc.*`, `thread.*` | [`sinsp_filtercheck_thread.cpp:49-727`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_thread.cpp) |
-| 4 | `sinsp_filter_check_user` | `user` | `user.*` | [`sinsp_filtercheck_user.cpp:37-61`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_user.cpp) |
-| 5 | `sinsp_filter_check_group` | `group` | `group.*` | [`sinsp_filtercheck_group.cpp:37-40`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_group.cpp) |
-| 6 | `sinsp_filter_check_fd` | `fd` | `fd.*` | [`sinsp_filtercheck_fd.cpp:53-315`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_fd.cpp) |
-| 7 | `sinsp_filter_check_fspath` | `fs.path` | `fs.path.*` | [`sinsp_filtercheck_fspath.cpp:34-83`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_fspath.cpp) |
-| 8 | `sinsp_filter_check_utils` | `util` (hidden) | `util.cnt` | [`sinsp_filtercheck_utils.cpp:31-33`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_utils.cpp) |
-| 9 | `sinsp_filter_check_fdlist` | `fdlist` | `fdlist.*` | [`sinsp_filtercheck_fdlist.cpp:31-73`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_fdlist.cpp) |
+| 1 | `sinsp_filter_check_gen_event` | `evt` (All event types) | `evt.num`, `evt.time`, `evt.hostname`, etc. | [`sinsp_filtercheck_gen_event.cpp:47-161`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_gen_event.cpp#L47-L161) |
+| 2 | `sinsp_filter_check_event` | `evt` (Syscall events only) | `evt.latency`, `evt.type`, `evt.args`, etc. | [`sinsp_filtercheck_event.cpp:61-427`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_event.cpp#L61-L427) |
+| 3 | `sinsp_filter_check_thread` | `process` | `proc.*`, `thread.*` | [`sinsp_filtercheck_thread.cpp:49-729`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_thread.cpp#L49-L729) |
+| 4 | `sinsp_filter_check_user` | `user` | `user.*` | [`sinsp_filtercheck_user.cpp:37-61`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_user.cpp#L37-L61) |
+| 5 | `sinsp_filter_check_group` | `group` | `group.*` | [`sinsp_filtercheck_group.cpp:37-40`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_group.cpp#L37-L40) |
+| 6 | `sinsp_filter_check_fd` | `fd` | `fd.*` | [`sinsp_filtercheck_fd.cpp:53-315`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_fd.cpp#L53-L315) |
+| 7 | `sinsp_filter_check_fspath` | `fs.path` | `fs.path.*` | [`sinsp_filtercheck_fspath.cpp:34-83`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_fspath.cpp#L34-L83) |
+| 8 | `sinsp_filter_check_utils` | `util` (hidden) | `util.cnt` | [`sinsp_filtercheck_utils.cpp:31-33`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_utils.cpp#L31-L33) |
+| 9 | `sinsp_filter_check_fdlist` | `fdlist` | `fdlist.*` | [`sinsp_filtercheck_fdlist.cpp:31-73`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_fdlist.cpp#L31-L73) |
 
-> **Important (era 0.44):** Container fields (`container.*`) and Kubernetes fields (`k8s.*`) are **not** built-in filterchecks. They are provided by plugins (specifically the `container` plugin) via the plugin extraction capability. They are **not** registered in `sinsp_filter_check_list`.
+> **Important (era 0.45):** Container fields (`container.*`) and Kubernetes fields (`k8s.*`) are **not** built-in filterchecks. They are provided by plugins (specifically the `container` plugin) via the plugin extraction capability. They are **not** registered in `sinsp_filter_check_list`.
 
 ## Filtercheck Field Details
 
 ### Generic Event Fields (`evt.*` -- all event types)
 
-**Class:** `sinsp_filter_check_gen_event` | **Source:** [`sinsp_filtercheck_gen_event.cpp:47-161`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_gen_event.cpp)
+**Class:** `sinsp_filter_check_gen_event` | **Source:** [`sinsp_filtercheck_gen_event.cpp:47-161`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_gen_event.cpp#L47-L161)
 
 These fields apply to all events, including plugin events:
 
@@ -292,7 +302,7 @@ These fields apply to all events, including plugin events:
 
 ### Syscall Event Fields (`evt.*` -- syscall events only)
 
-**Class:** `sinsp_filter_check_event` | **Source:** [`sinsp_filtercheck_event.cpp:60-426`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_event.cpp)
+**Class:** `sinsp_filter_check_event` | **Source:** [`sinsp_filtercheck_event.cpp:61-427`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_event.cpp#L61-L427)
 
 Key fields (selected, 58 total):
 
@@ -328,7 +338,7 @@ Key fields (selected, 58 total):
 
 ### Process/Thread Fields (`proc.*`, `thread.*`)
 
-**Class:** `sinsp_filter_check_thread` | **Source:** [`sinsp_filtercheck_thread.cpp:49-727`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_thread.cpp)
+**Class:** `sinsp_filter_check_thread` | **Source:** [`sinsp_filtercheck_thread.cpp:49-729`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_thread.cpp#L49-L729)
 
 Key fields (selected, 90 total):
 
@@ -406,7 +416,7 @@ Key fields (selected, 90 total):
 
 ### File Descriptor Fields (`fd.*`)
 
-**Class:** `sinsp_filter_check_fd` | **Source:** [`sinsp_filtercheck_fd.cpp:53-315`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_fd.cpp)
+**Class:** `sinsp_filter_check_fd` | **Source:** [`sinsp_filtercheck_fd.cpp:53-315`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_fd.cpp#L53-L315)
 
 | Field | Type | Flags | Description |
 |-------|------|-------|-------------|
@@ -459,7 +469,7 @@ Key fields (selected, 90 total):
 
 ### User Fields (`user.*`)
 
-**Class:** `sinsp_filter_check_user` | **Source:** [`sinsp_filtercheck_user.cpp:37-61`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_user.cpp)
+**Class:** `sinsp_filter_check_user` | **Source:** [`sinsp_filtercheck_user.cpp:37-61`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_user.cpp#L37-L61)
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -472,7 +482,7 @@ Key fields (selected, 90 total):
 
 ### Group Fields (`group.*`)
 
-**Class:** `sinsp_filter_check_group` | **Source:** [`sinsp_filtercheck_group.cpp:37-40`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_group.cpp)
+**Class:** `sinsp_filter_check_group` | **Source:** [`sinsp_filtercheck_group.cpp:37-40`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_group.cpp#L37-L40)
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -481,7 +491,7 @@ Key fields (selected, 90 total):
 
 ### Filesystem Path Fields (`fs.path.*`)
 
-**Class:** `sinsp_filter_check_fspath` | **Source:** [`sinsp_filtercheck_fspath.cpp:34-83`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_fspath.cpp)
+**Class:** `sinsp_filter_check_fspath` | **Source:** [`sinsp_filtercheck_fspath.cpp:34-83`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_fspath.cpp#L34-L83)
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -494,7 +504,7 @@ Key fields (selected, 90 total):
 
 ### FD List Fields (`fdlist.*`)
 
-**Class:** `sinsp_filter_check_fdlist` | **Source:** [`sinsp_filtercheck_fdlist.cpp:31-73`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_fdlist.cpp)
+**Class:** `sinsp_filter_check_fdlist` | **Source:** [`sinsp_filtercheck_fdlist.cpp:31-73`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_fdlist.cpp#L31-L73)
 
 For poll/select events:
 
@@ -509,7 +519,7 @@ For poll/select events:
 
 ### Utility Fields (`util.*`)
 
-**Class:** `sinsp_filter_check_utils` (hidden) | **Source:** [`sinsp_filtercheck_utils.cpp:31-33`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_utils.cpp)
+**Class:** `sinsp_filter_check_utils` (hidden) | **Source:** [`sinsp_filtercheck_utils.cpp:31-33`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck_utils.cpp#L31-L33)
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -517,7 +527,7 @@ For poll/select events:
 
 ## Filter Compilation
 
-**Source:** [`filter.h:179-283`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter.h)
+**Source:** [`filter.h:182-286`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter.h#L182-L286)
 
 `sinsp_filter_compiler` compiles filter strings or pre-parsed ASTs into executable `sinsp_filter` objects. It implements `const_expr_visitor` to traverse the AST.
 
@@ -534,9 +544,9 @@ For poll/select events:
 5. Compile unary transformers into child filtercheck chains and multivalue transformers into synthetic filterchecks
 6. Return `sinsp_filter` with `run(sinsp_evt*)` method
 
-**Runtime execution:** `sinsp_filter::run(evt)` evaluates the expression tree by calling `compare(evt)` on each `sinsp_filter_expression`, which recursively evaluates child checks via `extract()` + `compare()`. **Source:** [`filter.h:76-91`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter.h)
+**Runtime execution:** `sinsp_filter::run(evt)` evaluates the expression tree by calling `compare(evt)` on each `sinsp_filter_expression`, which recursively evaluates child checks via `extract()` + `compare()`. **Source:** [`filter.h:76-91`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter.h#L76-L91)
 
-The compiler also emits warnings (e.g., for values that look like field names or transformer names). **Source:** [`filter.h:244`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter.h)
+The compiler also emits warnings (e.g., for values that look like field names or transformer names). **Source:** [`filter.h:247`](../../../refs/falcosecurity/libs/userspace/libsinsp/filter.h#L247)
 
 ## String Escaping
 
@@ -546,7 +556,7 @@ The `libsinsp::filter` namespace provides `escape_str()` and `unescape_str()` fo
 
 ## Plugin Fields
 
-Plugins with extraction capability register custom fields. In era 0.44, container (`container.*`) and Kubernetes (`k8s.*`) fields are provided by the `container` plugin, not by built-in filterchecks. Plugin fields use the same comparison and transformer infrastructure.
+Plugins with extraction capability register custom fields. In era 0.45, container (`container.*`) and Kubernetes (`k8s.*`) fields are provided by the `container` plugin, not by built-in filterchecks. Plugin fields use the same comparison and transformer infrastructure.
 
 See [`plugin-framework.md`](plugin-framework.md) for plugin field extraction details.
 

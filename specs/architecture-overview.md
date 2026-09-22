@@ -2,7 +2,7 @@
 
 > End-to-end system architecture of Falco: event pipeline, component boundaries, threading model, and multi-source event handling.
 
-**Era:** 0.44 | **Source:** [`refs/falcosecurity/falco/`](../refs/falcosecurity/falco/), [`refs/falcosecurity/libs/`](../refs/falcosecurity/libs/)
+**Era:** 0.45 | **Source:** [`refs/falcosecurity/falco/`](../refs/falcosecurity/falco/), [`refs/falcosecurity/libs/`](../refs/falcosecurity/libs/)
 
 ## Overview
 
@@ -181,8 +181,9 @@ Falco uses a multi-threaded architecture with a clear separation of concerns bet
 |--------|---------|-------------------|
 | Main thread | Event capture, parsing, rule matching | Single-threaded per source (see below) |
 | Output worker | Alert formatting and delivery | Consumer on TBB concurrent queue |
-| Web server | Health checks, metrics endpoint | cpp-httplib internal threads |
-| Restart handler | Watch config/rules files for changes | inotify-based watcher |
+| Web server | Health checks, metrics and reload-status endpoint | cpp-httplib internal threads |
+| Reload control (optional) | Unix-socket reload requests and status | Separate cpp-httplib listener and bounded worker pool |
+| Restart handler | Validate config/rules changes and explicit reload requests | inotify + eventfd worker; full restart within the process |
 
 ### Multi-Source Threading
 
@@ -289,6 +290,9 @@ struct state {
 
     // Servers
     falco_webserver webserver;
+#ifdef __linux__
+    falco_reload_control reload_control;
+#endif
 };
 ```
 
@@ -296,17 +300,21 @@ struct state {
 
 ## Version Compatibility
 
-### Component Versions (Era 0.44)
+### Component Versions (Era 0.45)
 
 | Component | Version | Compatibility Scope |
-|-----------|---------|-------------------|
-| Falco | 0.44.1 | Application release |
-| Libs | 0.25.4 | Library API |
-| Driver API | 10.0.0 (minimum required by the Falco 0.44.x binary, measured on 0.44.0); libs 0.25.4 source publishes 10.1.0 | Kernel/userspace boundary |
-| Schema | 4.3.0 (minimum required by the Falco 0.44.x binary, measured on 0.44.0); libs 0.25.4 source publishes 4.5.1 | Event data format |
+|-----------|---------|---------------------|
+| Falco | 0.45.0 | Application release |
+| Libs | 0.26.0 | Library API |
+| Engine | 0.65.0 | Rule/field compatibility |
+| Default driver | 11.0.0+driver | Shipped driver release |
+| Driver API | 11.0.0 | Minimum required by Falco; also the pinned driver's API |
+| Schema | 4.3.0 minimum; pinned libs publishes 4.5.2 | Event data compatibility |
 | Plugin API | 3.12.0 | Plugin/host interface |
 
-> `falco --version` for the bundled 0.44.0 binary reports Driver API `10.0.0` and Schema `4.3.0` — these are the **minimum versions Falco requires** of the drivers it talks to (the binary analyzed in the knowledge base is 0.44.0; the era pin now bundles libs 0.25.4 via Falco 0.44.1). The libs 0.25.4 source files [`driver/API_VERSION`](../refs/falcosecurity/libs/driver/API_VERSION) and [`driver/SCHEMA_VERSION`](../refs/falcosecurity/libs/driver/SCHEMA_VERSION) advertise newer numbers (`10.1.0`/`4.5.1`) because libs picked up backward-compatible additions; these source values are unchanged between libs 0.25.2 and 0.25.4.
+The driver API/schema reported by `falco --version` are the minimum required versions, which need not equal the schema advertised by the bundled driver. The engine version in the final source is 0.65.0; intermediate release notes are not the authority for this value.
+
+**Source:** [`versions_info.cpp`](../refs/falcosecurity/falco/userspace/falco/versions_info.cpp), [`falcosecurity-libs.cmake:45`](../refs/falcosecurity/falco/cmake/modules/falcosecurity-libs.cmake#L45), [`driver.cmake:38`](../refs/falcosecurity/falco/cmake/modules/driver.cmake#L38), [`falco_engine_version.h:21-24`](../refs/falcosecurity/falco/userspace/engine/falco_engine_version.h#L21-L24), [`driver/API_VERSION`](../refs/falcosecurity/libs/driver/API_VERSION), [`driver/SCHEMA_VERSION`](../refs/falcosecurity/libs/driver/SCHEMA_VERSION), [`scap.h`](../refs/falcosecurity/libs/userspace/libscap/scap.h).
 
 ### Compatibility Rules
 

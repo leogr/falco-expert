@@ -2,22 +2,22 @@
 
 > Rule language, YAML schema, three-phase compilation pipeline, rule indexing, ruleset management, and error handling.
 
-**Era:** 0.44 | **Source:** [`refs/falcosecurity/falco/userspace/engine/`](../refs/falcosecurity/falco/userspace/engine/)
+**Era:** 0.45 | **Source:** [`refs/falcosecurity/falco/userspace/engine/`](../refs/falcosecurity/falco/userspace/engine/)
 
 ## Overview
 
 The Falco rule engine compiles YAML-based rule definitions into executable filters (`sinsp_filter`) that match against enriched events (`sinsp_evt`). The engine processes rule files through a three-phase pipeline (reader, collector, compiler) and manages multiple rulesets that can be selectively enabled or disabled at runtime.
 
-**Engine Version:** 0.62.0 (defined in [`falco_engine_version.h:22-24`](../refs/falcosecurity/falco/userspace/engine/falco_engine_version.h))
+**Engine Version:** 0.65.0 (defined in [`falco_engine_version.h:22-24`](../refs/falcosecurity/falco/userspace/engine/falco_engine_version.h#L22-L24))
 
 ```cpp
 // falco_engine_version.h:22-24
 #define FALCO_ENGINE_VERSION_MAJOR 0
-#define FALCO_ENGINE_VERSION_MINOR 62
+#define FALCO_ENGINE_VERSION_MINOR 65
 #define FALCO_ENGINE_VERSION_PATCH 0
 ```
 
-The engine version identifies the set of supported fields, event types, and rule file format. A checksum derived from these is used for CI-based change detection ([`falco_engine_version.h:39`](../refs/falcosecurity/falco/userspace/engine/falco_engine_version.h)).
+The engine version identifies the set of supported fields, event types, and rule file format. A checksum derived from these is used for CI-based change detection ([`falco_engine_version.h:38`](../refs/falcosecurity/falco/userspace/engine/falco_engine_version.h#L38)).
 
 ## Architecture
 
@@ -56,7 +56,7 @@ Rule files are YAML arrays. Each element is a YAML mapping with one of these top
 
 Lists are named collections of values that can be referenced in rule and macro conditions. At compilation time, list references in conditions are expanded inline.
 
-**Source:** [`rule_loader.h:403-416`](../refs/falcosecurity/falco/userspace/engine/rule_loader.h)
+**Source:** [`rule_loader.h:403-416`](../refs/falcosecurity/falco/userspace/engine/rule_loader.h#L403-L416)
 
 ```cpp
 struct list_info {
@@ -104,7 +104,7 @@ struct list_info {
 
 Macros are named condition fragments for reuse across rules and other macros. A visibility ordering is enforced: macros can only reference other macros defined before them.
 
-**Source:** [`rule_loader.h:421-435`](../refs/falcosecurity/falco/userspace/engine/rule_loader.h)
+**Source:** [`rule_loader.h:421-435`](../refs/falcosecurity/falco/userspace/engine/rule_loader.h#L421-L435)
 
 ```cpp
 struct macro_info {
@@ -145,7 +145,7 @@ struct macro_info {
 
 Rules define complete detection logic with conditions, outputs, and metadata.
 
-**Source:** [`rule_loader.h:482-509`](../refs/falcosecurity/falco/userspace/engine/rule_loader.h)
+**Source:** [`rule_loader.h:482-509`](../refs/falcosecurity/falco/userspace/engine/rule_loader.h#L482-L509)
 
 ```cpp
 struct rule_info {
@@ -186,14 +186,14 @@ struct rule_info {
 | `exceptions` | array | No | `[]` | Whitelisting definitions (see [Exceptions](#exceptions)) |
 | `warn_evttypes` | boolean | No | `true` | Warn if rule matches too many event types |
 | `skip-if-unknown-filter` | boolean | No | `false` | Skip rule silently if filter field is unknown |
-| `capture` | boolean | No | `false` | Enable packet capture when triggered |
-| `capture_duration` | integer | No | `0` | Capture duration in seconds |
+| `capture` | boolean | No | `false` | Enable syscall-event capture when triggered (requires global capture enablement) |
+| `capture_duration` | integer | No | `0` | Capture duration in milliseconds; converted to nanoseconds by the engine |
 
-**Source:** [`rule_loader_reader.cpp:880-898`](../refs/falcosecurity/falco/userspace/engine/rule_loader_reader.cpp) (field decoding)
+**Source:** [`rule_loader_reader.cpp:880-898`](../refs/falcosecurity/falco/userspace/engine/rule_loader_reader.cpp#L880-L898) (field decoding)
 
 #### Priority Levels
 
-**Source:** [`falco_common.h:50-59`](../refs/falcosecurity/falco/userspace/engine/falco_common.h)
+**Source:** [`falco_common.h:50-59`](../refs/falcosecurity/falco/userspace/engine/falco_common.h#L50-L59)
 
 ```cpp
 enum priority_type {
@@ -208,11 +208,11 @@ enum priority_type {
 };
 ```
 
-Priority is specified in YAML as a case-insensitive string (e.g., `WARNING`, `Error`, `info`). Lower numeric values represent higher severity. The engine can filter rules by minimum priority via `set_min_priority()` ([`falco_engine.h:141`](../refs/falcosecurity/falco/userspace/engine/falco_engine.h)).
+Priority is specified in YAML as a case-insensitive string (e.g., `WARNING`, `Error`, `info`). Lower numeric values represent higher severity. The engine can filter rules by minimum priority via `set_min_priority()` ([`falco_engine.h:141`](../refs/falcosecurity/falco/userspace/engine/falco_engine.h#L141)).
 
 #### Rule Matching Strategy
 
-**Source:** [`falco_common.h:66`](../refs/falcosecurity/falco/userspace/engine/falco_common.h)
+**Source:** [`falco_common.h:66`](../refs/falcosecurity/falco/userspace/engine/falco_common.h#L66)
 
 ```cpp
 enum rule_matching { FIRST = 0, ALL = 1 };
@@ -223,7 +223,7 @@ enum rule_matching { FIRST = 0, ALL = 1 };
 | `FIRST` | Stop after first matching rule | Better (default) |
 | `ALL` | Continue checking all rules | Enables multiple alerts per event |
 
-The strategy is passed to `process_event()` at call time ([`falco_engine.h:259-262`](../refs/falcosecurity/falco/userspace/engine/falco_engine.h)).
+The strategy is passed to `process_event()` at call time ([`falco_engine.h:259-262`](../refs/falcosecurity/falco/userspace/engine/falco_engine.h#L259-L262)).
 
 ### Condition Expressions
 
@@ -260,9 +260,9 @@ Falco 0.44 adds list modifiers `oneof`, `anyof`, and `allof` that can be combine
 | `anyof` | Matches when **at least one** value in the list satisfies the operator (logical OR) |
 | `allof` | Matches when **all** values in the list satisfy the operator (logical AND) |
 
-**Supported base operators:** `=`, `!=`, `contains`, `icontains`, `bcontains`, `startswith`, `bstartswith`, `endswith`, `glob`, `iglob`, `regex` ([`rule_loader_cmpop.h:26-43`](../refs/falcosecurity/falco/userspace/engine/rule_loader_cmpop.h)).
+**Supported base operators:** `=`, `!=`, `contains`, `icontains`, `bcontains`, `startswith`, `bstartswith`, `endswith`, `glob`, `iglob`, `regex` ([`rule_loader_cmpop.h:26-43`](../refs/falcosecurity/falco/userspace/engine/rule_loader_cmpop.h#L26-L43)).
 
-Only string operators support the modifiers; combinations like `in oneof` or `>= oneof` are rejected at parse time ([`rule_loader_cmpop.h:45-48`](../refs/falcosecurity/falco/userspace/engine/rule_loader_cmpop.h)).
+Only string operators support the modifiers; combinations like `in oneof` or `>= oneof` are rejected at parse time ([`rule_loader_cmpop.h:45-48`](../refs/falcosecurity/falco/userspace/engine/rule_loader_cmpop.h#L45-L48)).
 
 **Examples:**
 
@@ -283,6 +283,12 @@ Only string operators support the modifiers; combinations like `in oneof` or `>=
   priority: NOTICE
 ```
 
+### Raw Bytes in Conditions (0.45)
+
+String extraction and transforms preserve raw bytes. Quoted filter literals support `\xHH` for exactly two hexadecimal digits; use YAML single-quoted or block scalars when the filter parser must receive the backslash escape. For example, `condition: 'proc.name contains "\x01"'` matches a literal control byte, even though alert output renders that byte as an escape. Regex sanitizes invalid UTF-8 in its input; other string comparisons retain raw-byte semantics.
+
+**Source:** [`escaping.cpp:139-156`](../refs/falcosecurity/libs/userspace/libsinsp/filter/escaping.cpp#L139-L156), [`sinsp_filtercheck.cpp:880-947`](../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck.cpp#L880-L947), [`formats.cpp:76-85`](../refs/falcosecurity/falco/userspace/engine/formats.cpp#L76-L85).
+
 ### Output Format
 
 Output strings define the alert message using field interpolation.
@@ -296,13 +302,13 @@ output: "Alert message with field=%field.name and another=%other.field"
 - `%field.name` -- replaced with the field value at alert time
 - `%container.info` -- deprecated, no longer expanded (will be removed in Falco 1.0.0). The container plugin now provides `container.id` and `container.name` as suggested output fields automatically.
 
-**Source:** [`rule_loader_compiler.cpp:37-43`](../refs/falcosecurity/falco/userspace/engine/rule_loader_compiler.cpp) (container.info deprecation)
+**Source:** [`rule_loader_compiler.cpp:37-43`](../refs/falcosecurity/falco/userspace/engine/rule_loader_compiler.cpp#L37-L43) (container.info deprecation)
 
 #### Extra Output Configuration
 
 Extra output can be added programmatically via the engine API, enabling additional format strings or fields to be appended to rule outputs based on source, tags, or rule name.
 
-**Source:** [`rule_loader.h:311-325`](../refs/falcosecurity/falco/userspace/engine/rule_loader.h)
+**Source:** [`rule_loader.h:311-325`](../refs/falcosecurity/falco/userspace/engine/rule_loader.h#L311-L325)
 
 ```cpp
 struct extra_output_format_conf {
@@ -322,7 +328,7 @@ struct extra_output_field_conf {
 };
 ```
 
-The engine provides three methods for adding extra output ([`falco_engine.h:199-218`](../refs/falcosecurity/falco/userspace/engine/falco_engine.h)):
+The engine provides three methods for adding extra output ([`falco_engine.h:199-218`](../refs/falcosecurity/falco/userspace/engine/falco_engine.h#L199-L218)):
 - `add_extra_output_format()` -- appends to the text output format string
 - `add_extra_output_formatted_field()` -- adds a formatted field to structured output (JSON)
 - `add_extra_output_raw_field()` -- adds a raw field to structured output
@@ -331,7 +337,7 @@ The engine provides three methods for adding extra output ([`falco_engine.h:199-
 
 Exceptions provide a structured way to whitelist specific conditions without modifying the rule's main condition. They are compiled into negated condition suffixes appended to the original condition.
 
-**Source:** [`rule_loader.h:440-477`](../refs/falcosecurity/falco/userspace/engine/rule_loader.h)
+**Source:** [`rule_loader.h:440-477`](../refs/falcosecurity/falco/userspace/engine/rule_loader.h#L440-L477)
 
 ```cpp
 struct rule_exception_info {
@@ -385,7 +391,7 @@ and not ((proc.name = nginx and fd.directory startswith /etc/nginx) or
 
 #### Exception Compilation
 
-**Source:** [`rule_loader_compiler.cpp:93-154`](../refs/falcosecurity/falco/userspace/engine/rule_loader_compiler.cpp)
+**Source:** [`rule_loader_compiler.cpp:100-161`](../refs/falcosecurity/falco/userspace/engine/rule_loader_compiler.cpp#L100-L161)
 
 The `build_rule_exception_infos()` function transforms exceptions into condition suffixes:
 
@@ -396,11 +402,11 @@ The `build_rule_exception_infos()` function transforms exceptions into condition
 
 #### Valid Comparison Operators for Exceptions
 
-**Source:** [`rule_loader_collector.cpp:63-101`](../refs/falcosecurity/falco/userspace/engine/rule_loader_collector.cpp)
+**Source:** [`rule_loader_collector.cpp:63-101`](../refs/falcosecurity/falco/userspace/engine/rule_loader_collector.cpp#L63-L101)
 
 | Exception Type | Allowed Operators | Default |
 |----------------|-------------------|---------|
-| Single field (`fields` is a string) | `in`, `pmatch`, `intersects` only | `in` |
+| Single field (`fields` is a string) | `in`, `pmatch`, `intersects`, or supported string comparisons with `oneof`/`anyof`/`allof` | `in` |
 | Multi-field (`fields` is a list) | Any supported operator (`=`, `!=`, `contains`, `startswith`, etc.) | `=` |
 
 When `comps` is not specified, the collector assigns defaults: `in` for single-field, `=` for each field in multi-field.
@@ -429,7 +435,7 @@ When `comps` is not specified, the collector assigns defaults: `in` for single-f
 
 The `override` key provides fine-grained control over how rules, macros, and lists are modified across files.
 
-**Source:** [`rule_loader_reader.cpp:200-262`](../refs/falcosecurity/falco/userspace/engine/rule_loader_reader.cpp)
+**Source:** [`rule_loader_reader.cpp:200-262`](../refs/falcosecurity/falco/userspace/engine/rule_loader_reader.cpp#L200-L262)
 
 #### Override Operations
 
@@ -485,7 +491,7 @@ Specifies the minimum Falco engine version needed to load the rule file.
 - required_engine_version: 26  # Becomes 0.26.0
 ```
 
-**Implicit version conversion:** [`rule_loader_reader.h:52-56`](../refs/falcosecurity/falco/userspace/engine/rule_loader_reader.h)
+**Implicit version conversion:** [`rule_loader_reader.h:52-56`](../refs/falcosecurity/falco/userspace/engine/rule_loader_reader.h#L52-L56)
 
 ```cpp
 static inline sinsp_version get_implicit_engine_version(uint32_t minor) {
@@ -499,7 +505,7 @@ static inline sinsp_version get_implicit_engine_version(uint32_t minor) {
 
 Specifies plugin dependencies with optional alternatives.
 
-**Source:** [`rule_loader.h:370-398`](../refs/falcosecurity/falco/userspace/engine/rule_loader.h)
+**Source:** [`rule_loader.h:370-398`](../refs/falcosecurity/falco/userspace/engine/rule_loader.h#L370-L398)
 
 ```cpp
 struct plugin_version_info {
@@ -527,7 +533,7 @@ Alternatives allow multiple plugins to satisfy a single requirement. Any one of 
 
 ### Three-Phase Compilation Pipeline
 
-The rule loader processes rules through three distinct, sequential phases. The top-level entry point is `compiler::compile()` ([`rule_loader_compiler.cpp:556-584`](../refs/falcosecurity/falco/userspace/engine/rule_loader_compiler.cpp)).
+The rule loader processes rules through three distinct, sequential phases. The top-level entry point is `compiler::compile()` ([`rule_loader_compiler.cpp:570-598`](../refs/falcosecurity/falco/userspace/engine/rule_loader_compiler.cpp#L570-L598)).
 
 #### 1. Reader Phase
 
@@ -544,7 +550,7 @@ The rule loader processes rules through three distinct, sequential phases. The t
 | Exception reading | Parse exception structures (fields, comps, values) with type-aware decoding |
 | Delegation | Pass extracted definitions to the collector via `define()`, `append()`, or `selective_replace()` |
 
-**Key function:** `reader::read()` ([`rule_loader_reader.cpp:909-968`](../refs/falcosecurity/falco/userspace/engine/rule_loader_reader.cpp))
+**Key function:** `reader::read()` ([`rule_loader_reader.cpp:909-968`](../refs/falcosecurity/falco/userspace/engine/rule_loader_reader.cpp#L909-L968))
 
 #### 2. Collector Phase
 
@@ -562,8 +568,8 @@ The rule loader processes rules through three distinct, sequential phases. The t
 | Indexed collections | Maintain `indexed_vector` collections for lists, macros, and rules |
 
 **Key functions:**
-- `collector::define()` -- Register new definitions ([`rule_loader_collector.cpp:40-51`](../refs/falcosecurity/falco/userspace/engine/rule_loader_collector.cpp))
-- `validate_exception_info()` -- Validate exception structures ([`rule_loader_collector.cpp:63-101`](../refs/falcosecurity/falco/userspace/engine/rule_loader_collector.cpp))
+- `collector::define()` -- Register new definitions ([`rule_loader_collector.cpp:40-51`](../refs/falcosecurity/falco/userspace/engine/rule_loader_collector.cpp#L40-L51))
+- `validate_exception_info()` -- Validate exception structures ([`rule_loader_collector.cpp:63-101`](../refs/falcosecurity/falco/userspace/engine/rule_loader_collector.cpp#L63-L101))
 
 #### 3. Compiler Phase
 
@@ -578,11 +584,11 @@ The rule loader processes rules through three distinct, sequential phases. The t
 | Rule compilation | `compile_rule_infos()` ([line 405](../refs/falcosecurity/falco/userspace/engine/rule_loader_compiler.cpp)) | Build exception suffixes, expand lists/macros, parse into AST, compile to `sinsp_filter`, validate output format |
 | Unused detection | `compile()` ([line 556](../refs/falcosecurity/falco/userspace/engine/rule_loader_compiler.cpp)) | After compilation, warn about unused macros and lists |
 
-**Condition parsing depth limit:** 1000 (set via `parser::set_max_depth()` at [`rule_loader_compiler.cpp:278`](../refs/falcosecurity/falco/userspace/engine/rule_loader_compiler.cpp)).
+**Condition parsing depth limit:** 1000 (set via `parser::set_max_depth()` at [`rule_loader_compiler.cpp:278`](../refs/falcosecurity/falco/userspace/engine/rule_loader_compiler.cpp#L278)).
 
 #### Compilation Output
 
-**Source:** [`rule_loader_compile_output.h:26-41`](../refs/falcosecurity/falco/userspace/engine/rule_loader_compile_output.h)
+**Source:** [`rule_loader_compile_output.h:26-41`](../refs/falcosecurity/falco/userspace/engine/rule_loader_compile_output.h#L26-L41)
 
 ```cpp
 struct compile_output {
@@ -592,7 +598,7 @@ struct compile_output {
 };
 ```
 
-The compiled rule structure ([`falco_rule.h:79-117`](../refs/falcosecurity/falco/userspace/engine/falco_rule.h)):
+The compiled rule structure ([`falco_rule.h:79-117`](../refs/falcosecurity/falco/userspace/engine/falco_rule.h#L79-L117)):
 
 ```cpp
 struct falco_rule {
@@ -632,7 +638,7 @@ virtual void disable_tags(const std::set<std::string> &tags, uint16_t ruleset_id
 
 #### Match Types
 
-**Source:** [`filter_ruleset.h:43`](../refs/falcosecurity/falco/userspace/engine/filter_ruleset.h)
+**Source:** [`filter_ruleset.h:43`](../refs/falcosecurity/falco/userspace/engine/filter_ruleset.h#L43)
 
 ```cpp
 enum class match_type { exact, substring, wildcard };
@@ -648,7 +654,7 @@ enum class match_type { exact, substring, wildcard };
 
 The default ruleset is named `"default"`. Multiple rulesets allow different rule configurations for different contexts (e.g., different tenants or operating modes).
 
-**Source:** [`falco_engine.h:93-149`](../refs/falcosecurity/falco/userspace/engine/falco_engine.h)
+**Source:** [`falco_engine.h:93-149`](../refs/falcosecurity/falco/userspace/engine/falco_engine.h#L93-L149)
 
 ```cpp
 // Look up or create a ruleset ID by name
@@ -671,11 +677,11 @@ void enable_rule_by_tag(const std::set<std::string> &tags, bool enabled,
                         const std::string &ruleset = s_default_ruleset);
 ```
 
-Note: Enabling/disabling applies to the rules, not the tags. If a rule R has tags `(a, b)` and you call `enable_tags({a})` then `disable_tags({b})`, R will be disabled despite having tag `a` ([`filter_ruleset.h:183-206`](../refs/falcosecurity/falco/userspace/engine/filter_ruleset.h)).
+Note: Enabling/disabling applies to the rules, not the tags. If a rule R has tags `(a, b)` and you call `enable_tags({a})` then `disable_tags({b})`, R will be disabled despite having tag `a` ([`filter_ruleset.h:183-206`](../refs/falcosecurity/falco/userspace/engine/filter_ruleset.h#L183-L206)).
 
 #### Event Processing
 
-**Source:** [`falco_engine.h:259-262`](../refs/falcosecurity/falco/userspace/engine/falco_engine.h)
+**Source:** [`falco_engine.h:259-262`](../refs/falcosecurity/falco/userspace/engine/falco_engine.h#L259-L262)
 
 ```cpp
 std::unique_ptr<std::vector<rule_result>> process_event(
@@ -686,7 +692,7 @@ std::unique_ptr<std::vector<rule_result>> process_event(
 );
 ```
 
-The `rule_result` struct returned on match ([`falco_engine.h:222-233`](../refs/falcosecurity/falco/userspace/engine/falco_engine.h)):
+The `rule_result` struct returned on match ([`falco_engine.h:222-233`](../refs/falcosecurity/falco/userspace/engine/falco_engine.h#L222-L233)):
 
 ```cpp
 struct rule_result {
@@ -705,7 +711,7 @@ struct rule_result {
 
 ### Error and Warning Codes
 
-**Source:** [`falco_load_result.h:29-66`](../refs/falcosecurity/falco/userspace/engine/falco_load_result.h)
+**Source:** [`falco_load_result.h:29-66`](../refs/falcosecurity/falco/userspace/engine/falco_load_result.h#L29-L66)
 
 #### Error Codes
 
@@ -740,7 +746,7 @@ struct rule_result {
 
 #### Deprecated Fields
 
-**Source:** [`falco_load_result.h:78-86`](../refs/falcosecurity/falco/userspace/engine/falco_load_result.h)
+**Source:** [`falco_load_result.h:78-86`](../refs/falcosecurity/falco/userspace/engine/falco_load_result.h#L78-L86)
 
 | Code | Deprecated Field |
 |------|-----------------|
@@ -755,9 +761,9 @@ struct rule_result {
 
 ### Performance: Event Type Indexing
 
-For `syscall` source rules, the compiler extracts the set of `ppm_event_code` values that each rule's condition can match against. If a rule matches too many event types (empty set or >100 types), and `warn_evttypes` is `true`, a `LOAD_NO_EVTTYPE` warning is emitted because such rules carry a significant performance penalty -- every event must be evaluated against the rule's full condition.
+For `syscall` source rules, the compiler extracts the set of `ppm_event_code` values that each rule's condition can match against. If a rule matches too many event types (>100 types), and `warn_evttypes` is `true`, a `LOAD_NO_EVTTYPE` warning is emitted because such rules carry a significant performance penalty. An empty event-type set represents a statically unsatisfiable condition and does not trigger this warning in 0.45.
 
-**Source:** [`rule_loader_compiler.cpp:529-537`](../refs/falcosecurity/falco/userspace/engine/rule_loader_compiler.cpp)
+**Source:** [`rule_loader_compiler.cpp:539-552`](../refs/falcosecurity/falco/userspace/engine/rule_loader_compiler.cpp#L539-L552)
 
 The `filter_ruleset` interface exposes methods for retrieving the enabled event codes and syscall codes for a given ruleset, enabling the engine to configure the kernel driver to only capture relevant event types:
 
@@ -769,9 +775,9 @@ virtual libsinsp::events::set<ppm_event_code> enabled_event_codes(uint16_t rules
 
 ### Extensibility
 
-- **Plugin sources:** The engine supports multiple event sources via plugins. Each source gets its own filter factory, formatter factory, and ruleset. Sources are registered via `add_source()` ([`falco_engine.h:278-289`](../refs/falcosecurity/falco/userspace/engine/falco_engine.h)).
-- **Custom reader/collector/compiler:** The engine allows replacing the rule reader, collector, and compiler with custom implementations via `set_rule_reader()`, `set_rule_collector()`, `set_rule_compiler()` ([`falco_engine.h:69-76`](../refs/falcosecurity/falco/userspace/engine/falco_engine.h)).
-- **Custom ruleset factory:** Each source can use a custom `filter_ruleset_factory` for alternative rule indexing strategies ([`falco_engine.h:286-289`](../refs/falcosecurity/falco/userspace/engine/falco_engine.h)).
+- **Plugin sources:** The engine supports multiple event sources via plugins. Each source gets its own filter factory, formatter factory, and ruleset. Sources are registered via `add_source()` ([`falco_engine.h:278-289`](../refs/falcosecurity/falco/userspace/engine/falco_engine.h#L278-L289)).
+- **Custom reader/collector/compiler:** The engine allows replacing the rule reader, collector, and compiler with custom implementations via `set_rule_reader()`, `set_rule_collector()`, `set_rule_compiler()` ([`falco_engine.h:69-76`](../refs/falcosecurity/falco/userspace/engine/falco_engine.h#L69-L76)).
+- **Custom ruleset factory:** Each source can use a custom `filter_ruleset_factory` for alternative rule indexing strategies ([`falco_engine.h:286-289`](../refs/falcosecurity/falco/userspace/engine/falco_engine.h#L286-L289)).
 
 ## Related Specs
 

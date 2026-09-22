@@ -1,5 +1,5 @@
 # libscap (System CAPture Library)
-> **Era:** 0.44 | **Version:** libs 0.25.4 | **Source:** [`refs/falcosecurity/libs/`](../../../refs/falcosecurity/libs/)
+> **Era:** 0.45 | **Version:** libs 0.26.0 | **Source:** [`refs/falcosecurity/libs/`](../../../refs/falcosecurity/libs/)
 
 ## Overview
 
@@ -7,11 +7,11 @@ libscap is the low-level capture library in the Falco libs stack, sitting betwee
 
 In the Falco pipeline, libsinsp calls `scap_next()` to retrieve raw `scap_evt` events, then parses and enriches them.
 
-**Source:** [`scap.h:29-43`](../../../refs/falcosecurity/libs/userspace/libscap/scap.h)
+**Source:** [`scap.h:29-43`](../../../refs/falcosecurity/libs/userspace/libscap/scap.h#L29-L43)
 
 ## Engine Vtable (`scap_vtable`)
 
-libscap uses a vtable pattern so upper layers work identically regardless of the capture engine. Each engine implements `scap_vtable` ([`scap_vtable.h:118-269`](../../../refs/falcosecurity/libs/userspace/libscap/scap_vtable.h)):
+libscap uses a vtable pattern so upper layers work identically regardless of the capture engine. Each engine implements `scap_vtable` ([`scap_vtable.h:118-269`](../../../refs/falcosecurity/libs/userspace/libscap/scap_vtable.h#L118-L269)):
 
 ```c
 struct scap_vtable {
@@ -39,7 +39,7 @@ struct scap_vtable {
 };
 ```
 
-The `scap_engine_handle` wraps a `void*` pointer ([`engine_handle.h:27-29`](../../../refs/falcosecurity/libs/userspace/libscap/engine_handle.h)). The `next()` contract: `*pevent` memory is engine-owned, valid until the next `next()` call. Engine flag: `ENGINE_FLAG_BPF_STATS_ENABLED (1 << 0)` ([`scap_vtable.h:116`](../../../refs/falcosecurity/libs/userspace/libscap/scap_vtable.h)).
+The `scap_engine_handle` wraps a `void*` pointer ([`engine_handle.h:27-29`](../../../refs/falcosecurity/libs/userspace/libscap/engine_handle.h#L27-L29)). The `next()` contract: `*pevent` memory is engine-owned, valid until the next `next()` call. Engine flag: `ENGINE_FLAG_BPF_STATS_ENABLED (1 << 0)` ([`scap_vtable.h:116`](../../../refs/falcosecurity/libs/userspace/libscap/scap_vtable.h#L116)).
 
 ### Savefile Sub-Vtable
 
@@ -55,7 +55,7 @@ struct scap_savefile_vtable {
 
 ### Platform Vtable (`scap_platform_vtable`)
 
-Platform-specific operations are in a separate vtable ([`scap_platform_impl.h:43-88`](../../../refs/falcosecurity/libs/userspace/libscap/scap_platform_impl.h)) with methods for `init_platform`, `refresh_addr_list`, `get_device_by_mount_id`, `get_proc`, `refresh_proc_table`, `is_thread_alive`, `get_global_pid`, `get_threadlist`, `get_fdlist`, `get_fdinfo`, `close_platform`, and `free_platform`. The base `scap_platform` struct holds `m_vtable`, `m_addrlist`, `m_userlist`, `m_proclist`, `m_agent_info`, `m_machine_info`, `m_driver_procinfo` ([`scap_platform_impl.h:93-102`](../../../refs/falcosecurity/libs/userspace/libscap/scap_platform_impl.h)).
+Platform-specific operations are in a separate vtable ([`scap_platform_impl.h:44-96`](../../../refs/falcosecurity/libs/userspace/libscap/scap_platform_impl.h#L44-L96)) with methods for `init_platform`, `refresh_addr_list`, `get_device_by_mount_id`, `get_proc`, `refresh_proc_table`, `is_thread_alive`, `get_global_pid`, `get_threadlist`, `get_fdlist`, `get_fdinfo`, `get_file_path`, `close_platform`, and `free_platform`. The base `scap_platform` struct holds `m_vtable`, `m_addrlist`, `m_userlist`, `m_proclist`, `m_agent_info`, `m_machine_info`, `m_driver_procinfo` ([`scap_platform_impl.h:101-110`](../../../refs/falcosecurity/libs/userspace/libscap/scap_platform_impl.h#L101-L110)).
 
 ## Available Engines
 
@@ -71,32 +71,38 @@ Platform-specific operations are in a separate vtable ([`scap_platform_impl.h:43
 | Legacy eBPF (`engine/bpf/`) | `"bpf"` | `scap_bpf_engine_params` | **Removed in libs 0.25 / Falco 0.44** |
 | gVisor (`engine/gvisor/`) | `"gvisor"` | `scap_gvisor_engine_params` | **Removed in libs 0.25 / Falco 0.44** |
 
-**Source:** Engine public headers included from [`scap.h:81-88`](../../../refs/falcosecurity/libs/userspace/libscap/scap.h)
+**Source:** Engine public headers included from [`scap.h:81-89`](../../../refs/falcosecurity/libs/userspace/libscap/scap.h#L81-L89)
 
 ### Engine-Specific Parameters
 
-**Modern eBPF** ([`modern_bpf_public.h:26-42`](../../../refs/falcosecurity/libs/userspace/libscap/engine/modern_bpf/modern_bpf_public.h)): `uint16_t cpus_for_each_buffer` (0=shared, 1=per-CPU default), `bool allocate_online_only`, `unsigned long buffer_bytes_dim`, and `bool disable_iterators` (since libs 0.25.4 / Falco 0.44.1 — disables BPF iterators for synchronous state fetching, forcing a procfs fallback).
+**Modern eBPF** ([`modern_bpf_public.h:26-42`](../../../refs/falcosecurity/libs/userspace/libscap/engine/modern_bpf/modern_bpf_public.h#L26-L42)): `uint16_t cpus_for_each_buffer` (0=shared, 1=per-CPU default), `bool allocate_online_only`, `unsigned long buffer_bytes_dim`, and `bool disable_iterators` (since libs 0.25.4 / Falco 0.44.1 — disables BPF iterators for synchronous state fetching, forcing a procfs fallback).
 
-**Kmod** ([`kmod_public.h:26-30`](../../../refs/falcosecurity/libs/userspace/libscap/engine/kmod/kmod_public.h)): `unsigned long buffer_bytes_dim`.
+**Kmod** ([`kmod_public.h:26-30`](../../../refs/falcosecurity/libs/userspace/libscap/engine/kmod/kmod_public.h#L26-L30)): `unsigned long buffer_bytes_dim`.
 
-**Savefile** ([`savefile_public.h:27-36`](../../../refs/falcosecurity/libs/userspace/libscap/engine/savefile/savefile_public.h)): `int fd`, `const char* fname`, `uint64_t start_offset`, `uint32_t fbuffer_size`, `struct scap_platform* platform`.
+**Savefile** ([`savefile_public.h:27-36`](../../../refs/falcosecurity/libs/userspace/libscap/engine/savefile/savefile_public.h#L27-L36)): `int fd`, `const char* fname`, `uint64_t start_offset`, `uint32_t fbuffer_size`, `struct scap_platform* platform`.
 
-**Source Plugin** ([`source_plugin_public.h:25-30`](../../../refs/falcosecurity/libs/userspace/libscap/engine/source_plugin/source_plugin_public.h)): `scap_source_plugin* input_plugin`, `char* input_plugin_params`.
+**Source Plugin** ([`source_plugin_public.h:25-30`](../../../refs/falcosecurity/libs/userspace/libscap/engine/source_plugin/source_plugin_public.h#L25-L30)): `scap_source_plugin* input_plugin`, `char* input_plugin_params`.
 
 **Legacy eBPF** (removed in libs 0.25 / Falco 0.44; previously `bpf_public.h`): `unsigned long buffer_bytes_dim`, `const char* bpf_probe`.
 
 **gVisor** (removed in libs 0.25 / Falco 0.44; previously `gvisor_public.h`): `const char* gvisor_root_path`, `const char* gvisor_config_path`, `bool no_events`, `int gvisor_epoll_timeout`, `struct scap_gvisor_platform* gvisor_platform`.
+
+### Raw Block Engine (libs 0.26)
+
+`raw_block` consumes caller-owned memory containing complete `.scap`/pcapng blocks. `sinsp::open_raw_block(uint8_t** buffer_ptr, uint64_t* buffer_size_ptr)` supports a whole capture in memory or incremental processing. The first buffer includes the section header and metadata. `SCAP_EOF` means the current buffer is exhausted: append whole blocks and grow the size, or replace the buffer and call `sinsp::fseek(0)`. A trailing partial block fails; only host-endian buffers are supported. Buffer pointers and sizes must remain valid while the engine uses them.
+
+**Source:** [raw_block_public.h:21-71](../../../refs/falcosecurity/libs/userspace/libscap/engine/raw_block/raw_block_public.h#L21-L71), [sinsp.h:164-179](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp.h#L164-L179).
 
 ## Core API
 
 ### Opening a Capture
 
 ```c
-// Combined (scap.h:496-499)
+// Combined (scap.h:495-498)
 scap_t* scap_open(scap_open_args* oargs, const struct scap_vtable* vtable,
                   char* error, int32_t* rc);
 
-// Two-step (scap.h:462, 475) -- useful when handle address needed during init
+// Two-step (scap.h:461, 474) -- useful when handle address needed during init
 scap_t* scap_alloc(void);
 int32_t scap_init(scap_t* handle, scap_open_args* oargs, const struct scap_vtable* vtable);
 ```
@@ -115,19 +121,19 @@ typedef struct scap_open_args {
 } scap_open_args;
 ```
 
-**Source:** [`scap_open.h:38-50`](../../../refs/falcosecurity/libs/userspace/libscap/scap_open.h)
+**Source:** [`scap_open.h:38-50`](../../../refs/falcosecurity/libs/userspace/libscap/scap_open.h#L38-L50)
 
 ### Event Retrieval
 
 ```c
-// scap.h:562
+// scap.h:561
 int32_t scap_next(scap_t* handle, scap_evt** pevent, uint16_t* pcpuid, uint32_t* pflags);
 ```
 
-Returns `SCAP_SUCCESS`, `SCAP_TIMEOUT`, `SCAP_EOF`, or `SCAP_FAILURE`. The `scap_evt` type aliases `struct ppm_evt_hdr` ([`scap.h:57`](../../../refs/falcosecurity/libs/userspace/libscap/scap.h)):
+Returns `SCAP_SUCCESS`, `SCAP_TIMEOUT`, `SCAP_EOF`, or `SCAP_FAILURE`. The `scap_evt` type aliases `struct ppm_evt_hdr` ([`scap.h:57`](../../../refs/falcosecurity/libs/userspace/libscap/scap.h#L57)):
 
 ```c
-// driver/ppm_events_public.h:2182-2191 (packed)
+// driver/ppm_events_public.h:2261-2271 (packed)
 struct ppm_evt_hdr {
     uint64_t ts;      // Nanoseconds since epoch
     uint64_t tid;     // Thread ID
@@ -137,7 +143,7 @@ struct ppm_evt_hdr {
 };
 ```
 
-Event accessors ([`scap.h:571-842`](../../../refs/falcosecurity/libs/userspace/libscap/scap.h)): `scap_event_getlen()`, `scap_event_get_type()`, `scap_event_get_ts()`, `scap_event_get_tid()`, `scap_event_get_nparams()`, `scap_event_get_num()`, `scap_event_getinfo()`, `scap_event_get_dump_flags()`, `scap_event_decode_params()`.
+Event accessors ([`scap.h:572-843`](../../../refs/falcosecurity/libs/userspace/libscap/scap.h#L572-L843)): `scap_event_getlen()`, `scap_event_get_type()`, `scap_event_get_ts()`, `scap_event_get_tid()`, `scap_event_get_nparams()`, `scap_event_get_num()`, `scap_event_getinfo()`, `scap_event_get_dump_flags()`, `scap_event_decode_params()`.
 
 ### Capture Control
 
@@ -168,7 +174,7 @@ enum scap_setting {
 };
 ```
 
-Convenience wrappers ([`scap.h:799-996`](../../../refs/falcosecurity/libs/userspace/libscap/scap.h)): `scap_set_snaplen()`, `scap_set_ppm_sc()`, `scap_set_dropfailed()`, `scap_set_fullcapture_port_range()`, `scap_set_statsd_port()`, `scap_start_dropping_mode()`, `scap_stop_dropping_mode()`, `scap_enable_dynamic_snaplen()`, `scap_disable_dynamic_snaplen()`.
+Convenience wrappers ([`scap.h:800-997`](../../../refs/falcosecurity/libs/userspace/libscap/scap.h#L800-L997)): `scap_set_snaplen()`, `scap_set_ppm_sc()`, `scap_set_dropfailed()`, `scap_set_fullcapture_port_range()`, `scap_set_statsd_port()`, `scap_start_dropping_mode()`, `scap_stop_dropping_mode()`, `scap_enable_dynamic_snaplen()`, `scap_disable_dynamic_snaplen()`.
 
 ## Return Codes
 
@@ -187,7 +193,7 @@ Convenience wrappers ([`scap.h:799-996`](../../../refs/falcosecurity/libs/usersp
 #define SCAP_FILTERED_EVENT   10
 #define SCAP_LASTERR_SIZE    256
 
-const char* scap_getlasterr(scap_t* handle);  // scap.h:540
+const char* scap_getlasterr(scap_t* handle);  // scap.h:539
 ```
 
 **Source:** [`scap_const.h`](../../../refs/falcosecurity/libs/userspace/libscap/scap_const.h)
@@ -197,7 +203,7 @@ const char* scap_getlasterr(scap_t* handle);  // scap.h:540
 ### Basic (`scap_stats`)
 
 ```c
-// scap.h:127-149
+// scap.h:126-148
 typedef struct scap_stats {
     uint64_t n_evts;                             // Total events received
     uint64_t n_drops;                            // Total events dropped
@@ -231,29 +237,29 @@ const struct metrics_v2* scap_get_stats_v2(scap_t* handle, uint32_t flags,
                                            uint32_t* nstats, int32_t* rc);
 ```
 
-Category flags ([`metrics_v2.h:52-60`](../../../refs/falcosecurity/libs/userspace/libscap/metrics_v2.h)): `METRICS_V2_KERNEL_COUNTERS` (1<<0), `METRICS_V2_LIBBPF_STATS` (1<<1), `METRICS_V2_RESOURCE_UTILIZATION` (1<<2), `METRICS_V2_STATE_COUNTERS` (1<<3), `METRICS_V2_RULE_COUNTERS` (1<<4), `METRICS_V2_MISC` (1<<5), `METRICS_V2_PLUGINS` (1<<6), `METRICS_V2_KERNEL_COUNTERS_PER_CPU` (1<<7).
+Category flags ([`metrics_v2.h:52-60`](../../../refs/falcosecurity/libs/userspace/libscap/metrics_v2.h#L52-L60)): `METRICS_V2_KERNEL_COUNTERS` (1<<0), `METRICS_V2_LIBBPF_STATS` (1<<1), `METRICS_V2_RESOURCE_UTILIZATION` (1<<2), `METRICS_V2_STATE_COUNTERS` (1<<3), `METRICS_V2_RULE_COUNTERS` (1<<4), `METRICS_V2_MISC` (1<<5), `METRICS_V2_PLUGINS` (1<<6), `METRICS_V2_KERNEL_COUNTERS_PER_CPU` (1<<7).
 
-Each entry: `char name[512]`, `uint32_t flags`, `metrics_v2_metric_type metric_type`, `metrics_v2_value value`, `metrics_v2_value_type type`, `metrics_v2_value_unit unit` ([`metrics_v2.h:107-116`](../../../refs/falcosecurity/libs/userspace/libscap/metrics_v2.h)).
+Each entry: `char name[512]`, `uint32_t flags`, `metrics_v2_metric_type metric_type`, `metrics_v2_value value`, `metrics_v2_value_type type`, `metrics_v2_value_unit unit` ([`metrics_v2.h:107-116`](../../../refs/falcosecurity/libs/userspace/libscap/metrics_v2.h#L107-L116)).
 
 ## Platform Information
 
-### Machine Info ([`scap_machine_info.h:40-50`](../../../refs/falcosecurity/libs/userspace/libscap/scap_machine_info.h))
+### Machine Info ([`scap_machine_info.h:40-50`](../../../refs/falcosecurity/libs/userspace/libscap/scap_machine_info.h#L40-L50))
 
-Packed struct: `uint32_t num_cpus`, `uint64_t memory_size_bytes`, `uint64_t max_pid`, `char hostname[128]`, `uint64_t boot_ts_epoch` (ns, epoch), `uint64_t flags`, `uint64_t reserved3`, `uint64_t reserved4`. Retrieved via `scap_get_machine_info(struct scap_platform*)` ([`scap_platform_api.h:95`](../../../refs/falcosecurity/libs/userspace/libscap/scap_platform_api.h)).
+Packed struct: `uint32_t num_cpus`, `uint64_t memory_size_bytes`, `uint64_t max_pid`, `char hostname[128]`, `uint64_t boot_ts_epoch` (ns, epoch), `uint64_t flags`, `uint64_t reserved3`, `uint64_t reserved4`. Retrieved via `scap_get_machine_info(struct scap_platform*)` ([`scap_platform_api.h:96`](../../../refs/falcosecurity/libs/userspace/libscap/scap_platform_api.h#L96)).
 
-### Agent Info ([`scap_machine_info.h:57-62`](../../../refs/falcosecurity/libs/userspace/libscap/scap_machine_info.h))
+### Agent Info ([`scap_machine_info.h:57-62`](../../../refs/falcosecurity/libs/userspace/libscap/scap_machine_info.h#L57-L62))
 
-`uint64_t start_ts_epoch` (ns, epoch), `double start_time` (seconds since boot), `char uname_r[128]`. Retrieved via `scap_get_agent_info(struct scap_platform*)` ([`scap_platform_api.h:104`](../../../refs/falcosecurity/libs/userspace/libscap/scap_platform_api.h)).
+`uint64_t start_ts_epoch` (ns, epoch), `double start_time` (seconds since boot), `char uname_r[128]`. Retrieved via `scap_get_agent_info(struct scap_platform*)` ([`scap_platform_api.h:105`](../../../refs/falcosecurity/libs/userspace/libscap/scap_platform_api.h#L105)).
 
 ## Process Table
 
-### Thread Info (`scap_threadinfo`) ([`scap.h:246-301`](../../../refs/falcosecurity/libs/userspace/libscap/scap.h))
+### Thread Info (`scap_threadinfo`) ([`scap.h:245-300`](../../../refs/falcosecurity/libs/userspace/libscap/scap.h#L245-L300))
 
 Key fields: `uint64_t tid/pid/ptid/sid/vpgid/pgid`, `char comm/exe/exepath[1025]`, `bool exe_writable/exe_upper_layer/exe_lower_layer/exe_from_memfd`, `char args[4097]` + `uint16_t args_len`, `char env[4097]` + `uint16_t env_len`, `char cwd[1025]`, `int64_t fdlimit`, `uint32_t flags/uid/gid`, `uint64_t cap_permitted/cap_effective/cap_inheritable`, `uint64_t exe_ino/exe_ino_ctime/exe_ino_mtime`, `uint64_t exe_ino_ctime_duration_clone_ts/exe_ino_ctime_duration_pidns_start`, `uint32_t vmsize_kb/vmrss_kb/vmswap_kb`, `uint64_t pfmajor/pfminor`, `int64_t vtid/vpid`, `uint64_t pidns_init_start_ts`, `struct scap_cgroup_set cgroups`, `char root[1025]`, `scap_fdinfo* fdlist`, `uint64_t clone_ts`, `uint32_t tty/loginuid`.
 
 Limits ([`scap_limits.h`](../../../refs/falcosecurity/libs/userspace/libscap/scap_limits.h)): `SCAP_MAX_PATH_SIZE=1024`, `SCAP_MAX_ARGS_SIZE=4096`, `SCAP_MAX_ENV_SIZE=4096`.
 
-### Process Callbacks ([`scap_procs.h:50-72`](../../../refs/falcosecurity/libs/userspace/libscap/scap_procs.h))
+### Process Callbacks ([`scap_procs.h:50-72`](../../../refs/falcosecurity/libs/userspace/libscap/scap_procs.h#L50-L72))
 
 ```c
 typedef int32_t (*proc_entry_callback)(void* context, char* error, int64_t tid,
@@ -267,7 +273,7 @@ typedef struct scap_proc_callbacks {
 } scap_proc_callbacks;
 ```
 
-Platform API for process info ([`scap_platform_api.h:71-127`](../../../refs/falcosecurity/libs/userspace/libscap/scap_platform_api.h)): `scap_proc_get()`, `scap_refresh_proc_table()`, `scap_is_thread_alive()`, `scap_getpid_global()`, `scap_get_threadlist()`, `scap_get_fdlist()`, `scap_get_fdinfo()`.
+Platform API for process info ([`scap_platform_api.h:72-141`](../../../refs/falcosecurity/libs/userspace/libscap/scap_platform_api.h#L72-L141)): `scap_proc_get()`, `scap_refresh_proc_table()`, `scap_is_thread_alive()`, `scap_getpid_global()`, `scap_get_threadlist()`, `scap_get_fdlist()`, `scap_get_fdinfo()`, and `scap_get_file_path()`. The last writes a NUL-terminated path and reports its length excluding the terminator. `scap_get_device_by_mount_id()` takes a thread ID; the platform resolves its procfs mountinfo path.
 
 ## Capture Files (`.scap`)
 
@@ -305,13 +311,13 @@ Empty-param variants: `scap_event_encode_params_with_empty_params()`, `scap_crea
 ## Driver Version Compatibility
 
 ```c
-// scap.h:104-110
-#define SCAP_MINIMUM_DRIVER_API_VERSION    PPM_API_VERSION(8, 0, 0)
-#define SCAP_MINIMUM_DRIVER_SCHEMA_VERSION PPM_API_VERSION(4, 1, 0)
+// scap.h:103-109
+#define SCAP_MINIMUM_DRIVER_API_VERSION    PPM_API_VERSION(11, 0, 0)
+#define SCAP_MINIMUM_DRIVER_SCHEMA_VERSION PPM_API_VERSION(4, 3, 0)
 #define DEFAULT_DRIVER_BUFFER_BYTES_DIM    8 * 1024 * 1024  // 8MB
 ```
 
-Runtime queries: `scap_get_driver_api_version()`, `scap_get_driver_schema_version()`, `scap_check_current_engine()` ([`scap.h:833, 1003-1010`](../../../refs/falcosecurity/libs/userspace/libscap/scap.h)).
+Runtime queries: `scap_get_driver_api_version()`, `scap_get_driver_schema_version()`, `scap_check_current_engine()` ([`scap.h:833,997-1004`](../../../refs/falcosecurity/libs/userspace/libscap/scap.h#L833)).
 
 ## Sources
 

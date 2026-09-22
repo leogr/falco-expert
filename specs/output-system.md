@@ -2,7 +2,7 @@
 
 > Alert delivery architecture: output channels, async message queue, formatting, control messages, and timeout handling.
 
-**Era:** 0.44 | **Source:** [`refs/falcosecurity/falco/userspace/falco/`](../refs/falcosecurity/falco/userspace/falco/)
+**Era:** 0.45 | **Source:** [`refs/falcosecurity/falco/userspace/falco/`](../refs/falcosecurity/falco/userspace/falco/)
 
 ## Overview
 
@@ -10,7 +10,7 @@ The Falco output system delivers security alerts to configured destinations when
 
 The system is orchestrated by the `falco_outputs` class, which owns the message queue, the worker thread, and all output channel instances. Formatting is delegated to the `falco_formats` class, which uses `sinsp_evt_formatter` from libsinsp to interpolate field values into output templates.
 
-**Source:** [`falco_outputs.h:32-40`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.h), [`falco_outputs.cpp`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp), [`digests/falcosecurity/falco/outputs.md`](../digests/falcosecurity/falco/outputs.md)
+**Source:** [`falco_outputs.h:32-40`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.h#L32-L40), [`falco_outputs.cpp`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp), [`digests/falcosecurity/falco/outputs.md`](../digests/falcosecurity/falco/outputs.md)
 
 ## Architecture
 
@@ -24,7 +24,7 @@ typedef tbb::concurrent_bounded_queue<ctrl_msg> falco_outputs_cbq;
 falco_outputs_cbq m_queue;
 ```
 
-Queue capacity is set during construction via the `outputs_queue_capacity` parameter, which maps to the `outputs_queue.capacity` configuration option. The default is unbounded (`std::ptrdiff_t(~size_t(0) / 2)`), defined in [`falco_common.h:29`](../refs/falcosecurity/falco/userspace/engine/falco_common.h).
+Queue capacity is set during construction via the `outputs_queue_capacity` parameter, which maps to the `outputs_queue.capacity` configuration option. The default is unbounded (`std::ptrdiff_t(~size_t(0) / 2)`), defined in [`falco_common.h:29`](../refs/falcosecurity/falco/userspace/engine/falco_common.h#L29).
 
 ```cpp
 // falco_outputs.cpp:70
@@ -46,16 +46,16 @@ inline void falco_outputs::push(const ctrl_msg &cmsg) {
 }
 ```
 
-The drop count is exposed via `get_outputs_queue_num_drops()` ([`falco_outputs.cpp:328-330`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp)) for metrics collection.
+The drop count is exposed via `get_outputs_queue_num_drops()` ([`falco_outputs.cpp:330-332`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp#L330-L332)) for metrics collection.
 
-**Source:** [`falco_outputs.h:121-126`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.h), [`falco_outputs.cpp:262-276`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp)
+**Source:** [`falco_outputs.h:121-126`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.h#L121-L126), [`falco_outputs.cpp:264-278`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp#L264-L278)
 
 ### Worker Thread
 
 A dedicated worker thread is spawned in the constructor and runs the `worker()` method. It blocks on `m_queue.pop()` until a message is available, then dispatches it to every configured output channel via `process_msg()`. A watchdog monitors each output's processing time:
 
 ```cpp
-// falco_outputs.cpp:281-308
+// falco_outputs.cpp:283-310
 void falco_outputs::worker() noexcept {
     watchdog<std::string> wd;
     wd.start([&](const std::string &payload) -> void {
@@ -83,10 +83,10 @@ void falco_outputs::worker() noexcept {
 }
 ```
 
-The `process_msg()` method dispatches based on control message type ([`falco_outputs.cpp:310-326`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp)):
+The `process_msg()` method dispatches based on control message type ([`falco_outputs.cpp:312-328`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp#L312-L328)):
 
 ```cpp
-// falco_outputs.cpp:310-326
+// falco_outputs.cpp:312-328
 inline void falco_outputs::process_msg(falco::outputs::abstract_output *o,
                                         const ctrl_msg &cmsg) {
     switch(cmsg.type) {
@@ -104,13 +104,13 @@ inline void falco_outputs::process_msg(falco::outputs::abstract_output *o,
 }
 ```
 
-The worker thread is marked `noexcept`; an uncaught exception terminates the program. The `stop_worker()` method sends a `CTRL_MSG_STOP` message and joins the worker thread, using its own watchdog to handle the case where outputs are blocked ([`falco_outputs.cpp:237-254`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp)).
+The worker thread is marked `noexcept`; an uncaught exception terminates the program. The `stop_worker()` method sends a `CTRL_MSG_STOP` message and joins the worker thread, using its own watchdog to handle the case where outputs are blocked ([`falco_outputs.cpp:239-256`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp#L239-L256)).
 
-**Source:** [`falco_outputs.cpp:281-326`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp)
+**Source:** [`falco_outputs.cpp:283-328`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp#L283-L328)
 
 ### Control Messages
 
-The queue carries `ctrl_msg` values, which extend the `falco::outputs::message` struct with a type discriminator. The control message types are defined in [`falco_outputs.h:110-115`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.h):
+The queue carries `ctrl_msg` values, which extend the `falco::outputs::message` struct with a type discriminator. The control message types are defined in [`falco_outputs.h:110-115`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.h#L110-L115):
 
 | Message Type | Value | Purpose | Worker Action |
 |-------------|-------|---------|---------------|
@@ -133,13 +133,13 @@ struct ctrl_msg : falco::outputs::message {
 };
 ```
 
-Control messages (non-OUTPUT) are sent via the helper `push_ctrl()` ([`falco_outputs.cpp:256-260`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp)), which creates an empty message with only the type field set.
+Control messages (non-OUTPUT) are sent via the helper `push_ctrl()` ([`falco_outputs.cpp:258-262`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp#L258-L262)), which creates an empty message with only the type field set.
 
-**Source:** [`falco_outputs.h:110-119`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.h)
+**Source:** [`falco_outputs.h:110-119`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.h#L110-L119)
 
 ### Message Structure
 
-Each output message is defined in [`outputs.h:43-51`](../refs/falcosecurity/falco/userspace/falco/outputs.h):
+Each output message is defined in [`outputs.h:43-51`](../refs/falcosecurity/falco/userspace/falco/outputs.h#L43-L51):
 
 ```cpp
 // outputs.h:43-51
@@ -165,16 +165,16 @@ struct message {
 | `tags` | `std::set<std::string>` | Set of tags from the matched rule |
 
 Messages are populated by two entry points:
-- **`handle_event()`** ([`falco_outputs.cpp:120-164`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp)) -- formats a rule-matched event via `falco_formats::format_event()` and extracts field values
-- **`handle_msg()`** ([`falco_outputs.cpp:166-227`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp)) -- formats a generic (internal) message, e.g., drop alerts; uses source `"internal"`
+- **`handle_event()`** ([`falco_outputs.cpp:120-164`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp#L120-L164)) -- formats a rule-matched event via `falco_formats::format_event()` and extracts field values
+- **`handle_msg()`** ([`falco_outputs.cpp:166-229`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp#L166-L229)) -- formats a generic (internal) message, e.g., drop alerts; uses source `"internal"`
 
-**Source:** [`outputs.h:43-51`](../refs/falcosecurity/falco/userspace/falco/outputs.h), [`falco_outputs.cpp:120-227`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp)
+**Source:** [`outputs.h:43-51`](../refs/falcosecurity/falco/userspace/falco/outputs.h#L43-L51), [`falco_outputs.cpp:120-229`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp#L120-L229)
 
 ## Implementation Details
 
 ### Output Channels
 
-All output channels inherit from `falco::outputs::abstract_output` ([`outputs.h:58-93`](../refs/falcosecurity/falco/userspace/falco/outputs.h)), which defines the interface:
+All output channels inherit from `falco::outputs::abstract_output` ([`outputs.h:58-93`](../refs/falcosecurity/falco/userspace/falco/outputs.h#L58-L93)), which defines the interface:
 
 ```cpp
 // outputs.h:58-93
@@ -195,7 +195,7 @@ protected:
 };
 ```
 
-Output channels are instantiated at construction time by `add_output()` ([`falco_outputs.cpp:82-118`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp)), which maps the config name to a concrete class. Platform availability varies:
+Output channels are instantiated at construction time by `add_output()` ([`falco_outputs.cpp:82-118`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp#L82-L118)), which maps the config name to a concrete class. Platform availability varies:
 
 | Channel | Class | Platforms |
 |---------|-------|-----------|
@@ -205,7 +205,7 @@ Output channels are instantiated at construction time by `add_output()` ([`falco
 | `program` | `output_program` | Linux/Unix (not Windows) |
 | `http` | `output_http` | All platforms (not Emscripten, not MINIMAL_BUILD). Since 0.44, also built on macOS and Windows ([PR #3827](https://github.com/falcosecurity/falco/pull/3827)) |
 
-**Source:** [`falco_outputs.cpp:82-118`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp)
+**Source:** [`falco_outputs.cpp:82-118`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp#L82-L118)
 
 #### stdout_output
 
@@ -231,7 +231,7 @@ stdout_output:
 
 #### syslog_output
 
-Sends alerts to the system syslog via the POSIX `syslog()` function. The message `priority` field maps directly to syslog priority levels (the enum values in [`falco_common.h:50-59`](../refs/falcosecurity/falco/userspace/engine/falco_common.h) are numerically equivalent to `LOG_EMERG` through `LOG_DEBUG`). No trailing newline is appended.
+Sends alerts to the system syslog via the POSIX `syslog()` function. The message `priority` field maps directly to syslog priority levels (the enum values in [`falco_common.h:50-59`](../refs/falcosecurity/falco/userspace/engine/falco_common.h#L50-L59) are numerically equivalent to `LOG_EMERG` through `LOG_DEBUG`). No trailing newline is appended.
 
 ```cpp
 // outputs_syslog.cpp:21-24
@@ -304,7 +304,7 @@ void falco::outputs::output_http::output(const message *msg) {
 }
 ```
 
-The `init()` method ([`outputs_http.cpp:31-107`](../refs/falcosecurity/falco/userspace/falco/outputs_http.cpp)) configures all curl options from the config map. URL quoting is automatically stripped. When `echo` is `false` (default), a no-op write callback suppresses response output to stdout.
+The `init()` method ([`outputs_http.cpp:31-107`](../refs/falcosecurity/falco/userspace/falco/outputs_http.cpp#L31-L107)) configures all curl options from the config map. URL quoting is automatically stripped. When `echo` is `false` (default), a no-op write callback suppresses response output to stdout.
 
 Configuration:
 ```yaml
@@ -374,7 +374,7 @@ program_output:
 
 The default text format is: `<timestamp>: <Priority> <formatted_rule_output>`
 
-The prefix is constructed by `falco_formats::format_event()` ([`formats.cpp:38-73`](../refs/falcosecurity/falco/userspace/engine/formats.cpp)):
+The prefix is constructed by `falco_formats::format_event()` ([`formats.cpp:39-74`](../refs/falcosecurity/falco/userspace/engine/formats.cpp#L39-L74)):
 
 ```cpp
 // formats.cpp:49-54
@@ -398,11 +398,11 @@ With `time_format_iso_8601: true`:
 2024-01-15T13:53:31.726060287+0000: Critical Sensitive file opened (file=/etc/shadow proc_exe=cat)
 ```
 
-**Source:** [`formats.cpp:38-73`](../refs/falcosecurity/falco/userspace/engine/formats.cpp)
+**Source:** [`formats.cpp:39-74`](../refs/falcosecurity/falco/userspace/engine/formats.cpp#L39-L74)
 
 #### JSON Format
 
-When `json_output: true`, `format_event()` produces a complete JSON object ([`formats.cpp:77-158`](../refs/falcosecurity/falco/userspace/engine/formats.cpp)). The timestamp is always in ISO 8601 format with nanosecond precision:
+When `json_output: true`, `format_event()` produces a complete JSON object ([`formats.cpp:86-178`](../refs/falcosecurity/falco/userspace/engine/formats.cpp#L86-L178)). The timestamp is always in ISO 8601 format with nanosecond precision:
 
 ```json
 {
@@ -433,7 +433,15 @@ The inclusion of individual JSON properties is controlled by configuration flags
 
 The `time`, `rule`, `priority`, `source`, and `hostname` properties are always included when JSON output is enabled.
 
-**Source:** [`formats.cpp:77-158`](../refs/falcosecurity/falco/userspace/engine/formats.cpp), [`formats.h`](../refs/falcosecurity/falco/userspace/engine/formats.h)
+**Source:** [`formats.cpp:86-178`](../refs/falcosecurity/falco/userspace/engine/formats.cpp#L86-L178), [`formats.h`](../refs/falcosecurity/falco/userspace/engine/formats.h)
+
+### Byte Preservation and Output Encoding (0.45)
+
+Rule comparisons and field transforms operate on extracted raw bytes (regular expressions sanitize their string operand for UTF-8). Alert encoding happens afterward. For rule-matched text alerts, Falco JSON-encodes the complete formatted string and strips the outer quotes: control characters, quotes and backslashes are escaped; invalid UTF-8 is replaced with U+FFFD. Text consumers therefore see escaped control sequences rather than literal newlines from event data.
+
+JSON output sanitizes formatter-produced field JSON before parsing and serializes the final event with replacement for invalid UTF-8. `output_fields` retain JSON types; invalid byte sequences do not survive as their original bytes in displayed strings. Generic internal JSON alerts and JSON rule-validation/description output also use replacement on serialization. This describes presentation, not a transformation of the bytes used for matching.
+
+**Source:** [`formats.cpp:76-178`](../refs/falcosecurity/falco/userspace/engine/formats.cpp#L76-L178), [`falco_outputs.cpp:195-231`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp#L195-L231), [`sinsp_filtercheck.cpp:880-947`](../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck.cpp#L880-L947), [`sinsp_filtercheck.cpp:1137-1181`](../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck.cpp#L1137-L1181).
 
 ### Output Formatting
 
@@ -465,7 +473,7 @@ Sensitive file opened (file=/etc/shadow proc_exe=/usr/bin/cat proc_name=cat)
 
 Additional fields can be injected into rule outputs programmatically via the `falco_engine` API. Each extra field is specified as a pair of `(format_string, is_raw)` keyed by field name.
 
-The type is defined in [`falco_common.h:71`](../refs/falcosecurity/falco/userspace/engine/falco_common.h):
+The type is defined in [`falco_common.h:71`](../refs/falcosecurity/falco/userspace/engine/falco_common.h#L71):
 
 ```cpp
 typedef std::unordered_map<std::string, std::pair<std::string, bool>> extra_output_field_t;
@@ -477,13 +485,13 @@ typedef std::unordered_map<std::string, std::pair<std::string, bool>> extra_outp
 | `add_extra_output_formatted_field()` | Adds a formatted field to `output_fields` (`is_raw=false`) |
 | `add_extra_output_raw_field()` | Adds a raw field that preserves its original type in JSON (`is_raw=true`) |
 
-Each method accepts optional filters for source, tags, and rule name. In `handle_event()`, extra fields are resolved and merged into the `fields` map of the control message ([`falco_outputs.cpp:142-156`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp)). In JSON mode, raw fields are formatted with `OF_JSON` to preserve type information, while formatted fields are always strings ([`formats.cpp:133-155`](../refs/falcosecurity/falco/userspace/engine/formats.cpp)).
+Each method accepts optional filters for source, tags, and rule name. In `handle_event()`, extra fields are resolved and merged into the `fields` map of the control message ([`falco_outputs.cpp:142-156`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp#L142-L156)). In JSON mode, raw fields are formatted with `OF_JSON` to preserve type information, while formatted fields are always strings ([`formats.cpp:144-169`](../refs/falcosecurity/falco/userspace/engine/formats.cpp#L144-L169)).
 
-**Source:** [`falco_common.h:71`](../refs/falcosecurity/falco/userspace/engine/falco_common.h), [`falco_outputs.cpp:142-156`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp), [`formats.cpp:133-155`](../refs/falcosecurity/falco/userspace/engine/formats.cpp)
+**Source:** [`falco_common.h:71`](../refs/falcosecurity/falco/userspace/engine/falco_common.h#L71), [`falco_outputs.cpp:142-156`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp#L142-L156), [`formats.cpp:144-169`](../refs/falcosecurity/falco/userspace/engine/formats.cpp#L144-L169)
 
 ### Priority Levels
 
-Priority levels are defined in [`falco_common.h:50-59`](../refs/falcosecurity/falco/userspace/engine/falco_common.h). The numeric values are intentionally aligned with syslog priority levels:
+Priority levels are defined in [`falco_common.h:50-59`](../refs/falcosecurity/falco/userspace/engine/falco_common.h#L50-L59). The numeric values are intentionally aligned with syslog priority levels:
 
 ```cpp
 // falco_common.h:50-59
@@ -510,9 +518,9 @@ enum priority_type {
 | INFORMATIONAL | 6 | `LOG_INFO` | Informational messages |
 | DEBUG | 7 | `LOG_DEBUG` | Debug-level messages |
 
-The `format_priority()` and `parse_priority()` helper functions convert between enum values and string representations ([`falco_common.h:61-64`](../refs/falcosecurity/falco/userspace/engine/falco_common.h)).
+The `format_priority()` and `parse_priority()` helper functions convert between enum values and string representations ([`falco_common.h:61-64`](../refs/falcosecurity/falco/userspace/engine/falco_common.h#L61-L64)).
 
-**Source:** [`falco_common.h:50-64`](../refs/falcosecurity/falco/userspace/engine/falco_common.h)
+**Source:** [`falco_common.h:50-64`](../refs/falcosecurity/falco/userspace/engine/falco_common.h#L50-L64)
 
 ### Timeout and Buffering
 
@@ -528,9 +536,9 @@ wd.start([&](const std::string &payload) -> void {
 });
 ```
 
-The watchdog uses a polling resolution of 100ms ([`watchdog.h:31`](../refs/falcosecurity/falco/userspace/falco/watchdog.h)).
+The watchdog uses a polling resolution of 100ms ([`watchdog.h:31`](../refs/falcosecurity/falco/userspace/falco/watchdog.h#L31)).
 
-During shutdown, a separate watchdog monitors the stop operation. If the worker thread does not stop within the timeout period, the queue is cleared and a new stop message is pushed ([`falco_outputs.cpp:237-254`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp)).
+During shutdown, a separate watchdog monitors the stop operation. If the worker thread does not stop within the timeout period, the queue is cleared and a new stop message is pushed ([`falco_outputs.cpp:239-256`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp#L239-L256)).
 
 #### Buffered Outputs
 
@@ -542,13 +550,13 @@ The `buffered_outputs` configuration option (default: `false`) controls whether 
 The CLI flag `falco -U` forces unbuffered mode regardless of the configuration.
 
 Per-channel buffering behavior:
-- **stdout**: Sets `std::unitbuf` manipulator on each write ([`outputs_stdout.cpp:28-29`](../refs/falcosecurity/falco/userspace/falco/outputs_stdout.cpp))
-- **file**: Sets stream buffer size to 0 via `pubsetbuf(0, 0)` ([`outputs_file.cpp:23-24`](../refs/falcosecurity/falco/userspace/falco/outputs_file.cpp))
-- **program**: Sets `setvbuf()` to `_IONBF` ([`outputs_program.cpp:36`](../refs/falcosecurity/falco/userspace/falco/outputs_program.cpp))
+- **stdout**: Sets `std::unitbuf` manipulator on each write ([`outputs_stdout.cpp:28-29`](../refs/falcosecurity/falco/userspace/falco/outputs_stdout.cpp#L28-L29))
+- **file**: Sets stream buffer size to 0 via `pubsetbuf(0, 0)` ([`outputs_file.cpp:23-24`](../refs/falcosecurity/falco/userspace/falco/outputs_file.cpp#L23-L24))
+- **program**: Sets `setvbuf()` to `_IONBF` ([`outputs_program.cpp:36`](../refs/falcosecurity/falco/userspace/falco/outputs_program.cpp#L36))
 - **syslog**: Syslog handles its own buffering; the option has no effect
 - **http**: HTTP sends each message as a separate POST; the option has no effect
 
-**Source:** [`watchdog.h`](../refs/falcosecurity/falco/userspace/falco/watchdog.h), [`falco_outputs.cpp:237-254`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp), [`falco_outputs.cpp:281-308`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp)
+**Source:** [`watchdog.h`](../refs/falcosecurity/falco/userspace/falco/watchdog.h), [`falco_outputs.cpp:239-256`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp#L239-L256), [`falco_outputs.cpp:283-310`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp#L283-L310)
 
 ## Removed Features
 
@@ -562,7 +570,7 @@ Per-channel buffering behavior:
 - [`architecture-overview.md`](architecture-overview.md) -- System architecture and event pipeline; shows where `falco_outputs` fits in the overall flow
 - [`rule-engine.md`](rule-engine.md) -- Rule compilation and matching; produces the events and format strings consumed by the output system
 - [`configuration.md`](configuration.md) -- Configuration system; output options and JSON settings
-- [`application-lifecycle.md`](application-lifecycle.md) -- Application orchestration; controls output initialization, SIGHUP reopen, and shutdown
+- [`application-lifecycle.md`](application-lifecycle.md) -- Application orchestration; controls output initialization, SIGUSR1 reopen, and shutdown
 
 ## Sources
 

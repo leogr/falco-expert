@@ -1,7 +1,7 @@
 # falcosecurity/charts Digest
 
 **Repository:** https://github.com/falcosecurity/charts
-**Era:** 0.44
+**Era:** 0.45
 **Status:** Core / Stable
 
 Official Helm charts for deploying Falco and its ecosystem components in Kubernetes. This monorepo contains charts that demonstrate best practices for configuring and running Falco components.
@@ -23,20 +23,20 @@ helm repo add falcosecurity https://falcosecurity.github.io/charts
 helm repo update
 ```
 
-> **Chart source & release (0.44 era):** The Falco chart is developed in the [falco repository](../../refs/falcosecurity/falco/) under [`chart/falco/`](../../refs/falcosecurity/falco/chart/falco/) and synced into this `charts` repo by the `poiana` bot for release (e.g., tag `falco-9.1.0`, commit `53586de`, message `sync(charts/falco): v9.1.0`); this `charts` repo remains the published Helm/OCI distribution point. **This `charts` submodule, pinned at `falco-9.1.0`, is the canonical `9.1.0` / appVersion `0.44.1` chart.** Note: the `9.1.0` bump lives on the falco repo's `release/0.44.x` branch tip, which post-dates the pinned `0.44.1` tag — so the falco submodule's own `chart/falco/` (at the `0.44.1` tag) still reads `9.0.0` / appVersion `0.44.0`. The source chart release workflow was defined in the falco repo during the 0.44.x cycle (commit `e9cb2349`).
+> **Chart source and release:** Falco chart development lives in the [Falco repository](../../refs/falcosecurity/falco/chart/falco/); this charts monorepo is its published Helm/OCI distribution point. The current pin is `falco-9.2.0`, with appVersion `0.45.0` ([Chart.yaml](../../refs/falcosecurity/charts/charts/falco/Chart.yaml)).
 
 ## Charts Summary
 
 | Chart | Version | AppVersion | Purpose |
 |-------|---------|------------|---------|
-| [falco](../../refs/falcosecurity/charts/charts/falco/) | 9.1.0 | 0.44.1 | Core Falco deployment |
-| [falco-operator](../../refs/falcosecurity/charts/charts/falco-operator/) | 0.2.0 | 0.3.0 | Kubernetes Operator for managing Falco instances |
-| [falcosidekick](../../refs/falcosecurity/charts/charts/falcosidekick/) | 0.13.1 | 2.31.1 | Alert forwarding to 60+ outputs |
-| [falco-talon](../../refs/falcosecurity/charts/charts/falco-talon/) | 0.4.0 | 0.3.0 | Automated response actions |
-| [k8s-metacollector](../../refs/falcosecurity/charts/charts/k8s-metacollector/) | 0.3.0 | 0.1.2 | Kubernetes metadata enrichment |
+| [falco](../../refs/falcosecurity/charts/charts/falco/) | 9.2.0 | 0.45.0 | Core Falco deployment |
+| [falco-operator](../../refs/falcosecurity/charts/charts/falco-operator/) | 0.4.0-rc3 | 0.5.0-rc3 | Kubernetes Operator for managing Falco instances |
+| [falcosidekick](../../refs/falcosecurity/charts/charts/falcosidekick/) | 0.14.0 | 2.31.1 | Alert forwarding to 60+ outputs |
+| [falco-talon](../../refs/falcosecurity/charts/charts/falco-talon/) | 0.4.2 | 0.3.0 | Automated response actions |
+| [k8s-metacollector](../../refs/falcosecurity/charts/charts/k8s-metacollector/) | 0.3.2 | 0.1.4 | Kubernetes metadata enrichment |
 | [event-generator](../../refs/falcosecurity/charts/charts/event-generator/) | 0.4.0 | 0.13.0 | Test event generation |
 
-> **Chart `appVersion` vs. bundled component versions:** Each chart's `appVersion` is the application version that chart release ships by default; it is not always the latest upstream release of that component (e.g., the bundled `falcosidekick` chart appVersion is `2.31.1`, while the standalone falcosidekick app is at `2.34.1`).
+> **Chart `appVersion` vs. bundled component versions:** Each chart's `appVersion` is the application version that chart release ships by default; it is not always the latest upstream release of that component (e.g., the bundled `falcosidekick` chart appVersion is `2.31.1`, while the standalone falcosidekick app is at `2.35.0`).
 
 ## Falco Chart (Main)
 
@@ -143,7 +143,7 @@ helm install falco falcosecurity/falco -f values-k8saudit.yaml
 ```yaml
 driver:
   enabled: true
-  kind: module  # Or auto/modern_ebpf
+  kind: kmod  # Or auto/modern_ebpf
 controller:
   kind: daemonset  # Required for syscall capture
 collectors:
@@ -225,7 +225,6 @@ collectors:
 | K8s Audit only | `false` | `deployment` | `false` |
 | Syscalls + K8s Audit | `true` | `daemonset` | `true` |
 | CloudTrail (plugin) | `false` | `deployment` | `false` |
-| gVisor | `true` (kind: gvisor) | `daemonset` | `true` |
 
 ### Driver Configuration
 
@@ -247,7 +246,7 @@ helm install falco falcosecurity/falco --set driver.kind=modern_ebpf
 helm install falco falcosecurity/falco --set driver.kind=kmod
 ```
 
-**Driver Loader:** The `falco-driver-loader` init container handles driver setup when needed (kmod/ebpf). Modern eBPF requires no loader as it's embedded.
+**Driver Loader:** The `falco-driver-loader` init container handles setup for `auto`/`kmod` when enabled. Explicit `modern_ebpf` uses the embedded probe and disables the loader by default.
 
 ### Container Metadata Collection
 
@@ -258,7 +257,7 @@ collectors:
   enabled: true
   containerEngine:
     enabled: true
-    pluginRef: "ghcr.io/falcosecurity/plugins/plugin/container:0.7.1"
+    pluginRef: "ghcr.io/falcosecurity/plugins/plugin/container:0.7.4"
     engines:
       docker: { enabled: true, sockets: ["/var/run/docker.sock"] }
       containerd: { enabled: true, sockets: ["/run/host-containerd/containerd.sock"] }
@@ -274,10 +273,10 @@ For full Kubernetes metadata (beyond container annotations):
 collectors:
   kubernetes:
     enabled: true  # Deploys k8s-metacollector as dependency
-    pluginRef: "ghcr.io/falcosecurity/plugins/plugin/k8smeta:0.4.1"
+    pluginRef: "ghcr.io/falcosecurity/plugins/plugin/k8smeta:0.4.2"
 ```
 
-This enables fields like `k8s.ns.name`, `k8s.pod.name`, `k8s.deployment.name`.
+This enables fields like `k8smeta.ns.name`, `k8smeta.pod.name`, `k8smeta.deployment.name`.
 
 ### Rules Management (falcoctl)
 
@@ -288,18 +287,22 @@ falcoctl:
   artifact:
     install:
       enabled: true
-      refs: [falco-rules:5]  # Install at startup
     follow:
       enabled: true
-      refs: [falco-rules:5]  # Auto-update
-      every: 168h            # Check interval
+  config:
+    artifact:
+      install:
+        refs: [falco-rules:5]
+      follow:
+        refs: [falco-rules:5]
+        every: 168h
 ```
 
 To include incubating/sandbox rules:
 ```bash
 helm install falco falcosecurity/falco \
-  --set "falcoctl.config.artifact.install.refs={falco-rules:5,falco-incubating-rules:5}" \
-  --set "falcoctl.config.artifact.follow.refs={falco-rules:5,falco-incubating-rules:5}"
+  --set "falcoctl.config.artifact.install.refs={falco-rules:5,falco-incubating-rules:6}" \
+  --set "falcoctl.config.artifact.follow.refs={falco-rules:5,falco-incubating-rules:6}"
 ```
 
 ### Metrics and Observability
@@ -356,8 +359,7 @@ Driver-dependent security contexts are auto-configured:
 |--------|-----------------|
 | No driver | `{}` |
 | kmod, modern_ebpf | `privileged: true` |
-| ebpf | `privileged: true` (or least-privilege with capabilities) |
-| ebpf + leastPrivileged | `capabilities: [BPF, SYS_RESOURCE, PERFMON, SYS_PTRACE]` |
+| modern_ebpf + leastPrivileged | `capabilities: [BPF, SYS_RESOURCE, PERFMON, SYS_PTRACE]` |
 
 ### Key Values Reference
 
@@ -376,7 +378,7 @@ Driver-dependent security contexts are auto-configured:
 
 ## Falco-Operator Chart
 
-Deploys the [Falco Operator](falco-operator.md) (Kubernetes Operator, Incubating) that manages Falco instances and their artifacts via Custom Resources. Chart version `0.2.0`, appVersion `0.3.0` at this pin.
+Deploys the [Falco Operator](falco-operator.md) (Kubernetes Operator, Incubating) that manages Falco instances and their artifacts via Custom Resources. The chart at this monorepo pin is prerelease `0.4.0-rc3`, appVersion `0.5.0-rc3`; the standalone operator digest describes stable v0.4.1. Do not conflate these snapshots.
 
 ```bash
 helm install falco-operator falcosecurity/falco-operator --namespace falco
@@ -506,6 +508,18 @@ helm install falco-gvisor falcosecurity/falco \
 - **Default driver:** `auto` mode prefers Modern eBPF
 - **Container plugin:** Unified container metadata collection (since 0.40)
 - **Chart 9.1.0 (Falco 0.44.1):** Bumped `appVersion` to `0.44.1`; added `driver.modernEbpf.disableIterators` (default `false`) to opt out of BPF iterators and fall back to procfs, and exposed the missing `metrics.kernelIterEventCountersEnabled` (default `true`) for kernel-side iterator event/drop counters. See the Falco [`configuration`](falco/configuration.md) digest for the underlying `engine.modern_ebpf.disable_iterators` option.
+
+### Chart 9.2.0 Behavior
+
+Container-runtime hostPath volumes mount each socket's **parent directory** under `/host`, deduplicated by directory, so replacement sockets after a runtime restart remain visible. Plugin configuration still specifies socket file paths on the host. The Falco container always mounts the `specialized-falco-configs` emptyDir at `/etc/falco/config.d`, including when the driver loader and both falcoctl containers are disabled, to shadow image-provided snippets. The falcoctl ConfigMap volume is only rendered when an artifact container uses it.
+
+Both controllers support `revisionHistoryLimit`, including an explicit zero; unset values leave the Kubernetes default. `serviceAccount.labels` adds custom ServiceAccount labels. The Falco chart depends on falcosidekick `0.14.*`, metacollector `0.3.*`, and Talon `0.4.*`.
+
+**Source:** [`_helpers.tpl:447-514`](../../refs/falcosecurity/charts/charts/falco/templates/_helpers.tpl), [`pod-template.tpl:147-161,224-284`](../../refs/falcosecurity/charts/charts/falco/templates/pod-template.tpl), [`daemonset.yaml:20-22`](../../refs/falcosecurity/charts/charts/falco/templates/daemonset.yaml), [`deployment.yaml:18-20`](../../refs/falcosecurity/charts/charts/falco/templates/deployment.yaml), [`serviceaccount.yaml:11-17`](../../refs/falcosecurity/charts/charts/falco/templates/serviceaccount.yaml), [`Chart.yaml:20-32`](../../refs/falcosecurity/charts/charts/falco/Chart.yaml).
+
+The chart's HTTP output mTLS settings configure **outgoing alerts**. They do not enable client-certificate authentication on the k8saudit webhook; that listener uses its own HTTPS server certificate configuration.
+
+**Source:** [`README.md:274-284`](../../refs/falcosecurity/charts/charts/falco/README.md).
 
 ## Sources
 

@@ -3,7 +3,7 @@
 Regression test suite for Falco and other tools in its ecosystem.
 
 **Repository:** [falcosecurity/testing](https://github.com/falcosecurity/testing)
-**Commit:** `2f1fba01` (February 5, 2026)
+**Era:** 0.45; use `git submodule status` for the pinned revision.
 **Scope:** Infra
 **Status:** Incubating
 
@@ -33,7 +33,7 @@ The suite produces multiple test binaries, each targeting a specific component:
 | `dummy.test` | dummy plugin | Dummy plugin tests |
 | `falco-driver-loader.test` | drivers | Driver loader tests (requires kernel headers) |
 
-**Source:** [`README.md`](../../refs/falcosecurity/testing/README.md), [`action.yml:88-111`](../../refs/falcosecurity/testing/action.yml)
+**Source:** [`README.md`](../../refs/falcosecurity/testing/README.md), [`action.yml:88-111`](../../refs/falcosecurity/testing/action.yml#L88-L111)
 
 ### Package Structure
 
@@ -67,7 +67,7 @@ type Runner interface {
 - `ExecutableRunner`: Runs local executable binaries
 - `DockerRunner`: Runs executables within Docker containers
 
-**Source:** [`pkg/run/runner.go:39-47`](../../refs/falcosecurity/testing/pkg/run/runner.go), [`pkg/run/executable.go`](../../refs/falcosecurity/testing/pkg/run/executable.go), [`pkg/run/docker.go`](../../refs/falcosecurity/testing/pkg/run/docker.go)
+**Source:** [`pkg/run/runner.go:39-47`](../../refs/falcosecurity/testing/pkg/run/runner.go#L39-L47), [`pkg/run/executable.go`](../../refs/falcosecurity/testing/pkg/run/executable.go), [`pkg/run/docker.go`](../../refs/falcosecurity/testing/pkg/run/docker.go)
 
 ### Runner Options
 
@@ -79,7 +79,7 @@ WithStderr(writer io.Writer)         // Capture stderr
 WithEnvVars(vars map[string]string)  // Environment variables
 ```
 
-**Source:** [`pkg/run/runner.go:49-82`](../../refs/falcosecurity/testing/pkg/run/runner.go)
+**Source:** [`pkg/run/runner.go:49-82`](../../refs/falcosecurity/testing/pkg/run/runner.go#L49-L82)
 
 ## Falco Test Harness
 
@@ -97,7 +97,7 @@ Default behaviors:
 - Enables stdout output
 - Sets 5-minute maximum duration
 
-**Source:** [`pkg/falco/tester.go:69-115`](../../refs/falcosecurity/testing/pkg/falco/tester.go)
+**Source:** [`pkg/falco/tester.go:69-115`](../../refs/falcosecurity/testing/pkg/falco/tester.go#L69-L115)
 
 ### Test Options
 
@@ -128,7 +128,8 @@ The `TestOutput` type provides methods to analyze test results:
 ```go
 // Error handling
 Err() error                    // Returns error if Falco run failed
-ExitCode() int                 // Returns Falco exit code
+ExitCode() int                 // Executable exit code, -1 for signal termination
+ExitDesc() string              // Description from a recorded run.ExitError
 DurationExceeded() bool        // True if context deadline exceeded
 
 // Output access
@@ -138,6 +139,11 @@ StdoutJSON() map[string]interface{}  // Parsed JSON stdout
 ```
 
 **Source:** [`pkg/falco/tester_output.go`](../../refs/falcosecurity/testing/pkg/falco/tester_output.go)
+
+
+The executable runner converts process failures into `run.ExitError`, preserving both the numeric code and the exit description. Falco and falcoctl output helpers use `errors.As` to find that error. Always check `Err()` as well: when no typed exit error is recorded, `ExitCode()` returns zero and `ExitDesc()` returns an empty string. The Docker runner streams container output and does not implement the executable runner's exit-status conversion. **Sources:** [executable runner](../../refs/falcosecurity/testing/pkg/run/executable.go#L116-L121), [Falco output helpers](../../refs/falcosecurity/testing/pkg/falco/tester_output.go#L58-L78), [Docker runner](../../refs/falcosecurity/testing/pkg/run/docker.go#L120-L134).
+
+The 0.45 regression suite includes capture-based checks for raw invalid UTF-8 matching, replacement in rendered output, escaped control characters, and byte-oriented versus regex behavior. These are test definitions, not evidence that a particular build passed. **Source:** [UTF-8 regression tests](../../refs/falcosecurity/testing/tests/falco/utf8_test.go).
 
 ### Detection Assertions
 
@@ -188,7 +194,7 @@ Ported from the original Python regression tests in falcosecurity/falco:
 
 The porting was ~90% automated via a migration script.
 
-**Source:** [`tests/falco/legacy_test.go:21-36`](../../refs/falcosecurity/testing/tests/falco/legacy_test.go)
+**Source:** [`tests/falco/legacy_test.go:21-36`](../../refs/falcosecurity/testing/tests/falco/legacy_test.go#L21-L36)
 
 ### Test Data Generation
 
@@ -223,11 +229,11 @@ func TestFalco_Legacy_Endswith(t *testing.T) {
     assert.NotZero(t, res.Detections().Count())
     assert.NotZero(t, res.Detections().OfPriority("WARNING").Count())
     assert.NoError(t, res.Err(), "%s", res.Stderr())
-    assert.Equal(t, 0, res.ExitCode())
+    assert.Zero(t, res.ExitCode(), res.ExitDesc())
 }
 ```
 
-**Source:** [`tests/falco/legacy_test.go:84-99`](../../refs/falcosecurity/testing/tests/falco/legacy_test.go)
+**Source:** [`tests/falco/legacy_test.go:84-100`](../../refs/falcosecurity/testing/tests/falco/legacy_test.go)
 
 ## CLI Usage
 
@@ -268,7 +274,7 @@ go generate ./...
 | `-test.timeout` | Test timeout duration | - |
 | `-test.v` | Verbose output | - |
 
-**Source:** [`tests/tests.go:39-48`](../../refs/falcosecurity/testing/tests/tests.go)
+**Source:** [`tests/tests.go:39-48`](../../refs/falcosecurity/testing/tests/tests.go#L39-L48)
 
 ## GitHub Action
 
@@ -314,19 +320,19 @@ The testing suite is used in Falco CI and must be kept in sync:
 
 ## Era 0.44 Changes
 
-The pinned commit (`2f1fba01`, February 5, 2026) removes all gRPC references; Falco 0.43.0 deprecated gRPC output and Falco 0.44.0 removed it entirely.
+The historical commit (`2f1fba01`, February 5, 2026) removes all gRPC references; Falco 0.43.0 deprecated gRPC output and Falco 0.44.0 removed it entirely.
 
-**Source:** Git commit message `2f1fba01`
+**Source:** [historical cleanup commit](https://github.com/falcosecurity/testing/commit/2f1fba01)
 
 ## Key Dependencies
 
 | Dependency | Version | Purpose |
 |------------|---------|---------|
-| `github.com/docker/docker` | v24.0.3 | Docker container execution |
-| `github.com/stretchr/testify` | v1.8.1 | Test assertions |
-| `github.com/sirupsen/logrus` | v1.9.0 | Logging |
+| `github.com/docker/docker` | v28.5.2+incompatible | Docker container execution |
+| `github.com/stretchr/testify` | v1.11.1 | Test assertions |
+| `github.com/sirupsen/logrus` | v1.9.4 | Logging |
 | `gopkg.in/yaml.v3` | v3.0.1 | YAML parsing |
-| `go.uber.org/multierr` | v1.9.0 | Error aggregation |
+| `go.uber.org/multierr` | v1.11.0 | Error aggregation |
 
 **Source:** [`go.mod`](../../refs/falcosecurity/testing/go.mod)
 

@@ -1,6 +1,6 @@
 # falcosecurity/prempti Digest
 
-> **KB Era:** 0.44 — **prempti v0.2.1 targets Falco 0.43.0** (no prempti release for the 0.44 era yet; Makefile pins `FALCO_VERSION := 0.43.0`) | **Source:** [`refs/falcosecurity/prempti/`](../../refs/falcosecurity/prempti/) | **Version:** v0.2.1 (released 2026-05-12)
+> **KB Era:** 0.45 — **prempti v0.2.1 targets Falco 0.43.0** (the pinned Makefile still uses `FALCO_VERSION := 0.43.0`) | **Source:** [`refs/falcosecurity/prempti/`](../../refs/falcosecurity/prempti/) | **Version:** v0.2.1 (released 2026-05-12)
 
 **Repository:** [falcosecurity/prempti](https://github.com/falcosecurity/prempti)
 **Status:** Ecosystem / **Sandbox** (per README badge)
@@ -20,7 +20,7 @@
 
 | Item | Value |
 |------|-------|
-| Falco version targeted | **0.43.0** (hardcoded in [`Makefile:5`](../../refs/falcosecurity/prempti/Makefile)) |
+| Falco version targeted | **0.43.0** (hardcoded in [`Makefile:5`](../../refs/falcosecurity/prempti/Makefile#L5)) |
 | Engine mode | `nodriver` (no kernel driver — plugin-only event source) |
 | Falco source plugin SDK | `falco_plugin` Rust crate **v0.5** ([`plugins/coding-agents-plugin/Cargo.toml`](../../refs/falcosecurity/prempti/plugins/coding-agents-plugin/Cargo.toml)) |
 | Falco binary acquisition | Linux: pre-built download from `download.falco.org`. macOS/Windows: built from source with an `http_output` patch ([`installers/macos/falco-macos-http-output.patch`](../../refs/falcosecurity/prempti/installers/macos/falco-macos-http-output.patch), [`installers/windows/falco-windows-http-output.patch`](../../refs/falcosecurity/prempti/installers/windows/falco-windows-http-output.patch)) |

@@ -2,7 +2,7 @@
 
 > Language Server Protocol implementation for Falco rules: CLI validation/formatting tool, LSP server with diagnostics and completion, VS Code extension, and field registry.
 
-**Era:** 0.44 | **Source:** [`refs/falcosecurity/falco-lsp/`](../refs/falcosecurity/falco-lsp/)
+**Era:** 0.45 | **Source:** [`refs/falcosecurity/falco-lsp/`](../refs/falcosecurity/falco-lsp/)
 
 ## 1. Overview
 
@@ -41,9 +41,12 @@ falco-lsp provides comprehensive language tooling for Falco security rules throu
 
 **Repository status:** Incubating (Ecosystem)
 **License:** Apache-2.0
-**Current version:** 0.1.0 (the era-pinned commit declares `0.1.0` in [`vscode-extension/package.json`](../refs/falcosecurity/falco-lsp/vscode-extension/package.json); HEAD is a development commit past the `v0.1.0` tag, `git describe = v0.1.0-13-gaa8c175`, so no clean release tag applies for this era)
+**Current version:** 0.1.0 (the era-pinned commit declares `0.1.0` in [`vscode-extension/package.json`](../refs/falcosecurity/falco-lsp/vscode-extension/package.json); HEAD is a development commit past the `v0.1.0` tag, `git describe = v0.1.0-16-g26bd7fd`, so no clean release tag applies for this era)
 
 **Source:** [`README.md`](../refs/falcosecurity/falco-lsp/README.md), [`vscode-extension/package.json`](../refs/falcosecurity/falco-lsp/vscode-extension/package.json), [`digests/falcosecurity/falco-lsp.md`](../digests/falcosecurity/falco-lsp.md)
+
+
+The era transition changes only the extension dependency lockfile; parser, analyzer, schema and field-registry source files are unchanged from the preceding pin. This does not establish parity with Falco 0.45's engine: validate rule compatibility with the actual target Falco binary when authoritative validation is needed. [Source diff](https://github.com/falcosecurity/falco-lsp/compare/aa8c17510b13d3f75c20735290f3a21784411719...26bd7fdef8583f73071527db86d1513aea760482).
 
 ## 2. CLI Tool (falco-lang)
 

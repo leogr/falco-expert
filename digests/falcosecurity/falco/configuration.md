@@ -1,6 +1,6 @@
 # Falco Configuration
 
-> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/falco/`](../../../refs/falcosecurity/falco/) | **Version:** 0.44.1
+> **Era Relevance:** 0.45 | **Source:** [`refs/falcosecurity/falco/`](../../../refs/falcosecurity/falco/) | **Version:** 0.45.0
 
 ## Overview
 
@@ -17,7 +17,7 @@ Falco configuration is loaded from multiple sources in a specific order, with la
 3. **Environment variables** - System environment variables for interpolation
 4. **Command-line arguments** (`-o` flag) - Highest precedence overrides
 
-**Load Order** (from [`configuration.cpp:129-157`](../../../refs/falcosecurity/falco/userspace/falco/configuration.cpp)):
+**Load Order** (from [`configuration.cpp:132-160`](../../../refs/falcosecurity/falco/userspace/falco/configuration.cpp#L132-L160)):
 ```
 1. Load main falco.yaml
 2. Load any -o config_files=foo.yaml cmdline options
@@ -33,7 +33,7 @@ falco -o "json_output=true" -o "log_level=debug" -o "engine.kind=kmod"
 
 ## Config File Merge Strategies
 
-When using `config_files` to include additional configuration, three merge strategies are available (from [`yaml_helper.h:88-92`](../../../refs/falcosecurity/falco/userspace/engine/yaml_helper.h)):
+When using `config_files` to include additional configuration, three merge strategies are available (from [`yaml_helper.h:88-92`](../../../refs/falcosecurity/falco/userspace/engine/yaml_helper.h#L88-L92)):
 
 | Strategy | Sequences | Scalars | Non-existing Keys |
 |----------|-----------|---------|-------------------|
@@ -68,7 +68,7 @@ Each configuration key has a maturity level indicating stability (from [`proposa
 
 ### Engine Kinds
 
-The `engine.kind` setting determines how Falco captures system events (from [`configuration.cpp:236-247`](../../../refs/falcosecurity/falco/userspace/falco/configuration.cpp)):
+The `engine.kind` setting determines how Falco captures system events (from [`configuration.cpp:239-250`](../../../refs/falcosecurity/falco/userspace/falco/configuration.cpp#L239-L250)):
 
 | Kind | Status | Description |
 |------|--------|-------------|
@@ -77,7 +77,7 @@ The `engine.kind` setting determines how Falco captures system events (from [`co
 | `replay` | Stable | Replay from capture file |
 | `nodriver` | Stable | No kernel driver, useful for plugins |
 
-> The legacy `ebpf` and `gvisor` engine kinds were removed in Falco 0.44.0 (PRs [#3796](https://github.com/falcosecurity/falco/pull/3796) and [#3797](https://github.com/falcosecurity/falco/pull/3797)). The valid set above is enforced in [`configuration.cpp:236-240`](../../../refs/falcosecurity/falco/userspace/falco/configuration.cpp).
+> The legacy `ebpf` and `gvisor` engine kinds were removed in Falco 0.44.0 (PRs [#3796](https://github.com/falcosecurity/falco/pull/3796) and [#3797](https://github.com/falcosecurity/falco/pull/3797)). The valid set above is enforced in [`configuration.cpp:239-243`](../../../refs/falcosecurity/falco/userspace/falco/configuration.cpp#L239-L243).
 
 **Configuration:**
 ```yaml
@@ -107,7 +107,7 @@ engine:
     disable_iterators: false  # Disable BPF iterators; fall back to procfs (default: false)
 ```
 
-> **`disable_iterators`** (modern_ebpf only, since 0.44.1): by default the modern eBPF driver uses BPF iterators to synchronously fetch kernel state — populating the initial process table at startup and healing it after event drops — which is faster and more reliable than walking procfs. Set to `true` to disable the iterators and force a procfs fallback. BPF iterators are also automatically disabled whenever Falco runs outside the host (root) PID namespace, regardless of this setting. Source: [`falco.yaml:429-453`](../../../refs/falcosecurity/falco/falco.yaml), [`configuration.cpp:269-271`](../../../refs/falcosecurity/falco/userspace/falco/configuration.cpp), [`config_json_schema.h:409`](../../../refs/falcosecurity/falco/userspace/falco/config_json_schema.h).
+> **`disable_iterators`** (modern_ebpf only, since 0.44.1): by default the modern eBPF driver uses BPF iterators to synchronously fetch kernel state — populating the initial process table at startup and healing it after event drops — which is faster and more reliable than walking procfs. Set to `true` to disable the iterators and force a procfs fallback. BPF iterators are also automatically disabled whenever Falco runs outside the host (root) PID namespace, regardless of this setting. Source: [`falco.yaml:429-453`](../../../refs/falcosecurity/falco/falco.yaml#L429-L453), [`configuration.cpp:272-274`](../../../refs/falcosecurity/falco/userspace/falco/configuration.cpp#L272-L274), [`config_json_schema.h:348`](../../../refs/falcosecurity/falco/userspace/falco/config_json_schema.h#L348).
 
 **Replay:**
 ```yaml
@@ -139,7 +139,7 @@ The `buf_size_preset` maps to actual buffer sizes per CPU:
 
 ### rules_files [Stable]
 
-Specifies rule file locations (from [`configuration.cpp:324-354`](../../../refs/falcosecurity/falco/userspace/falco/configuration.cpp)):
+Specifies rule file locations (from [`configuration.cpp:311-325`](../../../refs/falcosecurity/falco/userspace/falco/configuration.cpp#L311-L325)):
 
 ```yaml
 rules_files:                              # [Stable]
@@ -168,7 +168,7 @@ rules:                                    # [Incubating]
 
 ### load_plugins [Stable]
 
-List of plugins to load (from [`configuration.cpp:718-759`](../../../refs/falcosecurity/falco/userspace/falco/configuration.cpp)):
+List of plugins to load (from [`configuration.cpp:679-722`](../../../refs/falcosecurity/falco/userspace/falco/configuration.cpp#L679-L722)):
 
 ```yaml
 load_plugins: []                          # [Stable] Empty = none loaded
@@ -323,6 +323,8 @@ webserver:
 **Endpoints:**
 - `/healthz` - Health check
 - `/versions` - Version information (JSON)
+- `/reload` - Read-only reload generations and readiness
+- `/metrics` - Prometheus metrics when enabled
 
 ### grpc (Removed in 0.44)
 
@@ -398,6 +400,7 @@ metrics:
   resource_utilization_enabled: true
   state_counters_enabled: true
   kernel_event_counters_enabled: true
+  kernel_iter_event_counters_enabled: true  # Omitted when BPF iterators are disabled
   kernel_event_counters_per_cpu_enabled: false
   libbpf_stats_enabled: true
   plugins_metrics_enabled: true
@@ -420,21 +423,26 @@ capture:
 - `rules`: Capture only when rules with `capture: true` trigger
 - `all_rules`: Capture when any enabled rule triggers
 
+The 0.45 JSON schema removes the obsolete top-level `container_engines` object. Configure container metadata through the container plugin instead. The schema also defines `reload_control` with only `enabled` and `socket` properties. Configuration loading records schema validation status; this should not be confused with every schema warning necessarily aborting startup.
+
+**Source:** [`config_json_schema.h:160-202`](../../../refs/falcosecurity/falco/userspace/falco/config_json_schema.h#L160-L202), [`configuration.cpp:129-156`](../../../refs/falcosecurity/falco/userspace/falco/configuration.cpp#L129-L156).
+
 ## Hot Reload
 
 ```yaml
 watch_config_files: true                  # [Stable]
+reload_control:                          # [Incubating], Linux non-minimal builds
+  enabled: false
+  socket: /run/falco/control.sock
 ```
 
-When enabled, Falco monitors configuration and rules files for changes and automatically reloads. Reload can also be triggered via `SIGHUP` signal.
+File watching, `SIGHUP`, and the optional Unix-socket `POST /reload` all request the same dry-run-validated **full application restart within the existing process**. Configuration, plugins, inspectors and rules are reconstructed. Disabling `watch_config_files` disables inotify watches; explicit requests still work. A rejected dry-run keeps the running instance and emits an internal critical alert. Successful validation cannot guarantee subsequent startup: filesystem changes or socket bind failures may still prevent it.
 
-**Reloadable:**
-- Rules files
-- Most configuration options
+`reload_control` operates independently of the TCP webserver. It accepts a bodyless `POST /reload` without a query string and returns HTTP 202 with `instance_id` and a `started_generation` baseline. Observe `GET /reload` until the same instance has `ready=true` and `applied_generation > max(baseline, rejected_generation)`. GET is also available on the enabled TCP webserver; POST is Unix-socket-only. Listeners are recreated during reload, so clients retry observation through disconnects. A changed instance requires a new request; timeout/disconnect means an unknown outcome.
 
-**Not Reloadable (requires restart):**
-- Engine kind/driver selection
-- Some plugin configurations
+The socket path must be absolute and normalized. Provision a dedicated existing directory owned by Falco's effective UID (documented modes 0700 or 0750), with no group write, other access, extended/default POSIX ACLs, or symlink components. Ancestors must be root/Falco-owned and not writable by other users, except root-owned sticky directories. The socket is mode 0660 with the directory's group. Dry-run validates the directory without locking it or touching socket entries; startup repeats validation, locks the directory and binds. Replay mode does not start these listeners.
+
+**Source:** [`falco.yaml:925-994`](../../../refs/falcosecurity/falco/falco.yaml#L925-L994), [`configuration.cpp:500-518`](../../../refs/falcosecurity/falco/userspace/falco/configuration.cpp#L500-L518), [`start_webserver.cpp:27-58`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/start_webserver.cpp#L27-L58), [`reload_control.cpp:90-150`](../../../refs/falcosecurity/falco/userspace/falco/reload_control.cpp#L90-L150), [`reload_control.cpp:210-290`](../../../refs/falcosecurity/falco/userspace/falco/reload_control.cpp#L210-L290), [`create_signal_handlers.cpp:168-201`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/create_signal_handlers.cpp#L168-L201).
 
 ## Environment Variables
 
@@ -446,11 +454,12 @@ When enabled, Falco monitors configuration and rules files for changes and autom
 | `SKIP_DRIVER_LOADER` | Skip driver loading (fat image) | - |
 | `FALCO_FRONTEND` | `noninteractive` for unattended install | - |
 | `FALCO_DRIVER_CHOICE` | Driver for deb/rpm install | - |
+| `FALCOCTL_DRIVER_VERSION` | Explicit package-transaction driver version override | (unset) |
 | `FALCOCTL_ENABLED` | `no` to disable falcoctl | - |
 
 **Environment Variable Interpolation:**
 ```yaml
-probe: ${HOME}/.falco/falco-bpf.o         # Expands HOME
+filename: ${HOME}/falco-events.log         # Expands HOME
 value: $${literal}                        # Escapes to ${literal}
 ```
 
@@ -464,7 +473,7 @@ falco_libs:
   snaplen: 80                             # I/O buffer capture size (bytes)
 ```
 
-**Default Constants** (from [`falco_common.h:31-33`](../../../refs/falcosecurity/falco/userspace/engine/falco_common.h)):
+**Default Constants** (from [`falco_common.h:31-33`](../../../refs/falcosecurity/falco/userspace/engine/falco_common.h#L31-L33)):
 - `thread_table_size`: 262144
 - `thread_table_auto_purging_interval_s`: 300 (5 minutes)
 - `thread_table_auto_purging_thread_timeout_s`: 300 (5 minutes)

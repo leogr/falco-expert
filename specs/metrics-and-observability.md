@@ -2,7 +2,7 @@
 
 > Internal metrics framework, statistics collection, event drop detection, webserver endpoints, and health monitoring.
 
-**Era:** 0.44 | **Source:** [`refs/falcosecurity/falco/userspace/falco/`](../refs/falcosecurity/falco/userspace/falco/)
+**Era:** 0.45 | **Source:** [`refs/falcosecurity/falco/userspace/falco/`](../refs/falcosecurity/falco/userspace/falco/)
 
 ## Overview
 
@@ -59,7 +59,7 @@ The metrics system is composed of two layers: **Falco-level metrics** (rule coun
 
 The Prometheus endpoint is serviced on-demand (each HTTP request triggers `falco_metrics::to_text_prometheus()`), while the rule output and file output channels are driven by a periodic timer through the `stats_writer`.
 
-**Source:** [`falco_metrics.cpp:523-547`](../refs/falcosecurity/falco/userspace/falco/falco_metrics.cpp), [`stats_writer.cpp:230-275`](../refs/falcosecurity/falco/userspace/falco/stats_writer.cpp)
+**Source:** [`falco_metrics.cpp:523-547`](../refs/falcosecurity/falco/userspace/falco/falco_metrics.cpp#L523-L547), [`stats_writer.cpp:230-275`](../refs/falcosecurity/falco/userspace/falco/stats_writer.cpp#L230-L275)
 
 ### Webserver
 
@@ -70,6 +70,7 @@ The webserver is a [cpp-httplib](https://github.com/yhirose/cpp-httplib) based H
 | Endpoint | Method | Content Type | Purpose |
 |----------|--------|-------------|---------|
 | `/healthz` (configurable) | GET | `application/json` | Health check: returns `{"status": "ok"}` |
+| `/reload` | GET | `application/json` | Reload generations, process identity and live-source readiness |
 | `/versions` | GET | `application/json` | Version information JSON (used by falcoctl) |
 | `/metrics` | GET | `text/plain; version=0.0.4` | Prometheus exposition format (requires `metrics.enabled` and `webserver.prometheus_metrics_enabled`) |
 
@@ -131,6 +132,7 @@ metrics:
   resource_utilization_enabled: true      # CPU, memory, open FDs, container memory
   state_counters_enabled: true            # Thread table, FD table counters
   kernel_event_counters_enabled: true     # Kernel-side event and drop counters
+  kernel_iter_event_counters_enabled: true  # Omitted when BPF iterators are disabled
   kernel_event_counters_per_cpu_enabled: false  # Per-CPU event/drop counters
   libbpf_stats_enabled: true             # BPF program run time/count (requires kernel >= 5.1)
   plugins_metrics_enabled: true           # Custom plugin metrics via get_metrics()
@@ -139,7 +141,7 @@ metrics:
   include_empty_values: false             # Include fields with zero/empty values
 ```
 
-**Source:** [`falco.yaml:1214-1296`](../refs/falcosecurity/falco/falco.yaml), [`configuration.cpp:633-668`](../refs/falcosecurity/falco/userspace/falco/configuration.cpp)
+**Source:** [`falco.yaml:1249-1331`](../refs/falcosecurity/falco/falco.yaml#L1249-L1331), [`configuration.cpp:589-627`](../refs/falcosecurity/falco/userspace/falco/configuration.cpp#L589-L627)
 
 **Interval format:** The `interval` field uses Prometheus-style time duration format. Supported units: `ms` (millisecond), `s` (second), `m` (minute), `h` (hour), `d` (day), `w` (week), `y` (year). A minimum interval of 100ms is enforced. Recommended production values: `15m`, `30m`, `1h`, `4h`, `6h`.
 
@@ -153,18 +155,18 @@ Each metric category maps to a bitmask flag used internally to enable/disable co
 
 | Config Key | Flag | Defined In |
 |-----------|------|-----------|
-| `rules_counters_enabled` | `METRICS_V2_RULE_COUNTERS` (1 << 4) | [`metrics_v2.h:56`](../refs/falcosecurity/libs/userspace/libscap/metrics_v2.h) |
-| `resource_utilization_enabled` | `METRICS_V2_RESOURCE_UTILIZATION` (1 << 2) | [`metrics_v2.h:54`](../refs/falcosecurity/libs/userspace/libscap/metrics_v2.h) |
-| `state_counters_enabled` | `METRICS_V2_STATE_COUNTERS` (1 << 3) | [`metrics_v2.h:55`](../refs/falcosecurity/libs/userspace/libscap/metrics_v2.h) |
-| `kernel_event_counters_enabled` | `METRICS_V2_KERNEL_COUNTERS` (1 << 0) | [`metrics_v2.h:52`](../refs/falcosecurity/libs/userspace/libscap/metrics_v2.h) |
-| `kernel_event_counters_per_cpu_enabled` | `METRICS_V2_KERNEL_COUNTERS_PER_CPU` (1 << 7) | [`metrics_v2.h:59-60`](../refs/falcosecurity/libs/userspace/libscap/metrics_v2.h) |
-| `libbpf_stats_enabled` | `METRICS_V2_LIBBPF_STATS` (1 << 1) | [`metrics_v2.h:53`](../refs/falcosecurity/libs/userspace/libscap/metrics_v2.h) |
-| `plugins_metrics_enabled` | `METRICS_V2_PLUGINS` (1 << 6) | [`metrics_v2.h:58`](../refs/falcosecurity/libs/userspace/libscap/metrics_v2.h) |
-| `jemalloc_stats_enabled` | `METRICS_V2_JEMALLOC_STATS` (1 << 31) | [`configuration.h:41`](../refs/falcosecurity/falco/userspace/falco/configuration.h) |
+| `rules_counters_enabled` | `METRICS_V2_RULE_COUNTERS` (1 << 4) | [`metrics_v2.h:56`](../refs/falcosecurity/libs/userspace/libscap/metrics_v2.h#L56) |
+| `resource_utilization_enabled` | `METRICS_V2_RESOURCE_UTILIZATION` (1 << 2) | [`metrics_v2.h:54`](../refs/falcosecurity/libs/userspace/libscap/metrics_v2.h#L54) |
+| `state_counters_enabled` | `METRICS_V2_STATE_COUNTERS` (1 << 3) | [`metrics_v2.h:55`](../refs/falcosecurity/libs/userspace/libscap/metrics_v2.h#L55) |
+| `kernel_event_counters_enabled` | `METRICS_V2_KERNEL_COUNTERS` (1 << 0) | [`metrics_v2.h:52`](../refs/falcosecurity/libs/userspace/libscap/metrics_v2.h#L52) |
+| `kernel_event_counters_per_cpu_enabled` | `METRICS_V2_KERNEL_COUNTERS_PER_CPU` (1 << 7) | [`metrics_v2.h:59-60`](../refs/falcosecurity/libs/userspace/libscap/metrics_v2.h#L59-L60) |
+| `libbpf_stats_enabled` | `METRICS_V2_LIBBPF_STATS` (1 << 1) | [`metrics_v2.h:53`](../refs/falcosecurity/libs/userspace/libscap/metrics_v2.h#L53) |
+| `plugins_metrics_enabled` | `METRICS_V2_PLUGINS` (1 << 6) | [`metrics_v2.h:58`](../refs/falcosecurity/libs/userspace/libscap/metrics_v2.h#L58) |
+| `jemalloc_stats_enabled` | `METRICS_V2_JEMALLOC_STATS` (1 << 31) | [`configuration.h:41`](../refs/falcosecurity/falco/userspace/falco/configuration.h#L41) |
 
 Note: `METRICS_V2_JEMALLOC_STATS` is defined in Falco (not in libs) because jemalloc stats collection is Falco-specific. Enabling `kernel_event_counters_per_cpu_enabled` silently enables `METRICS_V2_KERNEL_COUNTERS` as well.
 
-**Source:** [`metrics_v2.h`](../refs/falcosecurity/libs/userspace/libscap/metrics_v2.h), [`configuration.h:41`](../refs/falcosecurity/falco/userspace/falco/configuration.h), [`configuration.cpp:639-663`](../refs/falcosecurity/falco/userspace/falco/configuration.cpp)
+**Source:** [`metrics_v2.h`](../refs/falcosecurity/libs/userspace/libscap/metrics_v2.h), [`configuration.h:41`](../refs/falcosecurity/falco/userspace/falco/configuration.h#L41), [`configuration.cpp:595-624`](../refs/falcosecurity/falco/userspace/falco/configuration.cpp#L595-L624)
 
 ### Metric Categories
 
@@ -180,7 +182,7 @@ Collected by `libs_metrics_collector` from libsinsp when `METRICS_V2_RESOURCE_UT
 
 In Prometheus output, resource utilization metrics use the `falco` subsystem prefix (`falcosecurity_falco_*`).
 
-**Source:** [`falco_metrics.cpp:338-339`](../refs/falcosecurity/falco/userspace/falco/falco_metrics.cpp), [`falco.yaml:1244-1260`](../refs/falcosecurity/falco/falco.yaml)
+**Source:** [`falco_metrics.cpp:338-339`](../refs/falcosecurity/falco/userspace/falco/falco_metrics.cpp#L338-L339), [`falco.yaml:1279-1295`](../refs/falcosecurity/falco/falco.yaml#L1279-L1295)
 
 #### Kernel Event Counters
 
@@ -197,7 +199,7 @@ Collected by `libs_metrics_collector` when `METRICS_V2_KERNEL_COUNTERS` is set. 
 
 In Prometheus output, kernel counters use the `scap` subsystem prefix (`falcosecurity_scap_*`). Buffer drops are distinguished using labels (`{drop="clone_fork",dir="exit"}`). Deprecated enter-event buffer drop metrics are emitted with value 0 for backward compatibility, with a deprecation notice in the HELP text.
 
-**Source:** [`falco_metrics.cpp:332-443`](../refs/falcosecurity/falco/userspace/falco/falco_metrics.cpp), [`event_drops.cpp:59-89`](../refs/falcosecurity/falco/userspace/falco/event_drops.cpp)
+**Source:** [`falco_metrics.cpp:332-443`](../refs/falcosecurity/falco/userspace/falco/falco_metrics.cpp#L332-L443), [`event_drops.cpp:59-89`](../refs/falcosecurity/falco/userspace/falco/event_drops.cpp#L59-L89)
 
 #### Per-CPU Kernel Counters
 
@@ -208,7 +210,13 @@ Collected when `METRICS_V2_KERNEL_COUNTERS_PER_CPU` is set. Provides per-CPU bre
 
 In Prometheus output, the CPU number is extracted from the metric name and emitted as a label (`{cpu="7"}`).
 
-**Source:** [`falco_metrics.cpp:347-379`](../refs/falcosecurity/falco/userspace/falco/falco_metrics.cpp)
+**Source:** [`falco_metrics.cpp:347-379`](../refs/falcosecurity/falco/userspace/falco/falco_metrics.cpp#L347-L379)
+
+#### Kernel Iterator Counters
+
+`metrics.kernel_iter_event_counters_enabled` selects `METRICS_V2_KERNEL_ITER_COUNTERS` (1 << 8). These counters expose iterator events/drops and are omitted when BPF iterators are disabled, even if this setting is true.
+
+**Source:** [`configuration.cpp:617-619`](../refs/falcosecurity/falco/userspace/falco/configuration.cpp#L617-L619), [`metrics_v2.h:61`](../refs/falcosecurity/libs/userspace/libscap/metrics_v2.h#L61), [`falco.yaml:1274-1278`](../refs/falcosecurity/falco/falco.yaml#L1274-L1278).
 
 #### State Counters
 
@@ -218,7 +226,7 @@ Collected by `libs_metrics_collector` when `METRICS_V2_STATE_COUNTERS` is set. S
 - **FD table**: `n_fds` (current count across all threads), `n_added_fds`, `n_removed_fds`, `n_noncached_fd_lookups`, `n_cached_fd_lookups`, `n_failed_fd_lookups`
 - **Event store**: `n_stored_evts`, `n_store_evts_drops`, `n_retrieved_evts`, `n_retrieve_evts_drops`
 
-**Source:** [`metrics_collector.h:31-56`](../refs/falcosecurity/libs/userspace/libsinsp/metrics_collector.h), [`metrics_collector.h:295-309`](../refs/falcosecurity/libs/userspace/libsinsp/metrics_collector.h)
+**Source:** [`metrics_collector.h:31-56`](../refs/falcosecurity/libs/userspace/libsinsp/metrics_collector.h#L31-L56), [`metrics_collector.h:295-309`](../refs/falcosecurity/libs/userspace/libsinsp/metrics_collector.h#L295-L309)
 
 #### Rules Counters
 
@@ -235,7 +243,7 @@ falcosecurity_falco_rules_matches_total{priority="4",rule_name="Read sensitive f
 
 In rule output, per-rule counters use sanitized rule names: `falco.rules.<sanitized_rule_name>`.
 
-**Source:** [`falco_metrics.cpp:174-221`](../refs/falcosecurity/falco/userspace/falco/falco_metrics.cpp), [`stats_writer.cpp:422-438`](../refs/falcosecurity/falco/userspace/falco/stats_writer.cpp)
+**Source:** [`falco_metrics.cpp:174-221`](../refs/falcosecurity/falco/userspace/falco/falco_metrics.cpp#L174-L221), [`stats_writer.cpp:422-438`](../refs/falcosecurity/falco/userspace/falco/stats_writer.cpp#L422-L438)
 
 #### Plugin Metrics
 
@@ -243,18 +251,18 @@ Collected by `libs_metrics_collector` when `METRICS_V2_PLUGINS` is set. Must be 
 
 Plugin authors provide metrics via the `get_metrics()` capability in the plugin API. If a plugin does not implement metrics, no metrics are emitted for that plugin.
 
-**Source:** [`falco_metrics.cpp:320-331`](../refs/falcosecurity/falco/userspace/falco/falco_metrics.cpp), [`falco.yaml:1283-1286`](../refs/falcosecurity/falco/falco.yaml)
+**Source:** [`falco_metrics.cpp:320-331`](../refs/falcosecurity/falco/userspace/falco/falco_metrics.cpp#L320-L331), [`falco.yaml:1318-1321`](../refs/falcosecurity/falco/falco.yaml#L1318-L1321)
 
 #### libbpf Stats
 
-Collected when `METRICS_V2_LIBBPF_STATS` is set. Only available for eBPF-based drivers (`bpf` or `modern_ebpf`). Provides statistics similar to `bpftool prog show`:
+Collected when `METRICS_V2_LIBBPF_STATS` is set. Only available for the `modern_ebpf` driver in the current era. Provides statistics similar to `bpftool prog show`:
 
 - BPF program invocation counts
 - Time spent in each BPF program (nanoseconds)
 
 Requires kernel >= 5.1 with `/proc/sys/kernel/bpf_stats_enabled` set. The current libbpf implementation does not support granularity at the BPF tail call level. libbpf stats are automatically disabled for non-eBPF drivers.
 
-**Source:** [`falco.yaml:1274-1282`](../refs/falcosecurity/falco/falco.yaml), [`stats_writer.cpp:623-626`](../refs/falcosecurity/falco/userspace/falco/stats_writer.cpp)
+**Source:** [`falco.yaml:1309-1317`](../refs/falcosecurity/falco/falco.yaml#L1309-L1317), [`stats_writer.cpp:623-626`](../refs/falcosecurity/falco/userspace/falco/stats_writer.cpp#L623-L626)
 
 #### jemalloc Stats
 
@@ -263,7 +271,7 @@ Collected when `METRICS_V2_JEMALLOC_STATS` is set (Falco-specific flag, 1 << 31)
 In Prometheus output: `falcosecurity_falco_jemalloc_*_bytes`
 In rule output: `falco.jemalloc.<stat_name>_bytes`
 
-**Source:** [`falco_metrics.cpp:222-253`](../refs/falcosecurity/falco/userspace/falco/falco_metrics.cpp), [`stats_writer.cpp:440-479`](../refs/falcosecurity/falco/userspace/falco/stats_writer.cpp)
+**Source:** [`falco_metrics.cpp:222-253`](../refs/falcosecurity/falco/userspace/falco/falco_metrics.cpp#L222-L253), [`stats_writer.cpp:440-479`](../refs/falcosecurity/falco/userspace/falco/stats_writer.cpp#L440-L479)
 
 ### Wrapper (Always-On) Metrics
 
@@ -292,7 +300,7 @@ Certain metrics are always emitted regardless of category flags:
 - `evt.source`, `scap.engine_name`
 - `falco.evts_rate_sec`, `falco.num_evts`, `falco.num_evts_prev`
 
-**Source:** [`falco_metrics.cpp:103-514`](../refs/falcosecurity/falco/userspace/falco/falco_metrics.cpp), [`stats_writer.cpp:331-413`](../refs/falcosecurity/falco/userspace/falco/stats_writer.cpp)
+**Source:** [`falco_metrics.cpp:103-514`](../refs/falcosecurity/falco/userspace/falco/falco_metrics.cpp#L103-L514), [`stats_writer.cpp:331-413`](../refs/falcosecurity/falco/userspace/falco/stats_writer.cpp#L331-L413)
 
 ### Multi-Inspector Metrics Collection
 
@@ -312,7 +320,7 @@ Falco utilizes multiple inspectors when plugins with event sources are loaded. T
 
 The syscall inspector is always at index 0 in the source loop when it exists, ensuring these category constraints are respected.
 
-**Source:** [`falco_metrics.cpp:32-64`](../refs/falcosecurity/falco/userspace/falco/falco_metrics.cpp) (class documentation)
+**Source:** [`falco_metrics.cpp:32-64`](../refs/falcosecurity/falco/userspace/falco/falco_metrics.cpp#L32-L64) (class documentation)
 
 ### Stats Writer
 
@@ -359,7 +367,7 @@ Supported Prometheus metric types: `counter` (monotonic) and `gauge` (non-monoto
 
 Unit conventions follow Prometheus best practices: memory is converted to bytes, CPU usage to a ratio, timestamps kept in nanoseconds (to avoid precision loss).
 
-**Source:** [`metrics_collector.h:99-220`](../refs/falcosecurity/libs/userspace/libsinsp/metrics_collector.h), [`falco_metrics.cpp:73`](../refs/falcosecurity/falco/userspace/falco/falco_metrics.cpp)
+**Source:** [`metrics_collector.h:99-220`](../refs/falcosecurity/libs/userspace/libsinsp/metrics_collector.h#L99-L220), [`falco_metrics.cpp:73`](../refs/falcosecurity/falco/userspace/falco/falco_metrics.cpp#L73)
 
 ### Event Drop Detection
 
@@ -388,7 +396,7 @@ syscall_event_drops:
 4. If the ratio exceeds `threshold`, a drop event is detected
 5. A token bucket (`rate` / `max_burst`) rate-limits the actions to prevent flooding
 
-**Source:** [`event_drops.cpp:53-127`](../refs/falcosecurity/falco/userspace/falco/event_drops.cpp)
+**Source:** [`event_drops.cpp:53-127`](../refs/falcosecurity/falco/userspace/falco/event_drops.cpp#L53-L127)
 
 **Actions:**
 
@@ -401,7 +409,7 @@ syscall_event_drops:
 
 The alert action includes detailed drop statistics as output fields: `n_evts`, `n_drops`, `n_drops_buffer_total`, per-category buffer drops (`n_drops_buffer_clone_fork_exit`, `n_drops_buffer_execve_exit`, etc.), `n_drops_scratch_map`, `n_drops_page_faults`, `n_drops_bug`, and `ebpf_enabled`.
 
-**Source:** [`event_drops.h:30`](../refs/falcosecurity/falco/userspace/falco/event_drops.h), [`event_drops.cpp:135-219`](../refs/falcosecurity/falco/userspace/falco/event_drops.cpp)
+**Source:** [`event_drops.h:30`](../refs/falcosecurity/falco/userspace/falco/event_drops.h#L30), [`event_drops.cpp:133-213`](../refs/falcosecurity/falco/userspace/falco/event_drops.cpp#L133-L213)
 
 **Key difference from metrics kernel counters:** The `syscall_event_drops` mechanism is threshold-based and operates per-second in real time during the event loop. The `metrics.kernel_event_counters_enabled` option exports monotonic cumulative counters at the configured metrics interval. Both use `scap_stats` from the same underlying driver counters.
 
@@ -416,7 +424,7 @@ syscall_event_timeouts:
 
 The alert rule name is "Falco internal: timeouts notification" and includes a `last_event_time` field.
 
-**Source:** [`process_events.cpp:196-222`](../refs/falcosecurity/falco/userspace/falco/app/actions/process_events.cpp)
+**Source:** [`process_events.cpp:200-226`](../refs/falcosecurity/falco/userspace/falco/app/actions/process_events.cpp#L200-L226)
 
 ### Health Check
 
@@ -424,7 +432,15 @@ The `/healthz` endpoint provides a basic liveness check that returns `{"status":
 
 The webserver itself monitors startup success using an atomic `m_failed` flag. If the server fails to bind or start, `stop()` is called and an exception is thrown. Once running, the health endpoint will respond as long as the httplib server thread is alive.
 
-**Source:** [`webserver.cpp:48-52`](../refs/falcosecurity/falco/userspace/falco/webserver.cpp), [`webserver.cpp:67-88`](../refs/falcosecurity/falco/userspace/falco/webserver.cpp)
+**Source:** [`webserver.cpp:63-67`](../refs/falcosecurity/falco/userspace/falco/webserver.cpp#L63-L67), [`webserver.cpp:80-101`](../refs/falcosecurity/falco/userspace/falco/webserver.cpp#L80-L101)
+
+### Reload Readiness (0.45)
+
+`GET /reload` supplements the liveness-only health check with `instance_id`, `started_generation`, `applied_generation`, `rejected_generation`, and `ready`. HTTP 200 means status was retrieved, not that a requested reload succeeded. Readiness becomes true only after all enabled live sources have started capture; any source stopping or failing, or application teardown, clears it. A failed validation advances the rejection generation while the prior healthy run may remain ready. The endpoint is exposed by the TCP webserver independently of `reload_control.enabled`, and by the optional Unix listener.
+
+See [the reload client protocol](configuration.md#hot-reload) for the acceptance/completion distinction and retry behavior.
+
+**Source:** [`webserver.cpp:50-60`](../refs/falcosecurity/falco/userspace/falco/webserver.cpp#L50-L60), [`reload_state.cpp:37-76`](../refs/falcosecurity/falco/userspace/falco/app/reload_state.cpp#L37-L76), [`process_events.cpp:157-162`](../refs/falcosecurity/falco/userspace/falco/app/actions/process_events.cpp#L157-L162), [`reload_control.cpp:242-272`](../refs/falcosecurity/falco/userspace/falco/reload_control.cpp#L242-L272).
 
 ### Output Watchdog
 
@@ -437,7 +453,7 @@ The output system (not the webserver) uses a `watchdog` template class to detect
 output_timeout: 2000                      # [Stable] Output delivery timeout in ms
 ```
 
-**Source:** [`watchdog.h`](../refs/falcosecurity/falco/userspace/falco/watchdog.h), [`falco_outputs.cpp:238-248`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp), [`falco_outputs.cpp:282-286`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp)
+**Source:** [`watchdog.h`](../refs/falcosecurity/falco/userspace/falco/watchdog.h), [`falco_outputs.cpp:240-250`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp#L240-L250), [`falco_outputs.cpp:284-288`](../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp#L284-L288)
 
 ## Non-Functional Requirements
 

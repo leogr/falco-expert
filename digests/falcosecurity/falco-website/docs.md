@@ -1,4 +1,4 @@
-# Falco Documentation Digest (Era 0.44)
+# Falco Documentation Digest (Era 0.45)
 
 > AI-optimized digest of the Falco documentation from falcosecurity/falco-website.
 > Source: [content/en/docs/_index.md](../../../refs/falcosecurity/falco-website/content/en/docs/_index.md)
@@ -113,7 +113,8 @@ Falco is a graduated CNCF project, originally created by Sysdig.
 | Variable | Values | Description |
 |----------|--------|-------------|
 | `FALCO_FRONTEND` | `noninteractive` | Disable dialog prompts |
-| `FALCO_DRIVER_CHOICE` | `kmod`, `ebpf`, `modern_ebpf`, `none` | Driver selection |
+| `FALCO_DRIVER_CHOICE` | `kmod`, `modern_ebpf`, `none` | Driver selection; `none` skips service installation/startup |
+| `FALCOCTL_DRIVER_VERSION` | Driver version | Explicit version override for the package transaction |
 | `FALCOCTL_ENABLED` | `no` | Disable automatic rules update |
 
 #### Debian/Ubuntu Installation
@@ -127,7 +128,7 @@ curl -fsSL https://falco.org/repo/falcosecurity-packages.asc | \
 echo "deb [signed-by=/usr/share/keyrings/falco-archive-keyring.gpg] https://download.falco.org/packages/deb stable main" | \
   sudo tee -a /etc/apt/sources.list.d/falcosecurity.list
 
-# Update and install dependencies (for kmod/ebpf)
+# Update and install dependencies for kmod
 sudo apt-get update -y
 sudo apt install -y dkms make linux-headers-$(uname -r) clang llvm dialog
 
@@ -152,14 +153,15 @@ sudo yum install -y dkms make kernel-devel-$(uname -r) clang llvm dialog
 sudo yum install -y falco
 ```
 
-**RHEL 8 Note:** Set `LD_PRELOAD=/lib64/libresolv.so.2` for glibc compatibility.
+**RHEL 8 / UBI 8:** The `LD_PRELOAD=/lib64/libresolv.so.2` workaround applies to affected Falco 0.42–0.44 installations with older container plugins. Container plugin 0.7.2 fixes the resolver-symbol issue; Falco 0.45 bundles 0.7.4, so the workaround can be removed after upgrading. [Source: packages.md:179-188](../../../refs/falcosecurity/falco-website/content/en/docs/setup/packages.md#L179-L188).
+
+**Package upgrades in 0.45:** DEB and RPM configure and start the selected service after upgrade. Driver pins matching the outgoing default follow the incoming default; distinct custom pins remain. An explicit `FALCOCTL_DRIVER_VERSION` preserves a deliberate pin even when it equals the outgoing default. RPM provisioning runs in `%posttrans`, after outgoing cleanup. Package-created follower-service masks can be removed automatically, while administrator and unrecorded masks remain. [Source: packages.md:404-410](../../../refs/falcosecurity/falco-website/content/en/docs/setup/packages.md#L404-L410).
 
 #### Systemd Services
 
 | Service | Description |
 |---------|-------------|
 | `falco-modern-bpf.service` | Modern eBPF driver |
-| `falco-bpf.service` | Legacy eBPF driver |
 | `falco-kmod.service` | Kernel module driver |
 | `falco-custom.service` | Custom configuration |
 | `falcoctl-artifact-follow.service` | Automatic rules updates |
@@ -184,7 +186,7 @@ tar -xvf falco-<version>-x86_64.tar.gz
 cp -R falco-<version>-x86_64/* /
 
 # Configure driver (if not using modern eBPF)
-falcoctl driver config --type kmod  # or --type ebpf
+falcoctl driver config --type kmod
 falcoctl driver install
 ```
 
@@ -317,6 +319,7 @@ falco [OPTION...]
   -l <rule>                     Show specific rule and exit
   --list [=<source>]            List defined fields and exit
   --list-events                 List syscall/tracepoint/meta events
+  --format <format>             List output: text, markdown, or json
   --list-plugins                Print plugin info and exit
   -M <seconds>                  Stop after N seconds
   -o, --option <opt>=<val>      Override config option
@@ -329,6 +332,8 @@ falco [OPTION...]
   --version                     Print version and exit
   --page-size                   Print system page size and exit
 ```
+
+`--format` applies to `--list`/`--list-events`; it cannot be combined with deprecated `--markdown`. In `-o` paths, backslashes escape literal dots, brackets, and backslashes in key names. [Source: cli-arguments.md:35-50](../../../refs/falcosecurity/falco-website/content/en/docs/reference/daemon/cli-arguments/cli-arguments.md#L35-L50).
 
 ### 3.4 Configuration Override Examples
 
@@ -346,6 +351,8 @@ falco -o "key.list[]=newvalue"  # Append to list (since 0.38.0)
 With `watch_config_files: true` (default), Falco automatically reloads on config/rules changes.
 
 Manual reload: `kill -1 $(pidof falco)` (SIGHUP)
+
+Since 0.45, the webserver's `GET /reload` reports reload generations and readiness. Optional `reload_control` adds local Unix-socket `POST /reload`; POST acceptance is not completion, so clients observe the generation/readiness state afterward. SIGHUP and explicit socket requests work when file watching is disabled. [Source: packages.md:402](../../../refs/falcosecurity/falco-website/content/en/docs/setup/packages.md#L402), [falco.yaml:925-994](../../../refs/falcosecurity/falco/falco.yaml#L925-L994).
 
 ---
 
@@ -459,16 +466,22 @@ Lists cannot be parsed as filtering expressions.
 
 | Operator | Description |
 |----------|-------------|
-| `=`, `!=` | Equality/inequality |
+| `=`, `==`, `!=` | Equality/inequality |
 | `<`, `<=`, `>`, `>=` | Numeric comparison |
 | `contains`, `icontains`, `bcontains` | String/byte containment |
 | `startswith`, `bstartswith`, `endswith` | String prefix/suffix |
 | `exists` | Field existence check |
-| `glob` | Glob pattern matching |
+| `glob`, `iglob` | Glob matching; `iglob` ignores case |
 | `in` | Set membership (complete) |
 | `intersects` | Set intersection (partial) |
 | `pmatch` | Path prefix matching |
 | `regex` | RE2 regex matching (full match only) |
+
+#### Comparison Modifiers and Byte Matching
+
+`anyof`, `allof`, and `oneof` compare one field value with a parenthesized list of patterns: at least one, every, or exactly one comparison must match. Repeated values count separately for `oneof`, and an empty list makes all three false. These modifiers apply to supported string comparisons, not numeric ordering, `in`, `intersects`, `pmatch`, or `exists`; use `in`/`intersects` for list-valued fields. With inequality, `proc.name != allof (bash, sh)` excludes both names. [Source: conditions.md:69-91](../../../refs/falcosecurity/falco-website/content/en/docs/concepts/rules/conditions.md#L69-L91).
+
+Since 0.45, ordinary string comparisons use the original field bytes. Quoted condition strings accept `\xHH` for exactly one byte; `regex` instead replaces invalid UTF-8 with U+FFFD before RE2 matching. NUL is permitted in byte-buffer filter values, but rejected for other field types. `bcontains`/`bstartswith` take hex digits directly, such as `evt.buffer bcontains 00FF`. Preserve backslashes through YAML with a block scalar or appropriate quoting. Alert encoding happens afterward, so displayed fields can differ from the bytes matched. [Source: conditions.md:93-101](../../../refs/falcosecurity/falco-website/content/en/docs/concepts/rules/conditions.md#L93-L101), [special-characters.md:35-74](../../../refs/falcosecurity/falco-website/content/en/docs/concepts/rules/special-characters.md#L35-L74).
 
 #### Transformers
 
@@ -665,8 +678,10 @@ rules_files:
 **Falcoctl for Rules Management:**
 ```bash
 falcoctl index add falcosecurity https://falcosecurity.github.io/falcoctl/index.yaml
-falcoctl artifact install falco-rules:3.2.0
+falcoctl artifact install falco-rules:5.2.0
 ```
+
+The website release parameters select stable 5.2.0, incubating 6.0.1 and sandbox 6.2.0. Helm examples use major channels `falco-rules:5`, `falco-incubating-rules:6`, and `falco-sandbox-rules:6`. [Source: params.yaml:12-20](../../../refs/falcosecurity/falco-website/config/_default/versions/params.yaml#L12-L20), [default-rules/index.md:15-23](../../../refs/falcosecurity/falco-website/content/en/docs/reference/rules/default-rules/index.md#L15-L23).
 
 ---
 
@@ -726,7 +741,7 @@ sudo bpftool feature probe kernel | grep -q "program_type tracing is available" 
 
 ```yaml
 engine:
-  kind: modern_ebpf  # or: kmod, ebpf, nodriver
+  kind: modern_ebpf  # or: kmod, nodriver
 ```
 
 Or via CLI: `falco -o engine.kind=modern_ebpf`
@@ -734,17 +749,18 @@ Or via CLI: `falco -o engine.kind=modern_ebpf`
 #### Least Privileged Mode Capabilities
 
 **Modern eBPF:**
-- `CAP_SYS_BPF` (or `CAP_SYS_ADMIN`)
-- `CAP_SYS_PERFMON` (or `CAP_SYS_ADMIN`)
-- `CAP_SYS_RESOURCE`
-- `CAP_SYS_PTRACE`
-
-**Legacy eBPF:**
-- `CAP_SYS_ADMIN`
+- `CAP_BPF` (or `CAP_SYS_ADMIN`)
+- `CAP_PERFMON` (or `CAP_SYS_ADMIN`)
 - `CAP_SYS_RESOURCE`
 - `CAP_SYS_PTRACE`
 
 **Kernel Module:** Requires full privileges
+
+The kernel overview still spells the granular capabilities `CAP_SYS_BPF`/`CAP_SYS_PERFMON`; the container setup page gives their actual names, `CAP_BPF`/`CAP_PERFMON`. [Source: container.md:105-110](../../../refs/falcosecurity/falco-website/content/en/docs/setup/container.md#L105-L110).
+
+#### Auxiliary Map Pool (0.45)
+
+The modern eBPF probe allocates two 128 KiB auxiliary event-storage segments per possible CPU, including offline CPUs, plus metadata. This doubles auxiliary event storage, not total Falco memory. The pool is separate from configurable ring buffers. Falco probes for BPF atomic compare-and-swap support and otherwise uses a plain-store fallback with a `no BPF atomics on this kernel` warning; that fallback relies on the kernel preventing preemption during segment claiming. [Source: kernel/_index.md:58-66](../../../refs/falcosecurity/falco-website/content/en/docs/concepts/event-sources/kernel/_index.md#L58-L66).
 
 ### 5.4 Kernel Architecture
 
@@ -757,6 +773,8 @@ Or via CLI: `falco -o engine.kind=modern_ebpf`
 - **Schema Version:** Supported event types
 
 Check versions: `falco --version`
+
+The reported driver API/schema values are the binary's minimum requirements; they do not identify a separately installed kernel module. [Source: architecture.md:26-33](../../../refs/falcosecurity/falco-website/content/en/docs/concepts/event-sources/kernel/architecture.md#L26-L33).
 
 **Event Format:**
 ```c
@@ -860,6 +878,8 @@ Plugins define event sources that:
 Example sources: `k8s_audit`, `aws_cloudtrail`, `okta`
 
 ### 6.5 Plugin Version Compatibility
+
+Falco 0.45 supports plugin API 3.12.0. A plugin's required API version must pass the compatibility check before loading. [Source: plugin-api-reference.md:24-30](../../../refs/falcosecurity/falco-website/content/en/docs/reference/plugins/plugin-api-reference.md#L24-L30).
 
 ```yaml
 - required_plugin_versions:
@@ -974,6 +994,8 @@ JSON format includes:
 ### 7.3 Output Formatting
 
 **Source:** [`concepts/outputs/formatting.md`](../../../refs/falcosecurity/falco-website/content/en/docs/concepts/outputs/formatting.md)
+
+Text and JSON alerts escape control characters, quotes and backslashes and replace invalid UTF-8 with U+FFFD. Printable valid UTF-8 remains readable. A newline in event data appears escaped in a serialized alert; a JSON parser decodes JSON escapes, but cannot recover invalid bytes replaced with U+FFFD. Review downstream parsers when upgrading from 0.44. [Source: formatting.md:18-25](../../../refs/falcosecurity/falco-website/content/en/docs/concepts/outputs/formatting.md#L18-L25).
 
 #### Appending Extra Output
 
@@ -1093,6 +1115,15 @@ Endpoint: `/metrics` on webserver port.
 - `falco.rules.<rule_name>`: Match count per rule
 - `falco.rules.matches_total`: Total matches
 
+**Modern eBPF auxiliary-map counters (0.45, enabled by `kernel_event_counters_enabled`):**
+
+- `scap.n_drops_auxmap_reentrancy`: ownership lost while constructing an event.
+- `scap.n_drops_auxmap_reentrancy_tail_call`: subset detected after a tail call.
+- `scap.n_drops_auxmap_pool_full`: all segments for the CPU were occupied.
+- `scap.n_auxmap_migrations`: recovered continuations after CPU migration, not drops.
+
+`scap.n_drops` includes reentrancy and pool-full drops. Do not add the tail-call subset twice. Enlarging ring buffers does not enlarge the auxiliary pool. [Source: metrics/_index.md:583-607](../../../refs/falcosecurity/falco-website/content/en/docs/concepts/metrics/_index.md#L583-L607), [dropping.md:17-20](../../../refs/falcosecurity/falco-website/content/en/docs/troubleshooting/dropping.md#L17-L20).
+
 ---
 
 ## 9. Troubleshooting
@@ -1121,7 +1152,7 @@ Endpoint: `/metrics` on webserver port.
 
 **Action Items:**
 
-1. Adjust `buf_size_preset` in falco.yaml (try 5-6 for kmod/ebpf, 6-7 for modern_ebpf)
+1. Adjust the driver's `buf_size_preset` in falco.yaml when ring-buffer capacity is the bottleneck (try 5-6 for kmod, 6-7 for modern_ebpf)
 2. Use `base_syscalls` to limit monitoring scope
 3. Optimize rules to reduce backpressure
 4. Try running without plugins
@@ -1129,7 +1160,8 @@ Endpoint: `/metrics` on webserver port.
 **Buffer Configuration:**
 ```yaml
 engine:
-  buf_size_preset: 6  # For kmod/ebpf
+  kmod:
+    buf_size_preset: 6
 
   # For modern_ebpf
   modern_ebpf:
@@ -1176,6 +1208,12 @@ base_syscalls:
 - Memory RSS/VSZ/PSS
 - Event counts and drop counts
 - Kernel tracepoint invocation counts
+
+### 9.4 Missing Container Metadata
+
+Ensure the `container` plugin is configured and loaded, and its runtime socket is accessible under `HOST_ROOT` when used. Configure `engines.cri.sockets` inside that plugin's `init_config`; the removed `container_engines.cri` settings and `disable_async` switch do not apply. Prefer the CRI interface for containerd when richer Kubernetes/container names are needed.
+
+`engine_timeout` defaults to ten seconds and bounds runtime connection and initial container listing; zero disables it. An unresponsive engine is skipped for the run. If connection succeeds but initial inspection exceeds the deadline, the engine stays enabled and retries unfinished inspection in the background, leaving metadata temporarily absent. [Source: missing-fields.md:23-73](../../../refs/falcosecurity/falco-website/content/en/docs/troubleshooting/missing-fields.md#L23-L73).
 
 ---
 
@@ -1313,7 +1351,7 @@ go build -buildmode=c-shared -o libmyplugin.so ./plugin
 - `proc.name` - Process name (16 char limit)
 - `proc.exe` - argv[0]
 - `proc.exepath` - Full executable path
-- `proc.cmdline` - Full command line
+- `proc.cmdline` - Process name plus captured arguments; before `execve()` completes, it can differ from the command line later shown by `ps` or `pstree`. [Source: supported-fields.md:88](../../../refs/falcosecurity/falco-website/content/en/docs/reference/rules/supported-fields/supported-fields.md#L88)
 - `proc.args` - Command arguments
 - `proc.pid` / `proc.ppid` - Process/parent PID
 - `proc.aname[N]` / `proc.apid[N]` - Ancestor name/pid
@@ -1410,7 +1448,7 @@ json_output: true
 
 ## Version Information
 
-This digest covers Falco documentation for **Era 0.44**.
+This digest covers Falco documentation for **Era 0.45**. Earlier-version examples and historical notes retain their original scope.
 
 **Key Removals in 0.44 (deprecated in earlier releases):**
 - gVisor engine (removed)

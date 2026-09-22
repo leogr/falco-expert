@@ -1,5 +1,5 @@
 # Plugins Digests
-> **Era:** 0.44 | **Source:** [`refs/falcosecurity/plugins/`](../../../refs/falcosecurity/plugins/)
+> **Era:** 0.45 | **Source:** [`refs/falcosecurity/plugins/`](../../../refs/falcosecurity/plugins/)
 
 Detailed digests for the [`plugins`](../../../refs/falcosecurity/plugins/) repository.
 

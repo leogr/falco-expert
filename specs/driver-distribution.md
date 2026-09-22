@@ -2,21 +2,21 @@
 
 > Pre-built driver distribution pipeline: kernel-crawler discovery, dbg-go orchestration, driverkit compilation, S3 distribution, and falcoctl installation.
 
-**Era:** 0.44 | **Source:** [`refs/falcosecurity/test-infra/driverkit/`](../refs/falcosecurity/test-infra/driverkit/), [`refs/falcosecurity/driverkit/`](../refs/falcosecurity/driverkit/), [`refs/falcosecurity/dbg-go/`](../refs/falcosecurity/dbg-go/), [`refs/falcosecurity/kernel-crawler/`](../refs/falcosecurity/kernel-crawler/)
+**Era:** 0.45 | **Source:** [`refs/falcosecurity/test-infra/driverkit/`](../refs/falcosecurity/test-infra/driverkit/), [`refs/falcosecurity/driverkit/`](../refs/falcosecurity/driverkit/), [`refs/falcosecurity/dbg-go/`](../refs/falcosecurity/dbg-go/), [`refs/falcosecurity/kernel-crawler/`](../refs/falcosecurity/kernel-crawler/)
 
 ## Overview
 
-Pre-built drivers enable Falco users to leverage kernel instrumentation (kernel modules and eBPF probes) without compiling drivers on their target systems. The Falco project maintains an automated pipeline that discovers available Linux kernels across 19 distributions, compiles drivers for each kernel/architecture combination, and publishes the resulting artifacts to a public distribution endpoint.
+Pre-built drivers enable Falco users to leverage kernel modules without compiling drivers on their target systems. The Falco project maintains an automated pipeline that discovers available Linux kernels across 19 distributions, compiles drivers for each kernel/architecture combination, and publishes the resulting artifacts to a public distribution endpoint.
 
 The pipeline follows a five-stage flow:
 
 1. **kernel-crawler** discovers kernel versions from Linux distribution repositories
 2. **dbg-go** generates driverkit build configurations from crawler output
-3. **driverkit** compiles kernel modules (`.ko`) and eBPF probes (`.o`) from falcosecurity/libs source
+3. **driverkit** compiles kernel modules (`.ko`) from falcosecurity/libs source
 4. **S3** stores the compiled artifacts in the `falco-distribution` bucket
 5. **falcoctl** downloads the correct driver for the user's kernel at install time
 
-This system currently maintains ~44,024 build configurations across 4 driver versions and 2 architectures.
+The pinned grid contains 23,438 build configurations across two driver versions and two architectures. Config counts describe intended coverage, not successful published artifacts. Falco embeds its default modern eBPF driver; this pipeline builds kernel modules. [Driver contract](../refs/falcosecurity/driverkit/cmd/root_options.go#L34-L41), [modern eBPF](../refs/falcosecurity/falco-website/content/en/docs/concepts/event-sources/kernel/_index.md#L35-L39).
 
 **Source:** [`digests/falcosecurity/dbg-go.md`](../digests/falcosecurity/dbg-go.md), [`digests/falcosecurity/test-infra/drivers-build-grid.md`](../digests/falcosecurity/test-infra/drivers-build-grid.md)
 
@@ -78,7 +78,7 @@ This system currently maintains ~44,024 build configurations across 4 driver ver
             ▼
  ┌──────────────────────────────────────────────────────────────┐
  │  driverkit/output/{version}/{arch}/falco_{target}_{kr}_{kv} │
- │  .ko (kernel module)   .o (eBPF probe)                      │
+ │  .ko (kernel module)                                          │
  └──────────┬───────────────────────────────────────────────────┘
             │ publish (dbg-go drivers publish)
             ▼
@@ -107,7 +107,7 @@ This system currently maintains ~44,024 build configurations across 4 driver ver
 
 kernel-crawler is a Python tool that discovers available kernel versions across Linux distribution package repositories. It runs daily via a GitHub Action, crawling package repositories for each supported distribution and architecture, then publishing the results as JSON to GitHub Pages.
 
-**Repository:** [falcosecurity/kernel-crawler](https://github.com/falcosecurity/kernel-crawler) | **Version:** commit `afc8224` (January 8, 2026) | **Scope:** Infra / Incubating
+**Repository:** [falcosecurity/kernel-crawler](https://github.com/falcosecurity/kernel-crawler) | **Version:** pinned release-cycle snapshot (`git submodule status`) | **Scope:** Infra / Incubating
 
 ### Supported Distributions
 
@@ -135,14 +135,14 @@ kernel-crawler is a Python tool that discovers available kernel versions across 
 
 **Supported Architectures:** x86_64, aarch64
 
-**Source:** [`kernel_crawler/crawler.py:43-63`](../refs/falcosecurity/kernel-crawler/kernel_crawler/crawler.py)
+**Source:** [`kernel_crawler/crawler.py:43-63`](../refs/falcosecurity/kernel-crawler/kernel_crawler/crawler.py#L43-L63)
 
 ### Crawl Methods
 
 | Method | Mechanism | Distributions |
 |--------|-----------|---------------|
 | **DEB-based** | Parses `Packages.gz` from APT repository indices for `linux-headers-*` packages | Ubuntu, Debian |
-| **RPM-based** | Parses `repomd.xml` and `primary.xml` from YUM/DNF repositories for `kernel-devel` packages | Amazon Linux, CentOS, Fedora, AlmaLinux, Rocky, Oracle Linux, openSUSE, Photon, Alibaba Cloud Linux |
+| **RPM-based** | Prefers SQLite `primary_db`; falls back to `primary` XML only when SQLite metadata is absent; XML does not resolve transitive dependencies | Amazon Linux, CentOS, Fedora, AlmaLinux, Rocky, Oracle Linux, openSUSE, Photon, Alibaba Cloud Linux |
 | **Git-based** | Queries GitHub/GitLab APIs, downloads kernel configs from manifest files | Flatcar, Bottlerocket, Minikube, Talos |
 | **Container-based** | Runs `rpm -qa kernel-devel*` inside a registered RHEL container image | Red Hat |
 
@@ -179,13 +179,13 @@ kernel-crawler outputs JSON organized by distribution, with each entry containin
 - **x86_64:** `https://falcosecurity.github.io/kernel-crawler/x86_64/list.json`
 - **aarch64:** `https://falcosecurity.github.io/kernel-crawler/aarch64/list.json`
 
-**Source:** [`kernel_crawler/repo.py:27-41`](../refs/falcosecurity/kernel-crawler/kernel_crawler/repo.py), [`.github/workflows/update-kernels.yml`](../refs/falcosecurity/kernel-crawler/.github/workflows/update-kernels.yml)
+**Source:** [`kernel_crawler/repo.py:27-41`](../refs/falcosecurity/kernel-crawler/kernel_crawler/repo.py#L27-L41), [`.github/workflows/update-kernels.yml`](../refs/falcosecurity/kernel-crawler/.github/workflows/update-kernels.yml)
 
 ## DBG-Go
 
 dbg-go (Drivers Build Grid - Go) is the orchestration tool that bridges kernel-crawler output to driverkit builds and manages S3 publishing. It uses driverkit as a Go library dependency.
 
-**Repository:** [falcosecurity/dbg-go](https://github.com/falcosecurity/dbg-go) | **Version:** commit `06c74bc` (February 2, 2026) | **Scope:** Infra / Incubating
+**Repository:** [falcosecurity/dbg-go](https://github.com/falcosecurity/dbg-go) | **Version:** v0.18.0 | **Scope:** Infra / Incubating
 
 ### CLI Structure
 
@@ -236,7 +236,7 @@ driverkit/config/10.2.0+driver/aarch64/debian_6.1.170-3-rt-arm64_1.yaml
 
 **Output path format:**
 ```
-driverkit/output/{driver-version}/{arch}/falco_{distro}_{kernelrelease}_{kernelversion}.{ko,o}
+driverkit/output/{driver-version}/{arch}/falco_{distro}_{kernelrelease}_{kernelversion}.ko
 ```
 
 **Source:** [`pkg/build/build.go`](../refs/falcosecurity/dbg-go/pkg/build/build.go)
@@ -245,15 +245,15 @@ driverkit/output/{driver-version}/{arch}/falco_{distro}_{kernelrelease}_{kernelv
 
 `dbg-go drivers publish` uploads locally built drivers to S3 with public-read ACL.
 
-**Required environment variables:** `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`
+**OCI job authentication:** the driver-kit service account supplies a projected web-identity token; the job sets `AWS_ROLE_ARN`, `AWS_WEB_IDENTITY_TOKEN_FILE` and region `eu-west-1`. Static access-key variables are not required by this deployed job configuration. [Source](../refs/falcosecurity/test-infra/config/jobs/oci/build-drivers/build-new-debian.yaml#L89-L99).
 
 **Source:** [`pkg/utils/s3/s3utils.go`](../refs/falcosecurity/dbg-go/pkg/utils/s3/s3utils.go), [`pkg/publish/publish.go`](../refs/falcosecurity/dbg-go/pkg/publish/publish.go)
 
 ## Driverkit
 
-Driverkit is the CLI tool and Go library that compiles Falco kernel modules (`.ko`) and eBPF probes (`.o`) for specific kernel versions and distributions.
+Driverkit is the CLI tool and Go library that compiles Falco kernel modules (`.ko`) for specific kernel versions and distributions.
 
-**Repository:** [falcosecurity/driverkit](https://github.com/falcosecurity/driverkit) | **Version:** v0.22.1 | **Scope:** Ecosystem / Incubating
+**Repository:** [falcosecurity/driverkit](https://github.com/falcosecurity/driverkit) | **Version:** v0.23.2 | **Scope:** Ecosystem / Incubating
 
 ### Builder Interface
 
@@ -269,7 +269,7 @@ type Builder interface {
 }
 ```
 
-**Source:** [`pkg/driverbuilder/builder/builders.go:86-92`](../refs/falcosecurity/driverkit/pkg/driverbuilder/builder/builders.go)
+**Source:** [`pkg/driverbuilder/builder/builders.go:86-92`](../refs/falcosecurity/driverkit/pkg/driverbuilder/builder/builders.go#L86-L92)
 
 ### Supported Targets
 
@@ -336,7 +336,7 @@ Example: `falcosecurity/driverkit-builder:centos-x86_64_gcc5.8.0_gcc6.0.0-latest
 | 3.x | 4.9 |
 | 2.x | 4.8 |
 
-**Source:** [`pkg/driverbuilder/builder/builders.go:220-247`](../refs/falcosecurity/driverkit/pkg/driverbuilder/builder/builders.go), [`docs/builder_images.md`](../refs/falcosecurity/driverkit/docs/builder_images.md)
+**Source:** [`pkg/driverbuilder/builder/builders.go:220-247`](../refs/falcosecurity/driverkit/pkg/driverbuilder/builder/builders.go#L220-L247), [`docs/builder_images.md`](../refs/falcosecurity/driverkit/docs/builder_images.md)
 
 ### Compilation
 
@@ -362,24 +362,23 @@ cmake -Wno-dev \
 
 **Source code URL:** `https://github.com/falcosecurity/libs/archive/<version>.tar.gz`
 
-**Source:** [`pkg/driverbuilder/builder/builders.go:37-52`](../refs/falcosecurity/driverkit/pkg/driverbuilder/builder/builders.go) (`cmakeCmdFmt`)
+**Source:** [`pkg/driverbuilder/builder/builders.go:37-52`](../refs/falcosecurity/driverkit/pkg/driverbuilder/builder/builders.go#L37-L52) (`cmakeCmdFmt`)
 
 ## Drivers Build Grid
 
-The Drivers Build Grid (DBG) is the infrastructure within [test-infra](https://github.com/falcosecurity/test-infra) that stores and manages the ~59,995 driverkit configuration files used to build pre-compiled drivers.
+The Drivers Build Grid (DBG) is the infrastructure within [test-infra](https://github.com/falcosecurity/test-infra) that stores and manages the 23,438 driverkit configuration files used to build pre-compiled drivers.
 
 ### Driver Versions
 
-Five driver versions are currently maintained:
+Two driver versions are present in the pinned grid:
 
 | Driver Version | x86_64 Configs | aarch64 Configs | Total |
 |---------------|----------------|-----------------|-------|
-| `9.0.0+driver` | 7,025 | 4,974 | 11,999 |
-| `9.1.0+driver` | 7,025 | 4,974 | 11,999 |
-| `10.0.0+driver` | 7,025 | 4,974 | 11,999 |
-| `10.1.0+driver` | 7,025 | 4,974 | 11,999 |
-| `10.2.0+driver` | 7,025 | 4,974 | 11,999 |
-| **Total** | **35,125** | **24,870** | **59,995** |
+| `10.2.0+driver` | 6,983 | 4,736 | 11,719 |
+| `11.0.0+driver` | 6,983 | 4,736 | 11,719 |
+| **Total** | **13,966** | **9,472** | **23,438** |
+
+Counts are the YAML files under each version/architecture directory in [driverkit/config](../refs/falcosecurity/test-infra/driverkit/config/). They do not measure build success or download availability.
 
 ### Architectures
 
@@ -431,7 +430,6 @@ kernelurls:
 | `target` | driverkit target distribution (e.g., `debian`, `ubuntu-generic`) |
 | `architecture` | driverkit architecture: `amd64` or `arm64` |
 | `output.module` | Output path for the kernel module `.ko` file |
-| `output.probe` | Output path for the eBPF probe `.o` file |
 | `kernelurls` | URLs to kernel header/devel packages needed for compilation |
 
 **Source:** [driverkit/config/10.2.0+driver/aarch64/debian\_6.1.170-3-rt-arm64\_1.yaml](../refs/falcosecurity/test-infra/driverkit/config/10.2.0+driver/aarch64/debian_6.1.170-3-rt-arm64_1.yaml)
@@ -448,9 +446,11 @@ kernelurls:
 | Source URL | `https://falco-distribution.s3-eu-west-1.amazonaws.com/?list-type=2&prefix=driver` |
 | Public URL | `https://download.falco.org/` |
 
-**Source:** [`tools/update-drivers-website/updateDriversWebsite.go:32-33`](../refs/falcosecurity/test-infra/tools/update-drivers-website/updateDriversWebsite.go)
+**Source:** [`tools/update-drivers-website/updateDriversWebsite.go:32-33`](../refs/falcosecurity/test-infra/tools/update-drivers-website/updateDriversWebsite.go#L32-L33)
 
 ### S3 Path Structure
+
+The listing code recognizes historical `.o` artifacts as well as `.ko`; current driverkit output is `.ko`. Existing object listings do not imply a matching current build configuration.
 
 ```
 driver/{driver_version}/{architecture}/falco_{target}_{kernelrelease}_{kernelversion}.{ko,o}
@@ -458,7 +458,6 @@ driver/{driver_version}/{architecture}/falco_{target}_{kernelrelease}_{kernelver
 
 **Examples:**
 - `driver/10.2.0+driver/aarch64/falco_debian_6.1.170-3-rt-arm64_1.ko`
-- `driver/10.2.0+driver/aarch64/falco_debian_6.1.170-3-rt-arm64_1.o`
 - `driver/10.2.0+driver/x86_64/falco_ubuntu-generic_5.4.0-136-generic_153.ko`
 
 **Source:** [`pkg/utils/s3/s3utils.go`](../refs/falcosecurity/dbg-go/pkg/utils/s3/s3utils.go)
@@ -482,87 +481,41 @@ The website is generated by a Go tool ([`updateDriversWebsite.go`](../refs/falco
 
 Configs are kept only for the latest kernel-crawler results. Previously added configs are dropped on DBG updates, but already-published driver artifacts on S3 remain available for download. This means the S3 bucket accumulates drivers over time even as the config directory reflects only the current crawl state.
 
-**Source:** [`driverkit/README.md:57-58`](../refs/falcosecurity/test-infra/driverkit/README.md)
+**Source:** [`driverkit/README.md:57-58`](../refs/falcosecurity/test-infra/driverkit/README.md#L57-L58)
 
 ## Automation
 
-The Drivers Build Grid is orchestrated through three categories of Prow jobs:
+The current source catalog loads grid jobs in OCI. The AWS backup catalog is historical and is not loaded by this OCI Kustomization. These are configured jobs, not a claim about live cluster health. [Catalog](../refs/falcosecurity/test-infra/config/jobs/oci/kustomization.yaml#L1-L26).
 
 ### Periodic Job: update-dbg
 
-| Field | Value |
-|-------|-------|
-| Name | `update-dbg` |
-| Schedule | Daily at 08:00 UTC (`0 8 * * *`) |
-| Image | `test-infra/update-dbg` (contains `dbg-go` v0.17.0 and `pr-creator`) |
-| Purpose | Auto-generate configs from kernel-crawler output, open PR |
-
-The job executes [`entrypoint.sh`](../refs/falcosecurity/test-infra/images/update-dbg/entrypoint.sh) which:
-1. Runs `dbg-go configs cleanup -a amd64` then `dbg-go configs generate -a amd64 --auto`
-2. Runs `dbg-go configs cleanup -a arm64` then `dbg-go configs generate -a arm64 --auto`
-3. If changes exist, creates a GPG-signed commit and opens a PR to `master` using the `poiana` bot account
-
-**Source:** [`config/jobs/update-dbg/update-dbg.yaml`](../refs/falcosecurity/test-infra/config/jobs/update-dbg/update-dbg.yaml), [`images/update-dbg/entrypoint.sh`](../refs/falcosecurity/test-infra/images/update-dbg/entrypoint.sh)
+`update-dbg` runs daily at 08:00 UTC, with one concurrent job in the x86 driver queue. It uses `ghcr.io/falcosecurity/test-infra/update-dbg:0.18.0-1`. Its entrypoint cleans and regenerates configs for amd64 and arm64, then commits and opens a PR when changes exist. [Job](../refs/falcosecurity/test-infra/config/jobs/oci/update-dbg/update-dbg.yaml#L1-L33), [entrypoint](../refs/falcosecurity/test-infra/images/update-dbg/entrypoint.sh#L35-L105).
 
 ### Presubmit Job: validate-dbg
 
-| Field | Value |
-|-------|-------|
-| Name | `validate-dbg` |
-| Trigger | PR changes matching `^driverkit/config/[a-z0-9.+-]{5,}/(.+/)?` |
-| Image | `test-infra/build-drivers:latest` |
-| Purpose | Validate config YAML files before merge |
-
-Calls `dbg-go configs validate` for both `arm64` and `amd64`.
-
-**Source:** [`config/jobs/build-drivers/validate-dbg.yaml`](../refs/falcosecurity/test-infra/config/jobs/build-drivers/validate-dbg.yaml), [`images/build-drivers/build-drivers.sh`](../refs/falcosecurity/test-infra/images/build-drivers/build-drivers.sh)
+Changes to driver configs on `master` run `validate-dbg`. Separate amd64 and arm64 containers execute `dbg-go configs validate` using the digest-pinned v0.18.0 image. [Job](../refs/falcosecurity/test-infra/config/jobs/oci/build-drivers/validate-dbg.yaml#L1-L59).
 
 ### Postsubmit Jobs: build-new-*
 
-14 distro-specific job files define the build jobs that run after config changes are merged to `master`:
+Fourteen distro job files are loaded by the catalog. Their jobs select changed architecture/distro/kernel config paths on `master`; each runs `dbg-go configs build` with `--skip-existing`, `--publish`, `--ignore-errors` and a failure log under Prow artifacts. The builder runs as a non-root user and talks over a shared Unix socket to a privileged Docker sidecar. The `driver-kit` service account provides the projected AWS token used for publication. [Catalog](../refs/falcosecurity/test-infra/config/jobs/oci/kustomization.yaml#L11-L26), [Debian job and arm variant](../refs/falcosecurity/test-infra/config/jobs/oci/build-drivers/build-new-debian.yaml#L1-L163).
 
-| Job File | Distros Covered |
-|----------|----------------|
-| [`build-new-amazonlinux.yaml`](../refs/falcosecurity/test-infra/config/jobs/build-drivers/build-new-amazonlinux.yaml) | amazonlinux, amazonlinux2, amazonlinux2022, amazonlinux2023 |
-| [`build-new-almalinux.yaml`](../refs/falcosecurity/test-infra/config/jobs/build-drivers/build-new-almalinux.yaml) | almalinux |
-| [`build-new-bottlerocket.yaml`](../refs/falcosecurity/test-infra/config/jobs/build-drivers/build-new-bottlerocket.yaml) | bottlerocket |
-| [`build-new-centos.yaml`](../refs/falcosecurity/test-infra/config/jobs/build-drivers/build-new-centos.yaml) | centos |
-| [`build-new-debian.yaml`](../refs/falcosecurity/test-infra/config/jobs/build-drivers/build-new-debian.yaml) | debian |
-| [`build-new-fedora.yaml`](../refs/falcosecurity/test-infra/config/jobs/build-drivers/build-new-fedora.yaml) | fedora |
-| [`build-new-minikube.yaml`](../refs/falcosecurity/test-infra/config/jobs/build-drivers/build-new-minikube.yaml) | minikube |
-| [`build-new-photon.yaml`](../refs/falcosecurity/test-infra/config/jobs/build-drivers/build-new-photon.yaml) | photon |
-| [`build-new-talos.yaml`](../refs/falcosecurity/test-infra/config/jobs/build-drivers/build-new-talos.yaml) | talos |
-| [`build-new-ubuntu-aws.yaml`](../refs/falcosecurity/test-infra/config/jobs/build-drivers/build-new-ubuntu-aws.yaml) | ubuntu-aws |
-| [`build-new-ubuntu-azure.yaml`](../refs/falcosecurity/test-infra/config/jobs/build-drivers/build-new-ubuntu-azure.yaml) | ubuntu-azure |
-| [`build-new-ubuntu-gcp.yaml`](../refs/falcosecurity/test-infra/config/jobs/build-drivers/build-new-ubuntu-gcp.yaml) | ubuntu-gcp |
-| [`build-new-ubuntu-generic.yaml`](../refs/falcosecurity/test-infra/config/jobs/build-drivers/build-new-ubuntu-generic.yaml) | ubuntu-generic and related variants |
-| [`build-new-ubuntu-gke.yaml`](../refs/falcosecurity/test-infra/config/jobs/build-drivers/build-new-ubuntu-gke.yaml) | ubuntu-gke |
-
-Each postsubmit job:
-- Watches for changes matching `^driverkit/config/[a-z0-9.+-]{5,}/<arch>/<distro>_.+` on the `master` branch
-- Runs the build-drivers Docker image with Docker-in-Docker (privileged mode)
-- Executes `build-drivers.sh <distro>` with `PUBLISH_S3=true`, `--ignore-errors`, `--skip-existing`, and `--redirect-errors=driverkit/output/failing.log`
-- Uses architecture-specific node selectors (`Archtype: "x86"` or `Archtype: "arm"`)
-- Uses the `driver-kit` service account for S3 access
-- Resource limits: 1 CPU / 4Gi memory, requests: 750m CPU / 2Gi memory
-
-**Source:** [`config/jobs/build-drivers/build-new-debian.yaml`](../refs/falcosecurity/test-infra/config/jobs/build-drivers/build-new-debian.yaml), [`images/build-drivers/build-drivers.sh`](../refs/falcosecurity/test-infra/images/build-drivers/build-drivers.sh)
+Driver builds are best effort: individual failures are logged while the batch proceeds. A successful batch job does not prove that every requested kernel has a published driver. Missing pre-built drivers are acceptable; evaluate the fallback available for the specific deployment. [Build options](../refs/falcosecurity/test-infra/config/jobs/oci/build-drivers/build-new-debian.yaml#L77-L88), [build error handling](../refs/falcosecurity/dbg-go/pkg/build/build.go).
 
 ## Consumer Integration
 
 ### falcoctl driver install
 
-`falcoctl driver install` is the primary mechanism for end users to obtain pre-built drivers. It:
+For kernel-module deployments, `falcoctl driver install` obtains or builds the kernel-specific module. It:
 
 1. Detects the running kernel version and release (`uname -r`, `uname -v`)
 2. Identifies the target distribution
-3. Constructs the download URL using the pattern: `https://download.falco.org/driver/{version}/{arch}/falco_{target}_{kernelrelease}_{kernelversion}.{ko,o}`
-4. Downloads the matching kernel module or eBPF probe
+3. Constructs the download URL using the pattern: `https://download.falco.org/driver/{version}/{arch}/falco_{target}_{kernelrelease}_{kernelversion}.ko`
+4. Downloads the matching kernel module
 5. Falls back to local compilation if no pre-built driver is available
 
 ### Kubernetes Integration
 
-In Kubernetes deployments, the Falco Helm chart can configure a `falco-driver-loader` init container that runs `falcoctl driver install` before the main Falco container starts. This ensures the appropriate driver is available when Falco begins event capture.
+In Kubernetes deployments, the Falco Helm chart can configure a `falco-driver-loader` init container that runs `falcoctl driver install` before the main Falco container starts. Modern eBPF deployments use the driver embedded in Falco; the chart does not need this kernel-module installation path for that engine.
 
 **Source:** [`digests/falcosecurity/dbg-go.md`](../digests/falcosecurity/dbg-go.md), [`digests/falcosecurity/driverkit.md`](../digests/falcosecurity/driverkit.md)
 
@@ -586,7 +539,7 @@ In Kubernetes deployments, the Falco Helm chart can configure a `falco-driver-lo
 | Driverkit builders | [`refs/falcosecurity/driverkit/pkg/driverbuilder/builder/builders.go`](../refs/falcosecurity/driverkit/pkg/driverbuilder/builder/builders.go) |
 | S3 utilities | [`refs/falcosecurity/dbg-go/pkg/utils/s3/s3utils.go`](../refs/falcosecurity/dbg-go/pkg/utils/s3/s3utils.go) |
 | Crawler distros | [`refs/falcosecurity/kernel-crawler/kernel_crawler/crawler.py`](../refs/falcosecurity/kernel-crawler/kernel_crawler/crawler.py) |
-| Build jobs (example) | [`refs/falcosecurity/test-infra/config/jobs/build-drivers/build-new-debian.yaml`](../refs/falcosecurity/test-infra/config/jobs/build-drivers/build-new-debian.yaml) |
+| Build jobs (example) | [`refs/falcosecurity/test-infra/config/jobs/oci/build-drivers/build-new-debian.yaml`](../refs/falcosecurity/test-infra/config/jobs/oci/build-drivers/build-new-debian.yaml) |
 | Update-dbg entrypoint | [`refs/falcosecurity/test-infra/images/update-dbg/entrypoint.sh`](../refs/falcosecurity/test-infra/images/update-dbg/entrypoint.sh) |
 | Drivers website tool | [`refs/falcosecurity/test-infra/tools/update-drivers-website/updateDriversWebsite.go`](../refs/falcosecurity/test-infra/tools/update-drivers-website/updateDriversWebsite.go) |
 | Config sample (Debian) | [`refs/falcosecurity/test-infra/driverkit/config/10.2.0+driver/aarch64/debian_6.1.170-3-rt-arm64_1.yaml`](../refs/falcosecurity/test-infra/driverkit/config/10.2.0+driver/aarch64/debian_6.1.170-3-rt-arm64_1.yaml) |

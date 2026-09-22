@@ -1,6 +1,6 @@
 # k8saudit Plugin - Design and Architecture
 
-**Era:** 0.44 | **Status:** Stable | **Scope:** Core
+**Era:** 0.45 | **Status:** Stable | **Scope:** Core
 
 The `k8saudit` plugin extends Falco to support [Kubernetes Audit Events](https://kubernetes.io/docs/tasks/debug-application-cluster/audit/#audit-backends) as a data source. Audit events are logged by the API server when cluster management tasks are performed, providing high visibility into cluster activity for detecting malicious behavior.
 
@@ -28,7 +28,7 @@ The `k8saudit` plugin extends Falco to support [Kubernetes Audit Events](https:/
 |----------|-------|
 | Plugin Name | `k8saudit` |
 | Plugin ID | 1 |
-| Plugin Version | 0.17.0 |
+| Plugin Version | 0.18.0 |
 | Event Source | `k8s_audit` |
 | Language | Go |
 | Minimum Falco Version | 0.32.0 |
@@ -91,7 +91,7 @@ The plugin is implemented in Go and consists of two main packages:
 2. **Plugin Entry Point** ([`plugin/k8saudit.go`](../../../refs/falcosecurity/plugins/plugins/k8saudit/plugin/k8saudit.go))
    - Registers the plugin with source and extractor capabilities
 
-**Source:** [`pkg/k8saudit/k8saudit.go:42-49`](../../../refs/falcosecurity/plugins/plugins/k8saudit/pkg/k8saudit/k8saudit.go)
+**Source:** [`pkg/k8saudit/k8saudit.go:42-49`](../../../refs/falcosecurity/plugins/plugins/k8saudit/pkg/k8saudit/k8saudit.go#L42-L49)
 
 ---
 
@@ -113,13 +113,13 @@ func (k *Plugin) Info() *plugins.Info {
         Name:        "k8saudit",
         Description: "Read Kubernetes Audit Events and monitor Kubernetes Clusters",
         Contact:     "github.com/falcosecurity/plugins",
-        Version:     "0.17.0",
+        Version:     "0.18.0",
         EventSource: "k8s_audit",
     }
 }
 ```
 
-**Source:** [`pkg/k8saudit/k8saudit.go:51-60`](../../../refs/falcosecurity/plugins/plugins/k8saudit/pkg/k8saudit/k8saudit.go)
+**Source:** [`pkg/k8saudit/k8saudit.go:51-60`](../../../refs/falcosecurity/plugins/plugins/k8saudit/pkg/k8saudit/k8saudit.go#L51-L60)
 
 ---
 
@@ -145,7 +145,7 @@ func (k *Plugin) OpenWebServer(address, endpoint string, ssl bool) (source.Insta
 - Uses push-mode event channel
 - Graceful 5-second shutdown timeout
 
-**Source:** [`pkg/k8saudit/source.go:128-220`](../../../refs/falcosecurity/plugins/plugins/k8saudit/pkg/k8saudit/source.go)
+**Source:** [`pkg/k8saudit/source.go:128-220`](../../../refs/falcosecurity/plugins/plugins/k8saudit/pkg/k8saudit/source.go#L128-L220)
 
 ### File Mode (Testing/Development)
 
@@ -163,7 +163,7 @@ func (k *Plugin) OpenReader(r io.ReadCloser) (source.Instance, error) {
 - Directory reading (files sorted by modification time)
 - JSONL format (one JSON object per line)
 
-**Source:** [`pkg/k8saudit/source.go:99-126`](../../../refs/falcosecurity/plugins/plugins/k8saudit/pkg/k8saudit/source.go)
+**Source:** [`pkg/k8saudit/source.go:99-126`](../../../refs/falcosecurity/plugins/plugins/k8saudit/pkg/k8saudit/source.go#L99-L126)
 
 ### Open Parameters
 
@@ -173,7 +173,7 @@ func (k *Plugin) OpenReader(r io.ReadCloser) (source.Instance, error) {
 | `https://<host>:<port>/<endpoint>` | Webhook | HTTPS web server |
 | `<filepath>` | File | Local file or directory path |
 
-**Source:** [`pkg/k8saudit/source.go:43-97`](../../../refs/falcosecurity/plugins/plugins/k8saudit/pkg/k8saudit/source.go)
+**Source:** [`pkg/k8saudit/source.go:43-97`](../../../refs/falcosecurity/plugins/plugins/k8saudit/pkg/k8saudit/source.go#L43-L97)
 
 ---
 
@@ -190,7 +190,7 @@ type PluginConfig struct {
 }
 ```
 
-**Source:** [`pkg/k8saudit/config.go:22-27`](../../../refs/falcosecurity/plugins/plugins/k8saudit/pkg/k8saudit/config.go)
+**Source:** [`pkg/k8saudit/config.go:22-27`](../../../refs/falcosecurity/plugins/plugins/k8saudit/pkg/k8saudit/config.go#L22-L27)
 
 ### Configuration Options
 
@@ -203,7 +203,7 @@ type PluginConfig struct {
 
 The `webhookMaxBatchSize` default is ~20% higher than the Kubernetes API server default of 10485760 bytes.
 
-**Source:** [`pkg/k8saudit/config.go:29-41`](../../../refs/falcosecurity/plugins/plugins/k8saudit/pkg/k8saudit/config.go)
+**Source:** [`pkg/k8saudit/config.go:29-41`](../../../refs/falcosecurity/plugins/plugins/k8saudit/pkg/k8saudit/config.go#L29-L41)
 
 ### Example Falco Configuration
 
@@ -375,6 +375,12 @@ The plugin extracts fields with the `ka.` prefix from Kubernetes Audit Events.
 
 ---
 
+### Init and Ephemeral Containers
+
+The 0.18.0 field set adds `ka.req.pod.initContainers.*` and `ka.req.pod.ephemeralContainers.*`, mirroring the regular container fields for name, image/repository, command, arguments and security context. These return string lists and accept an optional numeric index. Init containers also expose `host_port`; ephemeral containers do not. Effective user/group fields combine pod and container security contexts.
+
+**Sources:** [`fields.go:523-561`](../../../refs/falcosecurity/plugins/plugins/k8saudit/pkg/k8saudit/fields.go#L523-L561), [`extract.go:404-506`](../../../refs/falcosecurity/plugins/plugins/k8saudit/pkg/k8saudit/extract.go#L404-L506).
+
 ## Event Flow
 
 ### Webhook Event Processing
@@ -436,7 +442,7 @@ func (k *Plugin) ParseAuditEventsJSON(value *fastjson.Value) ([]*source.PushEven
 }
 ```
 
-**Source:** [`pkg/k8saudit/source.go:288-318`](../../../refs/falcosecurity/plugins/plugins/k8saudit/pkg/k8saudit/source.go)
+**Source:** [`pkg/k8saudit/source.go:288-318`](../../../refs/falcosecurity/plugins/plugins/k8saudit/pkg/k8saudit/source.go#L288-L318)
 
 ---
 
@@ -488,17 +494,25 @@ The plugin ships with a comprehensive ruleset for detecting security-relevant Ku
 - required_engine_version: 15
 - required_plugin_versions:
     - name: k8saudit
-      version: 0.7.0
+      version: 0.18.0
       alternatives:
         - name: k8saudit-aks
+          version: 0.6.0
         - name: k8saudit-eks
+          version: 0.12.0
         - name: k8saudit-gke
+          version: 0.9.0
         - name: k8saudit-ovh
+          version: 0.6.0
     - name: json
       version: 0.7.0
 ```
 
 ### Key Macros
+
+The bundled `any_container_privileged` macro covers regular, init and ephemeral container lists. `Create Privileged Pod` uses that macro; `EphemeralContainers Created` matches modifications of the `pods/ephemeralcontainers` subresource. These rules require the plugin versions declared above.
+
+**Source:** [`k8s_audit_rules.yaml:19-34,240-254,397-403`](../../../refs/falcosecurity/plugins/plugins/k8saudit/rules/k8s_audit_rules.yaml#L19-L34).
 
 | Macro | Description |
 |-------|-------------|

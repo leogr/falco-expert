@@ -1,6 +1,6 @@
 # JSON Plugin - Design and Architecture
 
-**Era:** 0.44 | **Status:** Stable | **Scope:** Core
+**Era:** 0.45 | **Status:** Stable | **Scope:** Core
 
 The `json` plugin is a general-purpose extractor plugin that extracts arbitrary values from JSON-encoded event payloads. It is commonly used alongside source plugins like `k8saudit`, `cloudtrail`, and `okta` that represent their events as JSON.
 
@@ -34,7 +34,7 @@ The `json` plugin is a general-purpose extractor plugin that extracts arbitrary 
 
 The json plugin is an **extractor-only plugin**, meaning it does not generate events but rather extracts fields from events produced by other source plugins. It parses JSON payloads using the high-performance [fastjson](https://github.com/valyala/fastjson) library and supports the RFC 6901 JSON Pointer syntax for navigating nested structures.
 
-**Source:** [`plugins/json/README.md`](../../../refs/falcosecurity/plugins/plugins/json/README.md), [`pkg/json/json.go:39-44`](../../../refs/falcosecurity/plugins/plugins/json/pkg/json/json.go)
+**Source:** [`plugins/json/README.md`](../../../refs/falcosecurity/plugins/plugins/json/README.md), [`pkg/json/json.go:39-44`](../../../refs/falcosecurity/plugins/plugins/json/pkg/json/json.go#L39-L44)
 
 ---
 
@@ -89,7 +89,7 @@ type Plugin struct {
 
 The plugin caches the parsed JSON for each event (identified by `jdataEvtnum`) to avoid re-parsing when multiple fields are extracted from the same event.
 
-**Source:** [`pkg/json/json.go:46-52`](../../../refs/falcosecurity/plugins/plugins/json/pkg/json/json.go)
+**Source:** [`pkg/json/json.go:46-52`](../../../refs/falcosecurity/plugins/plugins/json/pkg/json/json.go#L46-L52)
 
 ---
 
@@ -99,7 +99,7 @@ The json plugin implements a single capability:
 
 | Capability | Purpose | Implementation |
 |------------|---------|----------------|
-| `extraction` | Extract `json.*` and `jevt.*` fields from JSON payloads | [`pkg/json/json.go:125-225`](../../../refs/falcosecurity/plugins/plugins/json/pkg/json/json.go) |
+| `extraction` | Extract `json.*` and `jevt.*` fields from JSON payloads | [`pkg/json/json.go:125-225`](../../../refs/falcosecurity/plugins/plugins/json/pkg/json/json.go#L125-L225) |
 
 ### Extraction Logic
 
@@ -125,7 +125,7 @@ func (m *Plugin) Extract(req sdk.ExtractRequest, evt sdk.EventReader) error {
 }
 ```
 
-**Source:** [`pkg/json/json.go:125-225`](../../../refs/falcosecurity/plugins/plugins/json/pkg/json/json.go)
+**Source:** [`pkg/json/json.go:125-225`](../../../refs/falcosecurity/plugins/plugins/json/pkg/json/json.go#L125-L225)
 
 ---
 
@@ -151,7 +151,7 @@ func (m *Plugin) Extract(req sdk.ExtractRequest, evt sdk.EventReader) error {
 | 4 | `jevt.obj` |
 | 5 | `jevt.rawtime` |
 
-**Source:** [`pkg/json/json.go:88-123`](../../../refs/falcosecurity/plugins/plugins/json/pkg/json/json.go), [`README.md`](../../../refs/falcosecurity/plugins/plugins/json/README.md)
+**Source:** [`pkg/json/json.go:88-123`](../../../refs/falcosecurity/plugins/plugins/json/pkg/json/json.go#L88-L123), [`README.md`](../../../refs/falcosecurity/plugins/plugins/json/README.md)
 
 ---
 
@@ -201,7 +201,7 @@ Given this JSON payload:
 | `/~0tilde` | `"test"` |
 | (empty) | Full JSON object |
 
-**Source:** [`pkg/json/json.go:163-183`](../../../refs/falcosecurity/plugins/plugins/json/pkg/json/json.go), [`pkg/json/json_test.go:96-198`](../../../refs/falcosecurity/plugins/plugins/json/pkg/json/json_test.go)
+**Source:** [`pkg/json/json.go:163-183`](../../../refs/falcosecurity/plugins/plugins/json/pkg/json/json.go#L163-L183), [`pkg/json/json_test.go:96-198`](../../../refs/falcosecurity/plugins/plugins/json/pkg/json/json_test.go#L96-L198)
 
 ---
 
@@ -221,7 +221,7 @@ type PluginConfig struct {
 
 The `useAsync` option controls whether the plugin uses asynchronous extraction, which can improve performance when multiple fields are extracted from the same event.
 
-**Source:** [`pkg/json/config.go:20-27`](../../../refs/falcosecurity/plugins/plugins/json/pkg/json/config.go)
+**Source:** [`pkg/json/config.go:20-27`](../../../refs/falcosecurity/plugins/plugins/json/pkg/json/config.go#L20-L27)
 
 ### Example falco.yaml Configuration
 
@@ -311,7 +311,7 @@ plugins:
 └─────────┘      └───────────┘      └────────────┘
 ```
 
-**Source:** [`pkg/json/json.go:125-225`](../../../refs/falcosecurity/plugins/plugins/json/pkg/json/json.go)
+**Source:** [`pkg/json/json.go:125-225`](../../../refs/falcosecurity/plugins/plugins/json/pkg/json/json.go#L125-L225)
 
 ---
 
@@ -393,7 +393,7 @@ plugins:
 load_plugins: [k8saudit, json]
 ```
 
-**Source:** [`registry.yaml:103-122`](../../../refs/falcosecurity/plugins/registry.yaml)
+**Source:** [`registry.yaml:103-122`](../../../refs/falcosecurity/plugins/registry.yaml#L103-L122)
 
 ---
 

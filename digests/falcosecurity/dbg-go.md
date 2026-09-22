@@ -1,6 +1,6 @@
 # dbg-go Digest
 
-> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/dbg-go/`](../../refs/falcosecurity/dbg-go/) | **Commit:** `06c74bc` (February 2, 2026)
+> **Era Relevance:** 0.45 | **Source:** [`refs/falcosecurity/dbg-go/`](../../refs/falcosecurity/dbg-go/) | **Version:** v0.18.0
 
 **Repository:** [falcosecurity/dbg-go](https://github.com/falcosecurity/dbg-go)
 **Scope:** Infra
@@ -59,7 +59,7 @@ dbg-go is the orchestration layer for Falco's pre-built driver distribution syst
                                   ┌─────────────────────┐
                                   │ driverkit/output/   │
                                   │ {version}/{arch}/   │
-                                  │ falco_*.ko, *.o     │
+                                  │ falco_*.ko          │
                                   └──────────┬──────────┘
                                              │
                                              ▼
@@ -87,6 +87,8 @@ dbg-go is the orchestration layer for Falco's pre-built driver distribution syst
 ```
 
 **Source:** [`README.md`](../../refs/falcosecurity/dbg-go/README.md), [`pkg/generate/generate.go`](../../refs/falcosecurity/dbg-go/pkg/generate/generate.go)
+
+The current build path configures only `Output.Module`; S3 inventory can still recognize historical `.o` objects. The pinned tool depends on driverkit v0.23.0. **Sources:** [module build](../../refs/falcosecurity/dbg-go/pkg/build/build.go#L111-L145), [S3 filename matching](../../refs/falcosecurity/dbg-go/pkg/utils/s3/s3utils.go#L32-L36), [dependency](../../refs/falcosecurity/dbg-go/go.mod#L10).
 
 ## CLI Structure
 
@@ -166,8 +168,8 @@ architecture: amd64
 kernelurls:
   - https://mirror.example.com/kernel-devel-5.14.0-325.el9.x86_64.rpm
 output:
-  module: output/5.0.1+driver/x86_64/falco_centos_5.14.0-325.el9.x86_64_1.ko
-  probe: output/5.0.1+driver/x86_64/falco_centos_5.14.0-325.el9.x86_64_1.o
+  module: output/11.0.0+driver/x86_64/falco_centos_5.14.0-325.el9.x86_64_1.ko
+  probe: output/11.0.0+driver/x86_64/falco_centos_5.14.0-325.el9.x86_64_1.o
 ```
 
 **Path format:** `{repo-root}/driverkit/config/{driver-version}/{arch}/{distro}_{kernelrelease}_{kernelversion}.yaml`
@@ -180,22 +182,22 @@ Builds drivers using driverkit's Docker-based build system.
 
 ```shell
 # Build all configs for a driver version
-./dbg-go configs build --repo-root test-infra --driver-version 5.0.1+driver
+./dbg-go configs build --repo-root test-infra --driver-version 11.0.0+driver
 
 # Build and publish directly to S3
-./dbg-go configs build --repo-root test-infra --driver-version 5.0.1+driver --publish
+./dbg-go configs build --repo-root test-infra --driver-version 11.0.0+driver --publish
 
 # Skip already-built drivers (checks S3)
-./dbg-go configs build --repo-root test-infra --driver-version 5.0.1+driver --skip-existing
+./dbg-go configs build --repo-root test-infra --driver-version 11.0.0+driver --skip-existing
 
 # Continue on errors (useful for batch builds)
-./dbg-go configs build --repo-root test-infra --driver-version 5.0.1+driver --ignore-errors
+./dbg-go configs build --repo-root test-infra --driver-version 11.0.0+driver --ignore-errors
 
 # Redirect errors to file for later analysis
-./dbg-go configs build --driver-version 5.0.1+driver --redirect-errors errors.log
+./dbg-go configs build --driver-version 11.0.0+driver --redirect-errors errors.log
 ```
 
-**Output format:** `{repo-root}/driverkit/output/{driver-version}/{arch}/falco_{distro}_{kernelrelease}_{kernelversion}.{ko,o}`
+**Output format:** `{repo-root}/driverkit/output/{driver-version}/{arch}/falco_{distro}_{kernelrelease}_{kernelversion}.ko`
 
 **Source:** [`pkg/build/build.go`](../../refs/falcosecurity/dbg-go/pkg/build/build.go)
 
@@ -205,15 +207,13 @@ Builds drivers using driverkit's Docker-based build system.
 
 ```shell
 # Publish locally built drivers
-./dbg-go drivers publish --repo-root test-infra --driver-version 5.0.1+driver
+./dbg-go drivers publish --repo-root test-infra --driver-version 11.0.0+driver
 
 # Publish for arm64
-./dbg-go drivers publish --repo-root test-infra --driver-version 5.0.1+driver --architecture arm64
+./dbg-go drivers publish --repo-root test-infra --driver-version 11.0.0+driver --architecture arm64
 ```
 
-**Required environment variables:**
-- `AWS_ACCESS_KEY_ID`
-- `AWS_SECRET_ACCESS_KEY`
+**Credentials:** Publishing uses the AWS SDK default configuration chain; access-key environment variables are one option. Read-only clients use anonymous credentials. See [client construction](../../refs/falcosecurity/dbg-go/pkg/utils/s3/types.go#L29-L46).
 
 ### S3 Structure
 
@@ -221,10 +221,10 @@ Builds drivers using driverkit's Docker-based build system.
 |---------|-------|
 | Bucket | `falco-distribution` |
 | Region | `eu-west-1` |
-| Path format | `driver/{version}/{arch}/{driver}_{distro}_{kernelrelease}_{kernelversion}.{ko,o}` |
+| Path format | `driver/{version}/{arch}/{driver}_{distro}_{kernelrelease}_{kernelversion}.ko` |
 | ACL | public-read |
 
-**Example S3 path:** `driver/5.0.1+driver/x86_64/falco_ubuntu_5.4.0-150-generic_1.ko`
+**Example S3 path:** `driver/11.0.0+driver/x86_64/falco_ubuntu_5.4.0-150-generic_1.ko`
 
 **Source:** [`pkg/utils/s3/s3utils.go`](../../refs/falcosecurity/dbg-go/pkg/utils/s3/s3utils.go)
 
@@ -235,14 +235,14 @@ Builds drivers using driverkit's Docker-based build system.
 ./dbg-go configs stats --repo-root test-infra
 
 # Remote driver stats
-./dbg-go drivers stats --driver-version 5.0.1+driver
+./dbg-go drivers stats --driver-version 11.0.0+driver
 
 # Cleanup local configs (dry-run first)
 ./dbg-go configs cleanup --repo-root test-infra --dry-run
 ./dbg-go configs cleanup --repo-root test-infra
 
 # Cleanup remote drivers
-./dbg-go drivers cleanup --driver-version 5.0.1+driver --target-distro deprecated-distro
+./dbg-go drivers cleanup --driver-version 11.0.0+driver --target-distro deprecated-distro
 ```
 
 **Source:** [`pkg/stats/stats.go`](../../refs/falcosecurity/dbg-go/pkg/stats/stats.go), [`pkg/cleanup/cleanup.go`](../../refs/falcosecurity/dbg-go/pkg/cleanup/cleanup.go)
@@ -263,7 +263,7 @@ kernel-crawler ──▶ dbg-go ──▶ driverkit ──▶ S3 ──▶ falco
 
 **Outputs:**
 - Driverkit YAML config files
-- Kernel modules (.ko) and eBPF probes (.o)
+- Kernel modules (`.ko`); modern eBPF is embedded in Falco
 - S3 uploads to falco-distribution bucket
 
 **Related repositories:**

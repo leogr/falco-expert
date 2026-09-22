@@ -2,14 +2,14 @@
 
 > Artifact and driver management CLI tool: OCI artifact distribution, driver installation, registry operations, index system, and Kubernetes integration.
 
-**Era:** 0.44 | **Source:** [`refs/falcosecurity/falcoctl/`](../refs/falcosecurity/falcoctl/)
+**Era:** 0.45 | **Source:** [`refs/falcosecurity/falcoctl/`](../refs/falcosecurity/falcoctl/)
 
 ## Overview
 
 Falcoctl is a Go-based CLI tool for managing Falco artifacts and drivers. It serves as the primary interface for:
 
 1. **Artifact management** -- Search, install, and continuously follow rules, plugins, and assets from OCI-compliant registries
-2. **Driver management** -- Install, configure, and clean up kernel drivers (kmod, ebpf, modern_ebpf)
+2. **Driver management** -- Install, configure, and clean up kernel drivers (kmod, modern_ebpf)
 3. **Registry operations** -- Push, pull, and authenticate with OCI registries using multiple auth methods
 4. **Index management** -- Configure artifact indexes that map simple names to OCI registry locations
 
@@ -39,16 +39,14 @@ Falcoctl is built with [Cobra](https://github.com/spf13/cobra) for command struc
 │  │ • config    │  │             │  │             │  │             │    │
 │  └─────────────┘  └─────────────┘  └─────────────┘  └─────────────┘    │
 │                                                                          │
-│  ┌─────────────┐  ┌─────────────┐                                       │
-│  │     tls     │  │   version   │                                       │
-│  ├─────────────┤  └─────────────┘                                       │
-│  │ • install   │                                                         │
-│  └─────────────┘                                                         │
+│  ┌─────────────┐                                                        │
+│  │   version   │                                                        │
+│  └─────────────┘                                                        │
 │                                                                          │
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
-**Source:** [`cmd/root.go:67-72`](../refs/falcosecurity/falcoctl/cmd/root.go)
+**Source:** [`cmd/root.go:67-72`](../refs/falcosecurity/falcoctl/cmd/root.go#L67-L72)
 
 ### Package Structure
 
@@ -79,7 +77,7 @@ Falcoctl uses OCI-compliant registries (GHCR, Docker Hub, Google Artifact Regist
 | `plugin` | `application/vnd.cncf.falco.plugin.layer.v1+tar.gz` | `application/vnd.cncf.falco.plugin.config.v1+json` | Falco plugins (shared libraries) |
 | `asset` | `application/vnd.cncf.falco.asset.layer.v1+tar.gz` | `application/vnd.cncf.falco.asset.config.v1+json` | Assets consumed by plugins |
 
-**Source:** [`pkg/oci/constants.go:18-40`](../refs/falcosecurity/falcoctl/pkg/oci/constants.go), [`pkg/oci/types.go:28-38`](../refs/falcosecurity/falcoctl/pkg/oci/types.go)
+**Source:** [`pkg/oci/constants.go:18-40`](../refs/falcosecurity/falcoctl/pkg/oci/constants.go#L18-L40), [`pkg/oci/types.go:28-38`](../refs/falcosecurity/falcoctl/pkg/oci/types.go#L28-L38)
 
 #### ArtifactConfig Structure
 
@@ -106,7 +104,7 @@ type ArtifactDependency struct {
 }
 ```
 
-**Source:** [`pkg/oci/types.go:143-272`](../refs/falcosecurity/falcoctl/pkg/oci/types.go)
+**Source:** [`pkg/oci/types.go:143-272`](../refs/falcosecurity/falcoctl/pkg/oci/types.go#L143-L272)
 
 #### Reference Formats
 
@@ -121,7 +119,7 @@ Artifacts can be referenced in multiple ways:
 
 When no tag is provided, the default tag is `latest`.
 
-**Source:** [`README.md:261-272`](../refs/falcosecurity/falcoctl/README.md), [`pkg/oci/constants.go:39`](../refs/falcosecurity/falcoctl/pkg/oci/constants.go)
+**Source:** [`README.md:261-272`](../refs/falcosecurity/falcoctl/README.md#L261-L272), [`pkg/oci/constants.go:39`](../refs/falcosecurity/falcoctl/pkg/oci/constants.go#L39)
 
 ### Index System
 
@@ -145,7 +143,7 @@ An index is a YAML file that maps artifact names to their OCI registry locations
       email: cncf-falco-dev@lists.cncf.io
 ```
 
-**Source:** [`README.md:176-212`](../refs/falcosecurity/falcoctl/README.md)
+**Source:** [`README.md:176-212`](../refs/falcosecurity/falcoctl/README.md#L176-L212)
 
 #### Storage Backends
 
@@ -156,7 +154,7 @@ An index is a YAML file that maps artifact names to their OCI registry locations
 | S3 | `s3://` | AWS S3 |
 | File | `file://` | Local filesystem |
 
-**Source:** [`README.md:216-224`](../refs/falcosecurity/falcoctl/README.md)
+**Source:** [`README.md:216-224`](../refs/falcosecurity/falcoctl/README.md#L216-L224)
 
 #### Default Index
 
@@ -269,7 +267,6 @@ Driver commands manage the kernel driver used by Falco to capture system events.
 | Type | Constant | Extension | HasArtifacts | Description |
 |------|----------|-----------|--------------|-------------|
 | `kmod` | `TypeKmod` | `.ko` | Yes | Kernel module, broadest compatibility (>= 3.10) |
-| `ebpf` | `TypeBpf` | `.o` | Yes | Classic eBPF probe (deprecated in favor of modern_ebpf) |
 | `modern_ebpf` | `TypeModernBpf` | - | No | CO-RE eBPF, embedded in Falco binary (>= 5.8 with BTF) |
 
 The `DriverType` interface defines the contract for all driver types:
@@ -319,11 +316,13 @@ Downloads or builds the kernel driver.
 falcoctl driver install [--download] [--compile]
 ```
 
-**Process (sequential):**
-1. **Clean** -- Remove existing driver artifacts
-2. **Download** -- Try to download prebuilt driver from configured repositories
-3. **Compile** -- If download fails and `--compile` is enabled, build locally using kernel headers
-4. **Load** -- Load the driver (`insmod` for kmod; no-op for modern_ebpf since it is embedded in Falco)
+**Installation behavior in falcoctl 0.14.2:**
+1. Download a prebuilt artifact when enabled; otherwise or after download failure, compile when enabled.
+2. Compilation requires the requested driver sources and verifies that DKMS reports the requested version/kernel/architecture as installed; a cached file alone is insufficient.
+3. Load only when the target kernel matches the running kernel. Loading a replacement unloads the current module without removing its DKMS installations, and a load failure is returned to the caller.
+4. Full DKMS removal remains an explicit `driver cleanup` operation; installation no longer starts with cleanup.
+
+**Source:** [`install.go:63-91,127-210`](../refs/falcosecurity/falcoctl/cmd/driver/install/install.go), [`distro.go:155-222`](../refs/falcosecurity/falcoctl/pkg/driver/distro/distro.go), [`kmod.go:44-167`](../refs/falcosecurity/falcoctl/pkg/driver/type/kmod.go)
 
 #### `driver cleanup`
 
@@ -399,14 +398,14 @@ falcoctl registry pull ghcr.io/falcosecurity/plugins/plugin/cloudtrail:latest
 
 Default location: `/etc/falcoctl/falcoctl.yaml`
 
-**Source:** [`README.md:111-156`](../refs/falcosecurity/falcoctl/README.md)
+**Source:** [`README.md:111-156`](../refs/falcosecurity/falcoctl/README.md#L111-L156)
 
 ```yaml
 artifact:
   install:
     refs:
       - falco-rules:5
-      - ghcr.io/falcosecurity/plugins/plugin/container:0.7.1
+      - ghcr.io/falcosecurity/plugins/plugin/container:0.7.4
     rulesfilesdir: /etc/falco
     pluginsdir: /usr/share/falco/plugins
     resolveDeps: true
@@ -447,7 +446,7 @@ All configuration can be set via environment variables:
 | `FALCOCTL_REGISTRY_AUTH_OAUTH` | OAuth2 credentials |
 | `FALCOCTL_REGISTRY_AUTH_GCP` | GCP registries |
 
-**Source:** [`README.md:462-491`](../refs/falcosecurity/falcoctl/README.md)
+**Source:** [`README.md:462-491`](../refs/falcosecurity/falcoctl/README.md#L462-L491)
 
 #### Configuration Priority
 
@@ -462,8 +461,8 @@ Configuration values are resolved in this order (highest priority first):
 Falcoctl is integral to Falco's Kubernetes deployment via the Helm chart. It runs as both init containers and sidecars, sharing artifacts with the Falco container through emptyDir volumes.
 
 **Sources:**
-- [`charts/falco/values.yaml:550-638`](../refs/falcosecurity/charts/charts/falco/values.yaml) - falcoctl configuration
-- [`charts/falco/templates/_helpers.tpl:255-315`](../refs/falcosecurity/charts/charts/falco/templates/_helpers.tpl) - container templates
+- [`charts/falco/values.yaml:555-643`](../refs/falcosecurity/charts/charts/falco/values.yaml#L555-L643) - falcoctl configuration
+- [`charts/falco/templates/_helpers.tpl:255-315`](../refs/falcosecurity/charts/charts/falco/templates/_helpers.tpl#L255-L315) - container templates
 - [`charts/falco/templates/falcoctl-configmap.yaml`](../refs/falcosecurity/charts/charts/falco/templates/falcoctl-configmap.yaml) - ConfigMap template
 
 #### Container Architecture
@@ -495,7 +494,7 @@ Falcoctl is integral to Falco's Kubernetes deployment via the Helm chart. It run
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
 
-The `falco-driver-loader` init container is separate from `falcoctl-artifact-install` because it requires different privileges (privileged mode) and access to host kernel files (`/boot`, `/lib/modules`, `/usr`). For `modern_ebpf`, it only writes config since the driver is embedded in Falco.
+The `falco-driver-loader` init container is separate from `falcoctl-artifact-install` because it requires different privileges (privileged mode) and access to host kernel files (`/boot`, `/lib/modules`, `/usr`). For explicit `driver.kind=modern_ebpf`, the chart omits this init container. In `auto` mode it runs and can select the embedded modern eBPF probe. [Source: `_helpers.tpl:357-363`](../refs/falcosecurity/charts/charts/falco/templates/_helpers.tpl).
 
 #### Shared Volumes (emptyDir)
 
@@ -519,21 +518,21 @@ follow:
 Falco exposes version info at `http://localhost:8765/versions`:
 ```json
 {
-  "falco_version": "0.44.0",
-  "libs_version": "0.25.2",
+  "falco_version": "0.45.0",
+  "libs_version": "0.26.0",
   "plugin_api_version": "3.12.0",
-  "driver_api_version": "10.1.0",
-  "driver_schema_version": "4.5.1",
-  "default_driver_version": "10.2.0+driver",
-  "engine_version": "62",
-  "engine_version_semver": "0.62.0",
+  "driver_api_version": "11.0.0",
+  "driver_schema_version": "4.5.2",
+  "default_driver_version": "11.0.0+driver",
+  "engine_version": "65",
+  "engine_version_semver": "0.65.0",
   "plugin_versions": {}
 }
 ```
 
 The `engine_version` field contains only the MINOR component as a string (kept for backward compatibility with existing tooling, including falcoctl's matching of old rules artifacts configs). The `engine_version_semver` field contains the full semver representation. Plugin versions are populated when plugins are loaded.
 
-**Source:** [`versions_info.cpp:65-83`](../refs/falcosecurity/falco/userspace/falco/versions_info.cpp), [`versions_info.h:33-57`](../refs/falcosecurity/falco/userspace/falco/versions_info.h), [`falco_engine_version.h`](../refs/falcosecurity/falco/userspace/engine/falco_engine_version.h)
+**Source:** [`versions_info.cpp:65-83`](../refs/falcosecurity/falco/userspace/falco/versions_info.cpp#L65-L83), [`versions_info.h:33-57`](../refs/falcosecurity/falco/userspace/falco/versions_info.h#L33-L57), [`falco_engine_version.h`](../refs/falcosecurity/falco/userspace/engine/falco_engine_version.h)
 
 Falcoctl checks artifact requirements against these versions to ensure compatibility before installing or updating artifacts.
 
@@ -543,7 +542,7 @@ Falcoctl checks artifact requirements against these versions to ensure compatibi
 falcoctl:
   image:
     repository: falcosecurity/falcoctl
-    tag: "0.13.0"
+    tag: "0.14.2"
   artifact:
     install:
       enabled: true              # Run as init container
@@ -612,7 +611,7 @@ falcoctl artifact install --no-verify <artifact>
 
 **Image verification (falcoctl container images are also signed):**
 ```bash
-cosign verify docker.io/falcosecurity/falcoctl:0.13.0 \
+cosign verify docker.io/falcosecurity/falcoctl:0.14.2 \
   --certificate-oidc-issuer=https://token.actions.githubusercontent.com \
   --certificate-identity-regexp=https://github.com/falcosecurity/falcoctl/
 ```
@@ -643,6 +642,12 @@ The `tls install` command (previously under `cmd/tls/`) generated and installed 
 | [`build-system.md`](build-system.md) | Build system for Falco and libs (driver compilation path) |
 | [`kernel-instrumentation.md`](kernel-instrumentation.md) | Kernel driver types managed by falcoctl driver commands |
 | [`architecture-overview.md`](architecture-overview.md) | Falco application architecture (versions endpoint, event sources) |
+
+### Archive and Manifest Handling
+
+Artifact extraction rejects symbolic-link and hard-link entries and checks regular-file paths for pre-existing symlinks. Unix writes additionally use `O_NOFOLLOW` on the final component; the parent-directory checks are defense in depth, not a claim of fully race-free traversal. Multi-platform OCI index selection skips descriptors without a platform and continues looking for the requested OS/architecture.
+
+**Source:** [`extract.go:30-179`](../refs/falcosecurity/falcoctl/internal/utils/extract.go), [`puller.go:192-235`](../refs/falcosecurity/falcoctl/pkg/oci/puller/puller.go)
 
 ## Sources
 

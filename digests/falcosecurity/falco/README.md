@@ -1,6 +1,6 @@
 # falcosecurity/falco Digest
 
-> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/falco/`](../../../refs/falcosecurity/falco/) | **Version:** 0.44.1
+> **Era Relevance:** 0.45 | **Source:** [`refs/falcosecurity/falco/`](../../../refs/falcosecurity/falco/) | **Version:** 0.45.0
 
 **Repository:** https://github.com/falcosecurity/falco
 **Status:** Core / Stable (CNCF Graduated)
@@ -11,12 +11,18 @@ The main Falco repository providing the runtime security tool binary. Built on t
 
 | Property | Value |
 |----------|-------|
-| Falco Version | 0.44.1 |
-| Engine Version | 0.62.0 |
-| Libs Version | 0.25.4 |
+| Falco Version | 0.45.0 |
+| Engine Version | 0.65.0 |
+| Libs Version | 0.26.0 |
 | Plugin API | 3.12.0 (from libs) |
 | Default Driver | modern_ebpf |
 | Architecture | x86-64, aarch64 |
+
+## Era 0.45 Changes
+
+- Generation-based reload status and an optional Unix HTTP administrative listener; SIGHUP notification persists across reload teardown. See [architecture](architecture.md#hot-reload) and [configuration](configuration.md#hot-reload).
+- Raw byte comparisons and hexadecimal escapes in filter literals, with UTF-8 sanitation at output boundaries. See [rule language](rule-language.md#raw-bytes-in-conditions-045) and [outputs](outputs.md#byte-preservation-and-output-encoding-045).
+- Package upgrades retain custom driver pins and defer RPM provisioning/startup until post-transaction cleanup. [Package helpers](../../../refs/falcosecurity/falco/scripts/packaging/functions.sh.in#L23-L64), [RPM posttrans](../../../refs/falcosecurity/falco/scripts/rpm/posttrans.in#L24-L49).
 
 ## Architecture Overview
 
@@ -118,15 +124,9 @@ Modular action framework:
 | [`falcoctl.md`](../falcoctl.md) | CLI tool for driver and artifact management |
 | [`deploy-kubernetes.md`](../deploy-kubernetes.md) | Raw Kubernetes manifests |
 
-## Codebase Statistics
+## Version Sources
 
-| Component | Files | Lines |
-|-----------|-------|-------|
-| Engine | 22 | ~8,700 |
-| Falco (main) | 24 | ~6,600 |
-| App/Actions | 38 | ~4,800 |
-| Configuration | 1 | ~65KB |
-| **Total** | ~150 | ~26,000 |
+The release selects its libraries and driver independently: [`falcosecurity-libs.cmake:45`](../../../refs/falcosecurity/falco/cmake/modules/falcosecurity-libs.cmake#L45), [`driver.cmake:38`](../../../refs/falcosecurity/falco/cmake/modules/driver.cmake#L38). The final engine version is defined in [`falco_engine_version.h:21-24`](../../../refs/falcosecurity/falco/userspace/engine/falco_engine_version.h#L21-L24).
 
 ## Sources
 

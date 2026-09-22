@@ -1,13 +1,13 @@
 # Driverkit Digest
 
 **Repository:** [falcosecurity/driverkit](https://github.com/falcosecurity/driverkit)
-**Version:** v0.23.1
+**Version:** v0.23.2
 **Status:** Ecosystem / Incubating
-**Era:** 0.44
+**Era:** 0.45
 
 ## Overview
 
-Driverkit is a command-line tool for building Falco kernel modules (`.ko`) and eBPF probes (`.o`). It abstracts away the complexity of driver compilation by providing multiple build backends (Docker, Kubernetes, local) and supporting numerous Linux distributions out of the box.
+Driverkit is a command-line tool for building Falco kernel modules (`.ko`). It abstracts away the complexity of driver compilation by providing multiple build backends (Docker, Kubernetes, local) and supporting numerous Linux distributions out of the box.
 
 **Source:** [`README.md`](../../refs/falcosecurity/driverkit/README.md)
 
@@ -52,7 +52,6 @@ Driverkit is a command-line tool for building Falco kernel modules (`.ko`) and e
 ┌─────────────────────────────────────────────────────────────────────┐
 │                      Output                                         │
 │  • Kernel Module: /tmp/driver/build/driver/<name>.ko               │
-│  • eBPF Probe: /tmp/driver/build/driver/bpf/probe.o                │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -74,7 +73,7 @@ type Builder interface {
 }
 ```
 
-**Source:** [`pkg/driverbuilder/builder/builders.go:86-92`](../../refs/falcosecurity/driverkit/pkg/driverbuilder/builder/builders.go)
+**Source:** [`pkg/driverbuilder/builder/builders.go:86-92`](../../refs/falcosecurity/driverkit/pkg/driverbuilder/builder/builders.go#L86-L92)
 
 #### 2. Build Configuration
 
@@ -88,9 +87,8 @@ The `Build` struct contains all information needed to build a driver:
 | `DriverVersion` | Git commit hash or tag from falcosecurity/libs |
 | `Architecture` | Target architecture (amd64, arm64) |
 | `ModuleFilePath` | Output path for kernel module |
-| `ProbeFilePath` | Output path for eBPF probe |
 
-**Source:** [`pkg/driverbuilder/builder/build.go:29-55`](../../refs/falcosecurity/driverkit/pkg/driverbuilder/builder/build.go)
+**Source:** [`pkg/driverbuilder/builder/build.go:29-55`](../../refs/falcosecurity/driverkit/pkg/driverbuilder/builder/build.go#L29-L55)
 
 #### 3. Build Processors
 
@@ -150,7 +148,6 @@ The `Build` struct contains all information needed to build a driver:
 --moduledevicename string   Kernel module device name (default: "falco")
 --moduledrivername string   Kernel module driver name (default: "falco")
 --output-module string      Output path for kernel module (.ko)
---output-probe string       Output path for eBPF probe (.o)
 --proxy string              HTTP/HTTPS proxy URL
 --repo-name string          GitHub repo name (default: "libs")
 --repo-org string           GitHub organization (default: "falcosecurity")
@@ -169,7 +166,6 @@ Build using Docker daemon:
 ```bash
 driverkit docker \
     --output-module /tmp/falco.ko \
-    --output-probe /tmp/falco.o \
     --kernelrelease 5.15.0-91-generic \
     --kernelversion 101 \
     --target ubuntu \
@@ -205,7 +201,6 @@ Build on local host:
 ```bash
 driverkit local \
     --output-module /tmp/falco.ko \
-    --output-probe /tmp/falco.o \
     --kernelrelease $(uname -r) \
     --target ubuntu \
     --driverversion 0.20.1
@@ -241,7 +236,6 @@ target: ubuntu
 driverversion: 0.20.1
 output:
   module: /tmp/falco.ko
-  probe: /tmp/falco.o
 ```
 
 Usage:
@@ -273,7 +267,7 @@ Examples:
 4. If "any" fallback image provides required GCC version → use it
 5. Otherwise, find image providing nearest GCC version (below target)
 
-**Source:** [`pkg/driverbuilder/builder/builders.go:257-329`](../../refs/falcosecurity/driverkit/pkg/driverbuilder/builder/builders.go)
+**Source:** [`pkg/driverbuilder/builder/builders.go:257-329`](../../refs/falcosecurity/driverkit/pkg/driverbuilder/builder/builders.go#L257-L329)
 
 ### Default GCC Selection
 
@@ -291,7 +285,7 @@ Based on kernel major version:
 | 3.x | 4.9 |
 | 2.x | 4.8 |
 
-**Source:** [`pkg/driverbuilder/builder/builders.go:220-247`](../../refs/falcosecurity/driverkit/pkg/driverbuilder/builder/builders.go)
+**Source:** [`pkg/driverbuilder/builder/builders.go:220-247`](../../refs/falcosecurity/driverkit/pkg/driverbuilder/builder/builders.go#L220-L247)
 
 ### Custom Builder Images
 
@@ -328,7 +322,7 @@ images:
 3. Verify URLs with HTTP HEAD requests
 4. Filter to only working URLs
 
-**Source:** [`pkg/driverbuilder/builder/builders.go:133-188`](../../refs/falcosecurity/driverkit/pkg/driverbuilder/builder/builders.go)
+**Source:** [`pkg/driverbuilder/builder/builders.go:133-188`](../../refs/falcosecurity/driverkit/pkg/driverbuilder/builder/builders.go#L133-L188)
 
 ### kernel-crawler Integration
 
@@ -362,13 +356,12 @@ type commonTemplateData struct {
     ModuleDriverName string    // falco
     ModuleFullPath   string    // /tmp/driver/build/driver/falco.ko
     BuildModule      bool      // Whether to build kernel module
-    BuildProbe       bool      // Whether to build eBPF probe
     GCCVersion       string    // GCC version to use
     CmakeCmd         string    // CMake command with all options
 }
 ```
 
-**Source:** [`pkg/driverbuilder/builder/builders.go:75-83`](../../refs/falcosecurity/driverkit/pkg/driverbuilder/builder/builders.go)
+**Source:** [`pkg/driverbuilder/builder/builders.go:75-83`](../../refs/falcosecurity/driverkit/pkg/driverbuilder/builder/builders.go#L75-L83)
 
 ### CMake Configuration
 
@@ -389,9 +382,9 @@ cmake -Wno-dev \
   ..
 ```
 
-> Note: The legacy `-DBUILD_BPF=On` option is no longer emitted; legacy eBPF probe build support was dropped in driverkit v0.23.0 (the modern eBPF probe and kernel module are built without it).
+> The current builder emits module output only. Its CMake command disables `BUILD_LIBSCAP_MODERN_BPF`; driverkit does not build the modern eBPF driver. Probe output flags and fields from older versions are no longer part of the CLI/build contract. **Sources:** [output options and flags](../../refs/falcosecurity/driverkit/cmd/root_options.go#L34-L41), [CMake command and template data](../../refs/falcosecurity/driverkit/pkg/driverbuilder/builder/builders.go#L37-L83).
 
-**Source:** [`pkg/driverbuilder/builder/builders.go:37-52`](../../refs/falcosecurity/driverkit/pkg/driverbuilder/builder/builders.go)
+**Source:** [`pkg/driverbuilder/builder/builders.go:37-52`](../../refs/falcosecurity/driverkit/pkg/driverbuilder/builder/builders.go#L37-L52)
 
 ## Adding New Target Support
 
@@ -432,7 +425,7 @@ Driverkit downloads driver source code from [falcosecurity/libs](https://github.
 https://github.com/falcosecurity/libs/archive/<version>.tar.gz
 ```
 
-**Source:** [`pkg/driverbuilder/builder/build.go:64-66`](../../refs/falcosecurity/driverkit/pkg/driverbuilder/builder/build.go)
+**Source:** [`pkg/driverbuilder/builder/build.go:64-66`](../../refs/falcosecurity/driverkit/pkg/driverbuilder/builder/build.go#L64-L66)
 
 ## Cross-Compilation
 
@@ -443,7 +436,7 @@ https://github.com/falcosecurity/libs/archive/<version>.tar.gz
 
 For arm64 cross-builds from x86_64, driverkit automatically pulls and runs `multiarch/qemu-user-static`.
 
-**Source:** [`pkg/driverbuilder/docker.go:68-126`](../../refs/falcosecurity/driverkit/pkg/driverbuilder/docker.go)
+**Source:** [`pkg/driverbuilder/docker.go:68-126`](../../refs/falcosecurity/driverkit/pkg/driverbuilder/docker.go#L68-L126)
 
 ## Special Cases
 
@@ -467,11 +460,13 @@ Require `kernelconfigdata` (base64-encoded kernel config):
 zcat /proc/config.gz | base64 -w0
 ```
 
-**Source:** [`cmd/root_options.go:220-232`](../../refs/falcosecurity/driverkit/cmd/root_options.go)
+**Source:** [`cmd/root_options.go:220-232`](../../refs/falcosecurity/driverkit/cmd/root_options.go#L220-L232)
 
 ## Version Note
 
-The 0.44 era uses driverkit **v0.23.1**. Legacy eBPF probe build support was dropped in **v0.23.0** ([`024c972`](https://github.com/falcosecurity/driverkit/commit/024c972) "chore!: drop legacy eBPF probe build support"), consistent with Falco 0.44 removing the legacy eBPF probe. driverkit now builds only the kernel module and the modern eBPF probe.
+The 0.45 era uses driverkit **v0.23.2**. This version's Ubuntu resolver preserves the production `GetResolvingURLs` call while exposing a resolver argument for tests. For amd64 it tries the main mirror, then the security mirror when resolution fails or does not return both required header packages; other architectures use the ports mirror. **Source:** [ubuntu.go:99-136](../../refs/falcosecurity/driverkit/pkg/driverbuilder/builder/ubuntu.go#L99-L136).
+
+Legacy eBPF output support was removed in v0.23.0; current output is a kernel module. The modern eBPF driver is outside this builder's output contract. **Sources:** [removal commit](https://github.com/falcosecurity/driverkit/commit/024c972), [build structure](../../refs/falcosecurity/driverkit/pkg/driverbuilder/builder/build.go#L32-L55), [CMake configuration](../../refs/falcosecurity/driverkit/pkg/driverbuilder/builder/builders.go#L37-L55).
 
 ## Sources
 

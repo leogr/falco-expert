@@ -2,7 +2,7 @@
 
 > Detection rule content and lifecycle: maturity framework, rule files and distribution tiers, rule taxonomy, macro/list architecture, tuning patterns, and release process.
 
-**Era:** 0.44 | **Source:** [`refs/falcosecurity/rules/`](../refs/falcosecurity/rules/)
+**Era:** 0.45 | **Source:** [`refs/falcosecurity/rules/`](../refs/falcosecurity/rules/)
 
 ## Overview
 
@@ -15,7 +15,7 @@ Falco rules are organized into four rule files corresponding to maturity tiers a
 - 4 rule files organized by maturity level
 - Maturity framework introduced in Falco 0.36 via [proposal 20230605](../refs/falcosecurity/rules/proposals/20230605-rules-adoption-management-maturity-framework.md)
 - SemVer-versioned and distributed as signed OCI artifacts
-- Engine version 0.62.0 (as defined in [`falco_engine_version.h:22-24`](../refs/falcosecurity/falco/userspace/engine/falco_engine_version.h))
+- Engine version 0.65.0 (as defined in [`falco_engine_version.h:22-24`](../refs/falcosecurity/falco/userspace/engine/falco_engine_version.h#L22-L24))
 
 **Source:** [`digests/falcosecurity/rules.md`](../digests/falcosecurity/rules.md), [`digests/falcosecurity/falco/rule-language.md`](../digests/falcosecurity/falco/rule-language.md)
 
@@ -186,7 +186,7 @@ Lists can reference other lists (resolved during compilation):
   items: [shell_binaries, powershell]
 ```
 
-**Source:** [`rule_loader.h:403-416`](../refs/falcosecurity/falco/userspace/engine/rule_loader.h)
+**Source:** [`rule_loader.h:403-416`](../refs/falcosecurity/falco/userspace/engine/rule_loader.h#L403-L416)
 
 ### Macros
 
@@ -205,7 +205,7 @@ Macros are named condition fragments for reuse across rules. They encapsulate co
   condition: evt.type = execve
 ```
 
-**Source:** [`rule_loader.h:421-435`](../refs/falcosecurity/falco/userspace/engine/rule_loader.h)
+**Source:** [`rule_loader.h:421-435`](../refs/falcosecurity/falco/userspace/engine/rule_loader.h#L421-L435)
 
 ### Override Patterns
 
@@ -244,7 +244,7 @@ Both lists and macros support `append` and `replace` operations for customizatio
 
 The legacy `append: true` syntax is deprecated and generates a warning. It cannot be mixed with the `override` key.
 
-**Source:** [`rule_loader_reader.cpp:200-262`](../refs/falcosecurity/falco/userspace/engine/rule_loader_reader.cpp)
+**Source:** [`rule_loader_reader.cpp:200-262`](../refs/falcosecurity/falco/userspace/engine/rule_loader_reader.cpp#L200-L262)
 
 ## Tuning Patterns
 
@@ -307,9 +307,9 @@ The recommended adoption strategy follows a staged approach:
 ```bash
 # Helm: install incubating and sandbox rules alongside stable
 helm install falco falcosecurity/falco \
-  --set "falcoctl.config.artifact.install.refs={falco-rules:2,falco-incubating-rules:2,falco-sandbox-rules:2}" \
-  --set "falcoctl.config.artifact.follow.refs={falco-rules:2,falco-incubating-rules:2,falco-sandbox-rules:2}" \
-  --set "falco.rules_file={/etc/falco/falco_rules.yaml,/etc/falco/falco-incubating_rules.yaml,/etc/falco/falco-sandbox_rules.yaml,/etc/falco/rules.d}"
+  --set "falcoctl.config.artifact.install.refs={falco-rules:5,falco-incubating-rules:6,falco-sandbox-rules:6}" \
+  --set "falcoctl.config.artifact.follow.refs={falco-rules:5,falco-incubating-rules:6,falco-sandbox-rules:6}" \
+  --set "falco.rules_files={/etc/falco/falco_rules.yaml,/etc/falco/falco-incubating_rules.yaml,/etc/falco/falco-sandbox_rules.yaml,/etc/falco/rules.d}"
 ```
 
 **Source:** [`digests/falcosecurity/rules.md`](../digests/falcosecurity/rules.md)
@@ -360,6 +360,12 @@ Rules are registered in [`registry.yaml`](../refs/falcosecurity/rules/registry.y
 | [`filter-engine.md`](filter-engine.md) | Filter expression language used in rule conditions |
 | [`falcoctl.md`](falcoctl.md) | OCI artifact distribution, rule installation and follow |
 | [`plugin-system.md`](plugin-system.md) | Plugin-sourced event rules (k8saudit, cloudtrail) |
+
+## Era 0.45 Rule Content
+
+The selected rules snapshot contains stable `falco-rules` 5.2.0, incubating 6.0.1, and sandbox 6.2.0. Stable rules exclude specific systemd helper processes from `Read sensitive file untrusted` using both parent name and executable path. Sandbox rules add `Container Accessing GPU Device` and `GPU Management Tool Run in Container`; both are disabled by default and use the `user_known_gpu_workloads` tuning hook. They observe device opens and management-tool execution, not proof that mining occurred.
+
+**Source:** [`falco_rules.yaml:412-446`](../refs/falcosecurity/rules/rules/falco_rules.yaml), [`falco-sandbox_rules.yaml:1976-2067`](../refs/falcosecurity/rules/rules/falco-sandbox_rules.yaml), [stable release](https://github.com/falcosecurity/rules/releases/tag/falco-rules-5.2.0), [incubating release](https://github.com/falcosecurity/rules/releases/tag/falco-incubating-rules-6.0.1), [sandbox release](https://github.com/falcosecurity/rules/releases/tag/falco-sandbox-rules-6.2.0).
 
 ## Sources
 

@@ -2,14 +2,14 @@
 
 > Plugin API, five capabilities, lifecycle, state table access, thread pool, field definitions, and official plugins.
 
-**Era:** 0.44 | **Source:** [`refs/falcosecurity/libs/userspace/plugin/`](../refs/falcosecurity/libs/userspace/plugin/)
+**Era:** 0.45 | **Source:** [`refs/falcosecurity/libs/userspace/plugin/`](../refs/falcosecurity/libs/userspace/plugin/)
 
 ## Overview
 
 The Falco plugin system extends the capabilities of libs beyond syscall events through a well-defined C API. Plugins are dynamically loaded shared libraries that can generate events from external sources, extract new filterable fields, parse events to maintain state, inject asynchronous events, and react to capture lifecycle changes.
 
 - **Plugin API Version:** 3.12.0
-- **Event Schema Version:** 4.1.0
+- **Driver schema:** 4.5.2 in libs 0.26.0; minimum compatible schema 4.3.0 (distinct from plugin API version). See [`scap.h:103-104`](../refs/falcosecurity/libs/userspace/libscap/scap.h#L103-L104).
 - **Maximum Error Length:** 1024 characters (`PLUGIN_MAX_ERRLEN`)
 
 The plugin API is backward compatible within the same major version. Plugins declare their required API version via `get_required_api_version()`, and the framework validates compatibility at load time.
@@ -611,7 +611,7 @@ Three official SDKs are available for developing Falco plugins:
 |-----|----------|---------|------------|--------|
 | plugin-sdk-go | Go | v0.8.3 | [`refs/falcosecurity/plugin-sdk-go/`](../refs/falcosecurity/plugin-sdk-go/) | Stable |
 | plugin-sdk-cpp | C++ | (header-only) | [`refs/falcosecurity/plugin-sdk-cpp/`](../refs/falcosecurity/plugin-sdk-cpp/) | Incubating |
-| plugin-sdk-rs | Rust | v0.5.0 | [`refs/falcosecurity/plugin-sdk-rs/`](../refs/falcosecurity/plugin-sdk-rs/) | Incubating |
+| plugin-sdk-rs | Rust | source snapshot beyond v0.5.0 | [`refs/falcosecurity/plugin-sdk-rs/`](../refs/falcosecurity/plugin-sdk-rs/) | Incubating |
 
 **Go SDK** (`plugin-sdk-go`): Three-layer architecture (core interfaces, CGO symbols, high-level plugins). Supports pull and push event production models. Async extraction optimization with worker goroutines.
 
@@ -668,7 +668,7 @@ The `k8smeta` plugin provides Kubernetes resource metadata enrichment beyond wha
 
 | Property | Value |
 |----------|-------|
-| Plugin Version | 0.4.1 |
+| Plugin Version | 0.4.2 |
 | Minimum Falco Version | 0.40.0 |
 | Language | C++ |
 | Capabilities | extraction, parsing, async, capture listening |
@@ -691,7 +691,7 @@ The `json` plugin is a general-purpose extraction plugin that extracts values fr
 
 | Property | Value |
 |----------|-------|
-| Plugin Version | 0.7.3 |
+| Plugin Version | 0.7.4 |
 | Language | Go |
 | Capabilities | extraction |
 | Event Source | None (extractor only, works with all sources) |
@@ -721,7 +721,7 @@ The `k8saudit` plugins enable Falco to monitor Kubernetes clusters via audit log
 | Property | Value |
 |----------|-------|
 | Plugin ID | 1 |
-| Plugin Version | 0.16.0 |
+| Plugin Version | 0.18.0 |
 | Event Source | `k8s_audit` |
 | Language | Go |
 | Capabilities | sourcing, extraction |

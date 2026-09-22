@@ -2,7 +2,7 @@
 
 > Fan-out daemon for Falco alerts: HTTP receiver, FalcoPayload data model, 70+ output integrations, priority filtering, deployment patterns, and Falcosidekick-UI.
 
-**Era:** 0.44 | **Source:** [`refs/falcosecurity/falcosidekick/`](../refs/falcosecurity/falcosidekick/)
+**Era:** 0.45 | **Source:** [`refs/falcosecurity/falcosidekick/`](../refs/falcosecurity/falcosidekick/)
 
 ## 1. Overview
 
@@ -44,7 +44,7 @@ Key capabilities:
 
 Multiple Falco instances send JSON-formatted alerts as HTTP POST requests to Falcosidekick's main handler endpoint (`/`). Falcosidekick deserializes each event into its internal `FalcoPayload` struct, enriches it with custom fields/tags, evaluates per-output priority filters, and dispatches the event to every enabled output in parallel. Each dispatch runs in its own panic-recovering goroutine (`safeGo`), isolating the daemon from panics triggered by a malformed event or a misbehaving output: the panic is recovered and logged while the other outputs proceed.
 
-**Source:** [`digests/falcosecurity/falcosidekick/README.md`](../digests/falcosecurity/falcosidekick/README.md), [`handlers.go:301`](../refs/falcosecurity/falcosidekick/handlers.go)
+**Source:** [`digests/falcosecurity/falcosidekick/README.md`](../digests/falcosecurity/falcosidekick/README.md), [`handlers.go:301`](../refs/falcosecurity/falcosidekick/handlers.go#L301)
 
 ## 3. Falco Integration
 
@@ -125,7 +125,7 @@ debug < informational < notice < warning < error < critical < alert < emergency
 
 These map directly to Falco's rule priority levels. The ordering is significant for minimum priority filtering (see section 7).
 
-**Source:** [`types/types.go:20-30`](../refs/falcosecurity/falcosidekick/types/types.go)
+**Source:** [`types/priority.go:10-22`](../refs/falcosecurity/falcosidekick/types/priority.go#L10-L22)
 
 ## 5. Output System
 
@@ -460,7 +460,7 @@ helm install falco --set falcosidekick.enabled=true falcosecurity/falco
 helm install falcosidekick falcosecurity/falcosidekick
 ```
 
-The Helm chart defaults to 2 replicas for high availability. Both replicas receive the same events and forward to the same outputs, providing redundancy.
+The Helm chart defaults to 2 replicas for high availability. The Service distributes incoming HTTP requests among replicas; two replicas do not by themselves duplicate every event to both pods.
 
 **Source:** [`digests/falcosecurity/falcosidekick/README.md`](../digests/falcosecurity/falcosidekick/README.md), [`README.md`](../refs/falcosecurity/falcosidekick/README.md)
 
@@ -493,6 +493,16 @@ Key characteristics:
 | [`output-system.md`](output-system.md) | Falco's native output system, including the `http_output` channel that sends events to Falcosidekick |
 | [`configuration.md`](configuration.md) | Falco's `http_output` and `json_output` config keys used for Falcosidekick integration |
 | [`falcoctl.md`](falcoctl.md) | Falcoctl manages Falco artifacts; Falcosidekick is separately distributed |
+
+## Falcosidekick 2.35.0 Behavior
+
+Fan-out collects the enabled dispatches before launching them. When there is more than one output, each dispatch receives a copied `OutputFields` map and `Tags` slice; map values are copied as values, not recursively cloned. Dispatch goroutines retain panic recovery. This isolates top-level field/tag mutations between outputs.
+
+OTLP traces, logs and metrics each expose `tls` (default false) alongside `checkcert` (default true). With `checkcert: false`, `tls: true` retains encryption while skipping certificate verification; `tls: false` selects the exporter's insecure transport. With `checkcert: true`, endpoint/SDK transport configuration applies. Logs use their own settings, not the traces settings.
+
+Other verified fixes: Alertmanager accepts numeric drop counters without asserting a string; AWS S3 uploads request CRC32 checksums; PolicyReport timestamps use Unix seconds; Dynatrace checks field types; SMTP dates use RFC 2822 ordering. Telegram's host defaults to `https://api.telegram.org` even when omitted or empty.
+
+**Source:** [`handlers.go:313-597`](../refs/falcosecurity/falcosidekick/handlers.go), [`types.go:32-49`](../refs/falcosecurity/falcosidekick/types/types.go), [`otlp_logs.go:82-106`](../refs/falcosecurity/falcosidekick/outputs/otlp_logs.go), [`otlp_traces_init.go:39-64`](../refs/falcosecurity/falcosidekick/outputs/otlp_traces_init.go), [`otlp_metrics.go:149-176`](../refs/falcosecurity/falcosidekick/outputs/otlp_metrics/otlp_metrics.go), [`alertmanager.go:75-106`](../refs/falcosecurity/falcosidekick/outputs/alertmanager.go), [`aws.go:168-179`](../refs/falcosecurity/falcosidekick/outputs/aws.go), [`policyreport.go:180-191`](../refs/falcosecurity/falcosidekick/outputs/policyreport.go), [`dynatrace.go:80-114`](../refs/falcosecurity/falcosidekick/outputs/dynatrace.go), [`smtp.go:25`](../refs/falcosecurity/falcosidekick/outputs/smtp.go), [`config.go:409-412,934-936`](../refs/falcosecurity/falcosidekick/config.go).
 
 ## 13. Sources
 

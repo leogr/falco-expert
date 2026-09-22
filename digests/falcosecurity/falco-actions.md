@@ -1,6 +1,6 @@
 # falco-actions Digest
 
-> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/falco-actions/`](../../refs/falcosecurity/falco-actions/) | **Commit:** `54d299d` (February 3, 2026)
+> **Era Relevance:** 0.45 | **Source:** [`refs/falcosecurity/falco-actions/`](../../refs/falcosecurity/falco-actions/)
 
 **Repository:** [falcosecurity/falco-actions](https://github.com/falcosecurity/falco-actions)
 **Scope:** Ecosystem
@@ -227,7 +227,7 @@ Default rules for detecting CI/CD-specific threats (tagged with `CI/CD`):
 
 **Required engine version:** 0.43.0 (per the pinned `falco_cicd_rules.yaml`; falco-actions is a Sandbox project and may lag the latest Falco engine version)
 
-**Source:** [`rules/falco_cicd_rules.yaml:1`](../../refs/falcosecurity/falco-actions/rules/falco_cicd_rules.yaml)
+**Source:** [`rules/falco_cicd_rules.yaml:1`](../../refs/falcosecurity/falco-actions/rules/falco_cicd_rules.yaml#L1)
 
 ## Report Contents
 
@@ -314,7 +314,7 @@ Apply Falco conditions to filter report entries:
 - Mounts `/proc`, `/etc`, `/var/run/docker.sock`
 - Outputs JSON to `/tmp/falco_events.json`
 
-**Source:** [`start/action.yaml:73-91`](../../refs/falcosecurity/falco-actions/start/action.yaml)
+**Source:** [`start/action.yaml:73-91`](../../refs/falcosecurity/falco-actions/start/action.yaml#L73-L91)
 
 ### Analyze Mode
 
@@ -329,7 +329,7 @@ Apply Falco conditions to filter report entries:
 - Extracts data using sysdig filters and chisels
 - Correlates events to GitHub workflow steps via API
 
-**Source:** [`start/action.yaml:107-185`](../../refs/falcosecurity/falco-actions/start/action.yaml), [`analyze/action.yaml`](../../refs/falcosecurity/falco-actions/analyze/action.yaml)
+**Source:** [`start/action.yaml:107-184`](../../refs/falcosecurity/falco-actions/start/action.yaml), [`analyze/action.yaml`](../../refs/falcosecurity/falco-actions/analyze/action.yaml)
 
 ## Required Permissions
 

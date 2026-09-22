@@ -109,7 +109,7 @@ falco -c /etc/falco/falco.yaml \
 docker run --rm \
   -v /path/to/capture.scap:/capture.scap:ro \
   -v /path/to/my_rules.yaml:/my_rules.yaml:ro \
-  falcosecurity/falco:0.44.0 \
+  falcosecurity/falco:0.45.0 \
   falco \
     -o "engine.kind=replay" \
     -o "engine.replay.capture_file=/capture.scap" \

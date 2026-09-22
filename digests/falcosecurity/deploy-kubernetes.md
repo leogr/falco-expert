@@ -1,11 +1,11 @@
 # falcosecurity/deploy-kubernetes Digest
 
 **Repository:** https://github.com/falcosecurity/deploy-kubernetes
-**Era:** 0.44
+**Era:** 0.45
 **Status:** Core / Stable
-**Pinned commit:** `ecd78de` (2026-05-27, day after the Falco 0.44.0 release)
+**Snapshot scope:** The manifests retained at the era cutoff still represent chart 9.1.0 / Falco 0.44.1, not the 0.45 Helm defaults.
 
-Pre-rendered Kubernetes manifests auto-generated from the [Helm charts](charts.md). These serve as deployment templates and provide insight into how Falco components are structured in Kubernetes. The manifests in this submodule were generated from the `falco-9.0.0` chart (appVersion `0.44.0`).
+Pre-rendered Kubernetes manifests auto-generated from the [Helm charts](charts.md). These serve as deployment templates and provide insight into how Falco components are structured in Kubernetes. The manifests in this submodule were generated from the `falco-9.1.0` chart (appVersion `0.44.1`).
 
 ## Overview
 
@@ -13,7 +13,7 @@ This repository provides ready-to-use Kubernetes manifests that can be deployed 
 
 **Source:** [`README.md`](../../refs/falcosecurity/deploy-kubernetes/README.md)
 
-**Important:** These are **templates** meant as starting points, not final resources. The repository README explicitly states they are "strongly recommended" to be considered templates ([`README.md:8`](../../refs/falcosecurity/deploy-kubernetes/README.md)). For production deployments, either:
+**Important:** These are **templates** meant as starting points, not final resources. The repository README explicitly states they are "strongly recommended" to be considered templates ([`README.md:8`](../../refs/falcosecurity/deploy-kubernetes/README.md#L8)). For production deployments, either:
 - Customize these manifests for your environment
 - Use the Helm charts directly for more flexibility
 
@@ -22,7 +22,7 @@ This repository provides ready-to-use Kubernetes manifests that can be deployed 
 kubectl apply -k kubernetes/falco
 ```
 
-> **Note (stale upstream content):** The [`kubernetes/README.md:11`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/README.md) still claims "The default configuration in Falco utilizes the kernel module driver (`kmod`)." This is outdated — the rendered [`configmap.yaml`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/configmap.yaml) sets `engine.kind: modern_ebpf` as the default. The same README correctly notes that `modern_ebpf` needs no driver download/build and no `falco-driver-loader` init container ([`kubernetes/README.md:15`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/README.md)).
+> **Note (stale upstream content):** The [`kubernetes/README.md:11`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/README.md#L11) still claims "The default configuration in Falco utilizes the kernel module driver (`kmod`)." This is outdated — the rendered [`configmap.yaml`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/configmap.yaml) sets `engine.kind: modern_ebpf` as the default. The same README correctly notes that `modern_ebpf` needs no driver download/build and no `falco-driver-loader` init container ([`kubernetes/README.md:15`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/README.md#L15)).
 
 ## Repository Structure
 
@@ -38,7 +38,7 @@ kubectl apply -k kubernetes/falco
 
 **Source:** [`kubernetes/falco/`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/)
 
-The Falco manifests demonstrate how Falco operates as a DaemonSet with multiple containers and init containers working together. The DaemonSet uses a `RollingUpdate` update strategy and tolerates `node-role.kubernetes.io/master` and `node-role.kubernetes.io/control-plane` NoSchedule taints, so it runs on control-plane nodes too ([`daemonset.yaml:29-33,261-262`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml)).
+The Falco manifests demonstrate how Falco operates as a DaemonSet with multiple containers and init containers working together. The DaemonSet uses a `RollingUpdate` update strategy and tolerates `node-role.kubernetes.io/master` and `node-role.kubernetes.io/control-plane` NoSchedule taints, so it runs on control-plane nodes too ([`daemonset.yaml:29-33,261-262`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml#L29-L33)).
 
 ### Kubernetes Resources
 
@@ -57,11 +57,11 @@ The [`kustomization.yaml`](../../refs/falcosecurity/deploy-kubernetes/kubernetes
 
 > Both **ClusterRole + ClusterRoleBinding** AND **Role + RoleBinding** exist for Falco. The ClusterRole grants cluster-wide read access; the namespace Role grants `configmaps` write access used by the driver-loader to persist its detected config (see [RBAC Permissions](#rbac-permissions)).
 
-All resources are created in the `default` namespace ([`daemonset.yaml:5`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml)).
+All resources are created in the `default` namespace ([`daemonset.yaml:5`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml#L5)).
 
 ### Pod Structure
 
-The Falco pod consists of **2 init containers** and **2 runtime containers** ([`daemonset.yaml:34-195`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml)):
+The Falco pod consists of **2 init containers** and **2 runtime containers** ([`daemonset.yaml:34-195`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml#L34-L195)):
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -94,7 +94,7 @@ The Falco pod consists of **2 init containers** and **2 runtime containers** ([`
 
 #### 1. `falco-driver-loader`
 
-**Image:** `docker.io/falcosecurity/falco-driver-loader:0.44.0` ([`daemonset.yaml:145`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml))
+**Image:** `docker.io/falcosecurity/falco-driver-loader:0.44.1` ([`daemonset.yaml:145`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml#L145))
 **Purpose:** Download or build the kernel driver before Falco starts
 
 ```yaml
@@ -108,13 +108,13 @@ env:
   - FALCOCTL_DRIVER_CONFIG_CONFIGMAP=falco
 ```
 
-**Volume mounts** ([`daemonset.yaml:151-169`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml)): `/root/.falco`, `/host/proc` (ro), `/host/boot` (ro), `/host/lib/modules`, `/host/usr` (ro), `/host/etc` (ro), and `/etc/falco/config.d` (writes the detected driver config to the `specialized-falco-configs` emptyDir).
+**Volume mounts** ([`daemonset.yaml:151-169`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml#L151-L169)): `/root/.falco`, `/host/proc` (ro), `/host/boot` (ro), `/host/lib/modules`, `/host/usr` (ro), `/host/etc` (ro), and `/etc/falco/config.d` (writes the detected driver config to the `specialized-falco-configs` emptyDir).
 
-> **Note:** With `modern_ebpf` (the default), no driver is downloaded or built — it is bundled in the Falco binary via CO-RE eBPF and works on kernels >= 5.8 ([`kubernetes/README.md:15`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/README.md)). The driver-loader still runs and persists driver config into the `falco` ConfigMap via `FALCOCTL_DRIVER_CONFIG_CONFIGMAP=falco` ([`daemonset.yaml:177-178`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml)).
+> **Note:** With `modern_ebpf` (the default), no driver is downloaded or built — it is bundled in the Falco binary via CO-RE eBPF and works on kernels >= 5.8 ([`kubernetes/README.md:15`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/README.md#L15)). The driver-loader still runs and persists driver config into the `falco` ConfigMap via `FALCOCTL_DRIVER_CONFIG_CONFIGMAP=falco` ([`daemonset.yaml:177-178`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml#L177-L178)).
 
 #### 2. `falcoctl-artifact-install`
 
-**Image:** `docker.io/falcosecurity/falcoctl:0.13.0` ([`daemonset.yaml:180`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml))
+**Image:** `docker.io/falcosecurity/falcoctl:0.13.0` ([`daemonset.yaml:180`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml#L180))
 **Purpose:** Download rules and plugins before Falco starts
 
 ```yaml
@@ -125,9 +125,9 @@ args:
 securityContext:        # empty (no privilege escalation)
 ```
 
-**Volume mounts** ([`daemonset.yaml:187-195`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml)): `/plugins`, `/rulesfiles`, `/etc/falcoctl` (config), `/artifactstate`.
+**Volume mounts** ([`daemonset.yaml:187-195`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml#L187-L195)): `/plugins`, `/rulesfiles`, `/etc/falcoctl` (config), `/artifactstate`.
 
-**Default artifacts installed** (from the falcoctl config, [`falcoctl-configmap.yaml:26-33`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/falcoctl-configmap.yaml)):
+**Default artifacts installed** (from the falcoctl config, [`falcoctl-configmap.yaml:26-33`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/falcoctl-configmap.yaml#L26-L33)):
 - `falco-rules:5` — Stable Falco rules (major version 5)
 - `ghcr.io/falcosecurity/plugins/plugin/container:0.7.1` — Container metadata plugin
 - `resolveDeps: true` — dependency resolution enabled
@@ -136,7 +136,7 @@ securityContext:        # empty (no privilege escalation)
 
 #### 1. `falco`
 
-**Image:** `docker.io/falcosecurity/falco:0.44.0` ([`daemonset.yaml:36`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml))
+**Image:** `docker.io/falcosecurity/falco:0.44.1` ([`daemonset.yaml:36`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml#L36))
 **Purpose:** Main Falco process for threat detection
 
 ```yaml
@@ -155,18 +155,18 @@ ports:
   - containerPort: 8765  # name: web — web server (healthz, versions, metrics)
 ```
 
-**Key environment variables** ([`daemonset.yaml:49-59`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml)):
+**Key environment variables** ([`daemonset.yaml:49-59`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml#L49-L59)):
 - `HOST_ROOT=/host` — Host filesystem mount point
 - `FALCO_HOSTNAME` — Node name (from `spec.nodeName`)
 - `FALCO_K8S_NODE_NAME` — Node name (from `spec.nodeName`)
 
-**Health probes** ([`daemonset.yaml:65-88`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml)): `startupProbe`, `livenessProbe`, and `readinessProbe` all HTTP-GET `/healthz` on port 8765. The startup probe allows up to 20 failures (≈100s) before liveness takes over.
+**Health probes** ([`daemonset.yaml:65-88`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml#L65-L88)): `startupProbe`, `livenessProbe`, and `readinessProbe` all HTTP-GET `/healthz` on port 8765. The startup probe allows up to 20 failures (≈100s) before liveness takes over.
 
-> Unlike the init `falco-driver-loader`, the main `falco` container does **not** mount `/host/boot`, `/host/lib/modules`, or `/host/usr` — it only mounts `/host/proc`, `/host/etc` (ro), `/host/dev` (ro), `/sys/module`, and `/sys/kernel` (ro), plus the container sockets and emptyDir volumes ([`daemonset.yaml:89-125`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml)).
+> Unlike the init `falco-driver-loader`, the main `falco` container does **not** mount `/host/boot`, `/host/lib/modules`, or `/host/usr` — it only mounts `/host/proc`, `/host/etc` (ro), `/host/dev` (ro), `/sys/module`, and `/sys/kernel` (ro), plus the container sockets and emptyDir volumes ([`daemonset.yaml:89-125`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml#L89-L125)).
 
 #### 2. `falcoctl-artifact-follow`
 
-**Image:** `docker.io/falcosecurity/falcoctl:0.13.0` ([`daemonset.yaml:127`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml))
+**Image:** `docker.io/falcosecurity/falcoctl:0.13.0` ([`daemonset.yaml:127`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml#L127))
 **Purpose:** Watch for and download rule updates while Falco runs
 
 ```yaml
@@ -177,11 +177,11 @@ args:
 securityContext:        # empty
 ```
 
-Re-checks for updates every `168h` (1 week) and queries the running Falco web server for compatible versions via `http://localhost:8765/versions` ([`falcoctl-configmap.yaml:18-21`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/falcoctl-configmap.yaml)). It follows only `falco-rules:5` ([`falcoctl-configmap.yaml:22-23`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/falcoctl-configmap.yaml)).
+Re-checks for updates every `168h` (1 week) and queries the running Falco web server for compatible versions via `http://localhost:8765/versions` ([`falcoctl-configmap.yaml:18-21`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/falcoctl-configmap.yaml#L18-L21)). It follows only `falco-rules:5` ([`falcoctl-configmap.yaml:22-23`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/falcoctl-configmap.yaml#L22-L23)).
 
 ### Volume Architecture
 
-The DaemonSet combines **hostPath** volumes (system access), **emptyDir** volumes (inter-container communication), and **configMap** volumes (config files) ([`daemonset.yaml:196-260`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml)).
+The DaemonSet combines **hostPath** volumes (system access), **emptyDir** volumes (inter-container communication), and **configMap** volumes (config files) ([`daemonset.yaml:196-260`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml#L196-L260)).
 
 #### Host Path Volumes (System Access)
 
@@ -198,7 +198,7 @@ The DaemonSet combines **hostPath** volumes (system access), **emptyDir** volume
 
 #### Container Socket Volumes
 
-All six are mounted into the `falco` container under `/host/...` (matching the container plugin socket config) ([`daemonset.yaml:90-101,197-214`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml)):
+All six are mounted into the `falco` container under `/host/...` (matching the container plugin socket config) ([`daemonset.yaml:90-101,197-214`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml#L90-L101)):
 
 | Volume | Host Path | Container Runtime |
 |--------|-----------|-------------------|
@@ -243,6 +243,7 @@ engine:
   modern_ebpf:
     buf_size_preset: 4
     cpus_for_each_buffer: 2
+    disable_iterators: false
     drop_failed_exit: false
 falco_libs:
   snaplen: 80
@@ -283,7 +284,7 @@ webserver:
   ssl_enabled: false
 ```
 
-Other defaults present in the ConfigMap: `append_output` with `suggested_output: true`; `http_output.enabled: false` (TLS cert paths under `/etc/falco/certs/`); `program_output.enabled: false`; `syscall_event_drops` with `log`+`alert` actions; `libs_logger.enabled: true`; `buffered_outputs: false`; `time_format_iso_8601: false` ([`configmap.yaml:14-147`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/configmap.yaml)).
+Other defaults present in the ConfigMap: `append_output` with `suggested_output: true`; `http_output.enabled: false` (TLS cert paths under `/etc/falco/certs/`); `program_output.enabled: false`; `syscall_event_drops` with `log`+`alert` actions; `libs_logger.enabled: true`; `buffered_outputs: false`; `time_format_iso_8601: false` ([`configmap.yaml:14-148`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/configmap.yaml#L14-L148)).
 
 ### RBAC Permissions
 
@@ -292,7 +293,7 @@ Other defaults present in the ConfigMap: `append_output` with `suggested_output:
 - `apps` group: `daemonsets`, `deployments`, `replicasets`, `statefulsets`
 - Non-resource URLs: `/healthz`, `/healthz/*` (`get`)
 
-> **Stale labels (verified in source):** [`clusterrole.yaml`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/clusterrole.yaml) and [`clusterrolebinding.yaml`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/clusterrolebinding.yaml) carry old chart labels `helm.sh/chart: falco-3.8.7` and `app.kubernetes.io/version: "0.36.2"`, unlike the other Falco resources which use `falco-9.0.0` / `0.44.0`. The RBAC rules themselves are unchanged and remain valid; only the metadata labels are outdated in the generated output.
+> **Stale labels (verified in source):** [`clusterrole.yaml`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/clusterrole.yaml) and [`clusterrolebinding.yaml`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/clusterrolebinding.yaml) carry old chart labels `helm.sh/chart: falco-3.8.7` and `app.kubernetes.io/version: "0.36.2"`, unlike the other Falco resources which use `falco-9.1.0` / `0.44.1`. The RBAC rules themselves are unchanged and remain valid; only the metadata labels are outdated in the generated output.
 
 **Role** (namespace-scoped, [`role.yaml`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/role.yaml)) — `configmaps`: `get`, `list`, `update`. This lets the `falco-driver-loader` init container write the detected driver configuration back into the `falco` ConfigMap.
 
@@ -300,11 +301,11 @@ These permissions let Falco and the container plugin enrich events with Kubernet
 
 ## Falcosidekick Deployment
 
-**Source:** [`kubernetes/falcosidekick/`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falcosidekick/) — chart `falcosidekick-0.13.1`
+**Source:** [`kubernetes/falcosidekick/`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falcosidekick/) — chart `falcosidekick-0.14.0`
 
 The [`kustomization.yaml`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falcosidekick/kustomization.yaml) bundles 8 resources: Deployment, a Grafana Loki dashboard ConfigMap, UI RBAC, core RBAC, UI secret, core secret, Service, and a test-connection Pod.
 
-A `Deployment` (not DaemonSet) with **2 replicas** for high availability ([`deployment.yaml:16`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falcosidekick/templates/deployment.yaml)):
+A `Deployment` (not DaemonSet) with **2 replicas** for high availability ([`deployment.yaml:16`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falcosidekick/templates/deployment.yaml#L16)):
 
 ```yaml
 spec:
@@ -324,7 +325,7 @@ spec:
         - secretRef: { name: falcosidekick }   # all output config via the secret
 ```
 
-> **Version inconsistency (verified in source):** the container `image` tag is `2.32.0` ([`deployment.yaml:41`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falcosidekick/templates/deployment.yaml)), but the resource labels report `app.kubernetes.io/version: "2.31.1"` and `helm.sh/chart: falcosidekick-0.13.1` ([`deployment.yaml:7-10`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falcosidekick/templates/deployment.yaml)). The `falcosidekick-0.13.1` chart's appVersion is `2.31.1` ([`charts/falcosidekick/Chart.yaml`](../../refs/falcosecurity/charts/charts/falcosidekick/Chart.yaml)); the rendered manifest pins the newer `2.32.0` image. Report the image tag as `2.32.0` faithfully.
+> **Version inconsistency (verified in source):** the container `image` tag is `2.32.0` ([`deployment.yaml:41`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falcosidekick/templates/deployment.yaml#L41)), but the resource labels report `app.kubernetes.io/version: "2.31.1"` and `helm.sh/chart: falcosidekick-0.14.0` ([`deployment.yaml:7-10`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falcosidekick/templates/deployment.yaml#L7-L10)). The `falcosidekick-0.14.0` chart's appVersion is `2.31.1` ([`charts/falcosidekick/Chart.yaml`](../../refs/falcosecurity/charts/charts/falcosidekick/Chart.yaml)); the rendered manifest pins the newer `2.32.0` image. Report the image tag as `2.32.0` faithfully.
 
 **Service** ([`service.yaml`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falcosidekick/templates/service.yaml)): `ClusterIP` exposing port `2801` (`http`) and `2810` (`http-notls`); annotated `prometheus.io/scrape: "true"`.
 
@@ -342,13 +343,13 @@ http_output:
   enabled: true
   url: "http://falcosidekick:2801"
 ```
-(In this rendered config `http_output.enabled` is `false` by default — [`configmap.yaml:47-61`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/configmap.yaml).)
+(In this rendered config `http_output.enabled` is `false` by default — [`configmap.yaml:48-62`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/configmap.yaml#L48-L62).)
 
 ## Falco-Exporter Deployment
 
 **Source:** [`kubernetes/falco-exporter/`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco-exporter/) — chart `falco-exporter-0.12.2`
 
-> **Important:** `falco-exporter` is shipped **only** by deploy-kubernetes. Its Helm chart was removed from the [falcosecurity/charts](charts.md) repository in the 0.44 era (no `falco-exporter` chart exists at `charts/charts/` for `falco-9.0.0`). There is **no current falco-exporter Helm chart** to install. The manifests here remain as a generated artifact from an older chart version.
+> **Important:** `falco-exporter` is shipped **only** by deploy-kubernetes. Its Helm chart was removed from the [falcosecurity/charts](charts.md) repository in the 0.44 era (no `falco-exporter` chart exists at `charts/charts/` for `falco-9.1.0`). There is **no current falco-exporter Helm chart** to install. The manifests here remain as a generated artifact from an older chart version.
 
 A `DaemonSet` ([`daemonset.yaml`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco-exporter/templates/daemonset.yaml)) that reads Falco's gRPC socket and exposes Prometheus metrics:
 
@@ -377,9 +378,9 @@ containers:
         name: falco-socket-dir
 ```
 
-The `falco-exporter` resource labels report `app.kubernetes.io/version: "0.8.7"` while the image tag is `0.8.3` ([`daemonset.yaml:8,39`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco-exporter/templates/daemonset.yaml)) — another label/image mismatch in the generated output; the deployed image is `0.8.3`. The **Service** is headless (`clusterIP: None`) and annotated for Prometheus scraping on port 9376 ([`service.yaml`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco-exporter/templates/service.yaml)). It also ships a ServiceAccount ([`serviceaccount.yaml`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco-exporter/templates/serviceaccount.yaml)) and a `busybox` `wget` test Pod ([`tests/test-connection.yaml`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco-exporter/templates/tests/test-connection.yaml)).
+The `falco-exporter` resource labels report `app.kubernetes.io/version: "0.8.7"` while the image tag is `0.8.3` ([`daemonset.yaml:8,39`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco-exporter/templates/daemonset.yaml#L8)) — another label/image mismatch in the generated output; the deployed image is `0.8.3`. The **Service** is headless (`clusterIP: None`) and annotated for Prometheus scraping on port 9376 ([`service.yaml`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco-exporter/templates/service.yaml)). It also ships a ServiceAccount ([`serviceaccount.yaml`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco-exporter/templates/serviceaccount.yaml)) and a `busybox` `wget` test Pod ([`tests/test-connection.yaml`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco-exporter/templates/tests/test-connection.yaml)).
 
-> **Requires the gRPC Unix socket** at `/run/falco/falco.sock`. The rendered Falco `falco.yaml` in this submodule does **not** enable gRPC, and the gRPC output server was removed from Falco in 0.44 (deprecated in 0.43). For metrics on a current 0.44 deployment, use Falco's native Prometheus endpoint instead (`webserver.prometheus_metrics_enabled`, currently `false` — [`configmap.yaml:144`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/configmap.yaml)). This DaemonSet is therefore effectively legacy.
+> **Requires the gRPC Unix socket** at `/run/falco/falco.sock`. The rendered Falco `falco.yaml` in this submodule does **not** enable gRPC, and the gRPC output server was removed from Falco in 0.44 (deprecated in 0.43). For metrics on a current 0.45 deployment, use Falco's native Prometheus endpoint instead (`webserver.prometheus_metrics_enabled`, currently `false` — [`configmap.yaml:145`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/configmap.yaml#L145)). This DaemonSet is therefore effectively legacy.
 
 ## Event-Generator Deployment
 
@@ -401,7 +402,7 @@ containers:
       - FALCO_EVENT_GENERATOR_NAMESPACE   # from metadata.namespace
 ```
 
-> The image tag is the floating `latest` (not a pinned version), and the deployment `app.kubernetes.io/version` label is `0.13.0` ([`deployment.yaml:10,33`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/event-generator/templates/deployment.yaml)). The `--loop` flag generates a continuous stream of events — intended for test environments only.
+> The image tag is the floating `latest` (not a pinned version), and the deployment `app.kubernetes.io/version` label is `0.13.0` ([`deployment.yaml:10,33`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/event-generator/templates/deployment.yaml#L10)). The `--loop` flag generates a continuous stream of events — intended for test environments only.
 
 **RBAC** ([`rbac.yaml`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/event-generator/templates/rbac.yaml)): a ServiceAccount, a **ClusterRole** (broad create/delete on configmaps, services, serviceaccounts, pods, deployments, roles/rolebindings; `get` on `pods/exec` and all resources), and a **RoleBinding** that binds the ClusterRole to the ServiceAccount in `default`. (Note: a RoleBinding referencing a ClusterRole grants those permissions only within the binding's namespace.)
 
@@ -426,7 +427,7 @@ kubectl delete -k kubernetes/falco
 
 ## Verification
 
-Per [`kubernetes/README.md:46-71`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/README.md):
+Per [`kubernetes/README.md:46-71`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/README.md#L46-L71):
 
 ```bash
 # Check pods
@@ -453,16 +454,16 @@ For K8s audit logs, use the [k8saudit plugin](https://github.com/falcosecurity/p
 
 ## Relationship to Helm Charts
 
-These manifests are generated from [falcosecurity/charts](charts.md) with default values. Chart versions verified against the [charts submodule](../../refs/falcosecurity/charts/) at tag `falco-9.0.0`:
+These rendered labels describe their own generation snapshot, which can lag the current [charts pin](charts.md):
 
-| Manifest | Helm Chart | Chart Version (per rendered labels) | In charts repo at `falco-9.0.0`? |
-|----------|------------|-------------------------------------|----------------------------------|
-| [`kubernetes/falco/`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/) | `falco` | `9.0.0` (appVersion `0.44.0`) | Yes ([`Chart.yaml`](../../refs/falcosecurity/charts/charts/falco/Chart.yaml): `9.0.0` / `0.44.0`) |
-| [`kubernetes/falcosidekick/`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falcosidekick/) | `falcosidekick` | `0.13.1` (appVersion `2.31.1`) | Yes ([`Chart.yaml`](../../refs/falcosecurity/charts/charts/falcosidekick/Chart.yaml): `0.13.1` / `2.31.1`) |
-| [`kubernetes/falco-exporter/`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco-exporter/) | `falco-exporter` | `0.12.2` (appVersion `0.8.7`) | **No — chart removed in the 0.44 era** |
-| [`kubernetes/event-generator/`](../../refs/falcosecurity/deploy-kubernetes/kubernetes/event-generator/) | `event-generator` | `0.4.0` (appVersion `0.13.0`) | Yes ([`Chart.yaml`](../../refs/falcosecurity/charts/charts/event-generator/Chart.yaml): `0.4.0` / `0.13.0`) |
+| Manifest | Rendered Chart / Application | Current Chart Relationship |
+|----------|------------------------------|----------------------------|
+| [Falco](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml) | 9.1.0 / 0.44.1 | Current Helm chart is 9.2.0 / 0.45.0 |
+| [Falcosidekick](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falcosidekick/templates/deployment.yaml) | 0.14.0 / 2.31.1 | Matches the chart's appVersion, not standalone Sidekick 2.35.0 |
+| [Falco-exporter](../../refs/falcosecurity/deploy-kubernetes/kubernetes/falco-exporter/templates/daemonset.yaml) | 0.12.2 / label 0.8.7, image 0.8.3 | Legacy; chart removed |
+| [Event-generator](../../refs/falcosecurity/deploy-kubernetes/kubernetes/event-generator/templates/deployment.yaml) | 0.4.0 / label 0.13.0, image latest | Matches chart generation version |
 
-> The chart versions above are taken from the `helm.sh/chart` labels embedded in the rendered manifests. For the `falco`, `falcosidekick`, and `event-generator` charts these match the current charts submodule. The `falco-exporter` chart is **no longer present** in the charts repo — its manifests here are a leftover generated artifact, so do not treat `falco-exporter-0.12.2` as a currently-installable chart.
+The retained Falco manifests mount socket files. Helm chart 9.2.0 mounts their parent directories and always shadows image-provided configuration snippets; consult the [charts digest](charts.md#chart-920-behavior) when working on current deployments.
 
 For customization beyond these defaults, use the Helm charts directly.
 

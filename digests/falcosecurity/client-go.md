@@ -1,6 +1,6 @@
 # client-go Digest
 
-> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/client-go/`](../../refs/falcosecurity/client-go/) | **Commit:** `5e214c6` (January 19, 2026)
+> **Era Relevance:** 0.45 | **Source:** [`refs/falcosecurity/client-go/`](../../refs/falcosecurity/client-go/)
 
 **Repository:** [falcosecurity/client-go](https://github.com/falcosecurity/client-go)
 **Scope:** Ecosystem
@@ -91,7 +91,7 @@ type Config struct {
 }
 ```
 
-**Source:** [`pkg/client/client.go:28-37`](../../refs/falcosecurity/client-go/pkg/client/client.go)
+**Source:** [`pkg/client/client.go:28-37`](../../refs/falcosecurity/client-go/pkg/client/client.go#L28-L37)
 
 ## Outputs API (Historical)
 
@@ -110,7 +110,7 @@ The gRPC output response contained:
 | `tags` | `[]string` | Rule tags |
 | `source` | `string` | Event source (syscall, k8s_audit, etc.) |
 
-**Source:** [`pkg/api/outputs/outputs.pb.go:83-98`](../../refs/falcosecurity/client-go/pkg/api/outputs/outputs.pb.go)
+**Source:** [`pkg/api/outputs/outputs.pb.go:83-98`](../../refs/falcosecurity/client-go/pkg/api/outputs/outputs.pb.go#L83-L98)
 
 ### Priority Levels
 
@@ -125,7 +125,7 @@ Priority_INFORMATIONAL = 6  // Informational messages
 Priority_DEBUG         = 7  // Debug-level messages
 ```
 
-**Source:** [`pkg/api/schema/schema.pb.go:38-65`](../../refs/falcosecurity/client-go/pkg/api/schema/schema.pb.go)
+**Source:** [`pkg/api/schema/schema.pb.go:38-65`](../../refs/falcosecurity/client-go/pkg/api/schema/schema.pb.go#L38-L65)
 
 ### Streaming Methods
 
@@ -150,7 +150,7 @@ err := client.OutputsWatch(ctx, fcs, func(res *outputs.Response) error {
 }, 30*time.Second)  // timeout for heartbeats
 ```
 
-**Source:** [`pkg/client/client.go:112-177`](../../refs/falcosecurity/client-go/pkg/client/client.go)
+**Source:** [`pkg/client/client.go:112-177`](../../refs/falcosecurity/client-go/pkg/client/client.go#L112-L177)
 
 ## Version API (Historical)
 

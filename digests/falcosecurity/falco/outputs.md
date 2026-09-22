@@ -1,6 +1,6 @@
 # Falco Outputs
 
-> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/falco/`](../../../refs/falcosecurity/falco/) | **Version:** 0.44.1
+> **Era Relevance:** 0.45 | **Source:** [`refs/falcosecurity/falco/`](../../../refs/falcosecurity/falco/) | **Version:** 0.45.0
 
 ## Overview
 
@@ -187,6 +187,14 @@ Defined in `falco_common.h:50-59`:
 | NOTICE | 5 | LOG_NOTICE |
 | INFORMATIONAL | 6 | LOG_INFO |
 | DEBUG | 7 | LOG_DEBUG |
+
+### Byte Preservation and Output Encoding (0.45)
+
+Rule comparisons and field transforms operate on extracted raw bytes (regular expressions sanitize their string operand for UTF-8). Alert encoding happens afterward. For rule-matched text alerts, Falco JSON-encodes the complete formatted string and strips the outer quotes: control characters, quotes and backslashes are escaped; invalid UTF-8 is replaced with U+FFFD. Text consumers therefore see escaped control sequences rather than literal newlines from event data.
+
+JSON output sanitizes formatter-produced field JSON before parsing and serializes the final event with replacement for invalid UTF-8. `output_fields` retain JSON types; invalid byte sequences do not survive as their original bytes in displayed strings. Generic internal JSON alerts and JSON rule-validation/description output also use replacement on serialization. This describes presentation, not a transformation of the bytes used for matching.
+
+**Source:** [`formats.cpp:76-178`](../../../refs/falcosecurity/falco/userspace/engine/formats.cpp#L76-L178), [`falco_outputs.cpp:195-231`](../../../refs/falcosecurity/falco/userspace/falco/falco_outputs.cpp#L195-L231), [`sinsp_filtercheck.cpp:880-947`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck.cpp#L880-L947), [`sinsp_filtercheck.cpp:1137-1181`](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck.cpp#L1137-L1181).
 
 ## Extra Output Fields
 

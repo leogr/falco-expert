@@ -4,9 +4,9 @@ Falco Knowledge Base for AI Agents.
 
 [Falco](https://falco.org) is the Cloud Native Runtime Security tool, part of the [CNCF](https://www.cncf.io/).
 
-## Current Era: 0.44
+## Current Era: 0.45
 
-Information in this repository corresponds to Falco version 0.44.x (released May 26, 2026).
+Information in this repository corresponds to Falco version 0.45.x (released September 21, 2026).
 
 `main` is the living era; each completed era is archived under a Git tag such as `0.44.x` before the next transition. See [Era Snapshots](AGENTS.md#era-snapshots) for historical lookup and the [Era Transition workflow](WORKFLOWS.md#era-transition) for tagging.
 
@@ -46,14 +46,14 @@ Data sources for the current era.
   - [`contrib/`](refs/falcosecurity/contrib/) - Community experiments (OUTDATED, UNTESTED)
   - [`dbg-go/`](refs/falcosecurity/dbg-go/) - Drivers Build Grid orchestration tool (Infra)
   - [`deploy-kubernetes/`](refs/falcosecurity/deploy-kubernetes/) - Pre-rendered Kubernetes manifests
-  - [`driverkit/`](refs/falcosecurity/driverkit/) - CLI tool for building kernel modules and eBPF probes
+  - [`driverkit/`](refs/falcosecurity/driverkit/) - CLI tool for building kernel modules
   - [`event-generator/`](refs/falcosecurity/event-generator/) - Testing tool to generate suspect actions detected by Falco
   - [`evolution/`](refs/falcosecurity/evolution/) - Governance, repository map, maintainers
   - [`falco/`](refs/falcosecurity/falco/) - Main Falco repository (binary, engine, outputs)
   - [`falco-actions/`](refs/falcosecurity/falco-actions/) - GitHub Actions for CI/CD security (Sandbox, Experimental)
   - [`falco-lsp/`](refs/falcosecurity/falco-lsp/) - Language Server Protocol and VS Code extension for Falco rules (Incubating)
   - [`falco-operator/`](refs/falcosecurity/falco-operator/) - Kubernetes Operator for Falco (Incubating)
-  - [`falco-playground/`](refs/falcosecurity/falco-playground/) - Browser-based rule validation using Falco Wasm (Sandbox, Experimental, Falco 0.37.1)
+  - [`falco-playground/`](refs/falcosecurity/falco-playground/) - Browser-based rule validation using Falco Wasm (Sandbox, experimental Wasm validation)
   - [`falco-website/`](refs/falcosecurity/falco-website/) - Source for [falco.org](https://falco.org)
   - [`falcoctl/`](refs/falcosecurity/falcoctl/) - Official CLI tool for Falco
   - [`falcosidekick/`](refs/falcosecurity/falcosidekick/) - Fan-out daemon for Falco events (70+ outputs)
@@ -99,8 +99,8 @@ AI-optimized summaries of reference materials.
   - [`falco-actions.md`](digests/falcosecurity/falco-actions.md) - GitHub Actions for CI/CD security (Sandbox, real use case example)
   - [`falco-lsp.md`](digests/falcosecurity/falco-lsp.md) - LSP, CLI tool (falco-lang), VS Code extension for Falco rules (Incubating)
   - [`falco-operator.md`](digests/falcosecurity/falco-operator.md) - Kubernetes Operator, 5 CRDs (Falco, Component, Rulesfile, Plugin, Config), artifact management, reference protection (Incubating)
-  - [`falco-playground.md`](digests/falcosecurity/falco-playground.md) - Browser-based rule validation, Falco Wasm proof-of-concept (Sandbox, Falco 0.37.1)
-  - [`falco/`](digests/falcosecurity/falco/) - 6 digests (~115KB total)
+  - [`falco-playground.md`](digests/falcosecurity/falco-playground.md) - Browser-based rule validation, Falco Wasm proof-of-concept (Sandbox, artifact-dependent validation)
+  - [`falco/`](digests/falcosecurity/falco/) - 6 digests (~123KB including index)
     - [`README.md`](digests/falcosecurity/falco/README.md) - Overview and navigation
     - [`architecture.md`](digests/falcosecurity/falco/architecture.md) - Application lifecycle, event flow, libs integration
     - [`rule-language.md`](digests/falcosecurity/falco/rule-language.md) - Complete rule language specification
@@ -108,7 +108,7 @@ AI-optimized summaries of reference materials.
     - [`outputs.md`](digests/falcosecurity/falco/outputs.md) - Alert output channels and formatting
     - [`cli-reference.md`](digests/falcosecurity/falco/cli-reference.md) - CLI options and introspection
     - [`proposals.md`](digests/falcosecurity/falco/proposals.md) - Design proposals, adoption/deprecation, roadmap
-  - [`falco-website/`](digests/falcosecurity/falco-website/) - 5 digests (~120KB total)
+  - [`falco-website/`](digests/falcosecurity/falco-website/) - 5 digests (~133KB including index)
     - [`docs.md`](digests/falcosecurity/falco-website/docs.md) - Core documentation
     - [`blog.md`](digests/falcosecurity/falco-website/blog.md) - Blog posts (with era markers)
     - [`about.md`](digests/falcosecurity/falco-website/about.md) - Use cases, FAQ, ecosystem
@@ -124,7 +124,7 @@ AI-optimized summaries of reference materials.
   - [`k8s-metacollector.md`](digests/falcosecurity/k8s-metacollector.md) - Centralized K8s metadata streaming service
   - [`kernel-crawler.md`](digests/falcosecurity/kernel-crawler.md) - Kernel version discovery for driver building (Infra)
   - [`kernel-testing.md`](digests/falcosecurity/kernel-testing.md) - Driver testing across kernels with Firecracker microVMs (Infra)
-  - [`libs/`](digests/falcosecurity/libs/) - 11 digests (~206KB total)
+  - [`libs/`](digests/falcosecurity/libs/) - 11 digests (~218KB including index)
     - [`README.md`](digests/falcosecurity/libs/README.md) - Overview and navigation
     - [`proposals-and-architecture.md`](digests/falcosecurity/libs/proposals-and-architecture.md) - Design proposals, versioning, roadmap
     - [`architecture.md`](digests/falcosecurity/libs/architecture.md) - Component relationships, event flow
@@ -152,9 +152,9 @@ AI-optimized summaries of reference materials.
   - [`rules.md`](digests/falcosecurity/rules.md) - Detection rules, maturity framework, versioning
   - [`testing.md`](digests/falcosecurity/testing.md) - Regression test suite, test harness, CI integration
   - [`syscalls-bumper.md`](digests/falcosecurity/syscalls-bumper.md) - Syscall table automation for libs (Infra)
-  - [`test-infra/`](digests/falcosecurity/test-infra/) - 5 digests (~165KB total)
+  - [`test-infra/`](digests/falcosecurity/test-infra/) - 5 digests (~177KB including index)
     - [`README.md`](digests/falcosecurity/test-infra/README.md) - Overview and navigation
-    - [`prow-infrastructure.md`](digests/falcosecurity/test-infra/prow-infrastructure.md) - Prow components, AWS EKS, deployment, images, tools
+    - [`prow-infrastructure.md`](digests/falcosecurity/test-infra/prow-infrastructure.md) - Prow components, AWS EKS and OCI OKE, deployment, images, tools
     - [`prow-config.md`](digests/falcosecurity/test-infra/prow-config.md) - Configuration reference, plugins, Tide, branch protection
     - [`prow-jobs.md`](digests/falcosecurity/test-infra/prow-jobs.md) - Job catalog and build system
     - [`github-org-management.md`](digests/falcosecurity/test-infra/github-org-management.md) - org.yaml, Peribolos, Poiana bot, teams
@@ -163,7 +163,7 @@ AI-optimized summaries of reference materials.
   - [`foundation.md`](digests/cncf/foundation.md) - CNCF IP policy, allowed licenses, container image guidance, copyright notices
 - [`falco-binary-report.md`](digests/falco-binary-report.md) - Static analysis of Falco binary (versions, dependencies, GLIBC, plugins)
 - [`proposals/`](digests/proposals/) - Cross-repository proposal digests
-  - [`multi-thread-falco.md`](digests/proposals/multi-thread-falco.md) - Multi-thread Falco initiative (0.44 architecture, pinned Folly proposal snapshot, and historical RCU design)
+  - [`multi-thread-falco.md`](digests/proposals/multi-thread-falco.md) - Multi-thread Falco initiative (0.45 architecture, pinned Folly proposal snapshot, and historical RCU design)
 
 ### Specifications ([`specs/`](specs/))
 
@@ -191,7 +191,7 @@ Implementation-focused technical specifications (24 specs).
 - [`falco-lsp.md`](specs/falco-lsp.md) - Language Server, CLI tool (falco-lang), VS Code extension for Falco rules
 - [`falco-talon.md`](specs/falco-talon.md) - Response Engine, actionners, automated threat response in Kubernetes
 - [`driver-distribution.md`](specs/driver-distribution.md) - Pre-built driver pipeline, kernel-crawler, driverkit, S3 distribution
-- [`ci-cd-infrastructure.md`](specs/ci-cd-infrastructure.md) - Prow components, AWS EKS, Tide merge automation, Pigeon secrets
+- [`ci-cd-infrastructure.md`](specs/ci-cd-infrastructure.md) - Prow components, AWS EKS and OCI OKE, Tide merge automation, Pigeon secrets
 - [`ci-cd-jobs.md`](specs/ci-cd-jobs.md) - Prow job catalog, GitHub org management, OWNERS workflow
 - [`ci-cd-github-actions.md`](specs/ci-cd-github-actions.md) - Falco Actions for CI/CD security, testing regression suite
 

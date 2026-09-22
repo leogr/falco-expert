@@ -1,13 +1,13 @@
 # Modern eBPF Driver
-> **Era:** 0.44 | **Version:** libs 0.25.4 | **Source:** [`refs/falcosecurity/libs/`](../../../refs/falcosecurity/libs/)
+> **Era:** 0.45 | **Version:** libs 0.26.0 | **Source:** [`refs/falcosecurity/libs/`](../../../refs/falcosecurity/libs/)
 
 ## Overview
 
-The modern eBPF driver is the **DEFAULT** driver since Falco 0.35, and the sole eBPF driver as of libs 0.25 / Falco 0.44 (the legacy eBPF probe at `driver/bpf/` was removed). It uses CO-RE (Compile Once, Run Everywhere) technology to provide portable, efficient syscall capture without requiring kernel headers at runtime.
+The modern eBPF driver is the **DEFAULT** driver since Falco 0.38, and the sole eBPF driver as of libs 0.25 / Falco 0.44 (the legacy eBPF probe at `driver/bpf/` was removed). It uses CO-RE (Compile Once, Run Everywhere) technology to provide portable, efficient syscall capture without requiring kernel headers at runtime.
 
 **Location:** `driver/modern_bpf/`
 **Requirements:** Linux kernel >= 5.8 with BTF support
-**API Version:** 10.1.0 | **Schema Version:** 4.5.1
+**API Version:** 11.0.0 | **Schema Version:** 4.5.2
 
 ## Key Features
 
@@ -16,7 +16,7 @@ The modern eBPF driver is the **DEFAULT** driver since Falco 0.35, and the sole 
 | **CO-RE** | Compile once, run on any BTF-enabled kernel |
 | **Ring Buffers** | Efficient BPF_MAP_TYPE_RINGBUF for event delivery |
 | **Tail Calls** | Modular syscall handling via BPF_MAP_TYPE_PROG_ARRAY |
-| **Per-CPU Auxiliary Maps** | Temporary event staging before ring buffer push |
+| **Auxiliary Buffer Pool** | Task-owned segments preserve event staging across preemption |
 | **No Kernel Headers** | BTF provides type information at runtime |
 | **BPF Iterators** | `iter/task`/`iter/task_file` programs synchronously fetch kernel state to bootstrap and heal the process table (with procfs fallback) |
 
@@ -108,7 +108,7 @@ struct {
 #### Data Maps
 
 ```c
-// Per-CPU auxiliary maps for event staging
+// Per-CPU pools of task-owned auxiliary segments for event staging
 struct {
     __uint(type, BPF_MAP_TYPE_ARRAY);
     __type(key, uint32_t);
@@ -170,7 +170,7 @@ struct {
    └─ Tail call to specific handler
 
 3. SYSCALL HANDLER (tail_called/syscalls/)
-   ├─ Get auxiliary map for this CPU
+   ├─ Claim an auxiliary segment for this task
    ├─ Build event header
    ├─ Extract parameters from kernel
    └─ Push to ring buffer
@@ -217,6 +217,14 @@ auxmap__store_bytebuf_param(auxmap, ptr, len, USER);
 auxmap__finalize_event_header(auxmap);
 auxmap__submit_event(auxmap, ctx);
 ```
+
+### Auxiliary Buffer Ownership and Drop Accounting (libs 0.26)
+
+Variable-size events claim task-owned segments from an auxiliary-buffer pool with `AUXMAP_POOL_DEPTH = 2` segments per possible CPU. Tail-called continuations recover the task's owned segment, including after CPU migration; a full pool or lost ownership drops the event instead of submitting overwritten data. The driver probes atomic compare-and-swap support and libpman adapts the program for older kernels.
+
+`n_drops_auxmap_reentrancy`, `n_drops_auxmap_reentrancy_tail_call`, and `n_drops_auxmap_pool_full` expose these paths. The tail-call counter is a subset of reentrancy drops. `n_auxmap_migrations` counts recovered builds, not drops. Aggregate `n_drops` and per-CPU drop totals include reentrancy and full-pool drops; legacy `scap_stats.n_preemptions` receives their sum. Attempted events that drop in these paths are included in `n_evts`.
+
+**Sources:** [struct_definitions.h:18-94](../../../refs/falcosecurity/libs/driver/modern_bpf/shared_definitions/struct_definitions.h#L18-L94), [auxmap_store_params.h:64-134,192-278,347-378](../../../refs/falcosecurity/libs/driver/modern_bpf/helpers/store/auxmap_store_params.h#L64-L134), [maps.c:440-508](../../../refs/falcosecurity/libs/userspace/libpman/src/maps.c#L440-L508), [stats.c:174-183,278-315](../../../refs/falcosecurity/libs/userspace/libpman/src/stats.c#L174-L183).
 
 ## CO-RE and BTF
 
@@ -305,8 +313,8 @@ Beyond per-syscall tracepoint programs, the modern eBPF driver ships **BPF itera
 
 **Disable and fallback behavior (libs 0.25.4):** iterator handling has two distinct fallback paths:
 
-1. **Global iterator disablement** — setting `engine.modern_ebpf.disable_iterators: true`, or running outside the host (root) PID namespace, disables BPF iterators in libpman. The PID-namespace guard exists because `iter/task` and `iter/task_file` programs are scoped by PID namespace, so inside a container they would not have full host-process visibility. Source: [`configuration.c:108-130`](../../../refs/falcosecurity/libs/userspace/libpman/src/configuration.c), [`support_probing.c:140-147`](../../../refs/falcosecurity/libs/userspace/libpman/src/support_probing.c).
-2. **Per-operation procfs fallback** — missing `bpf_iter_link_info.task` support is not a global iterator disable. Full-table iterator dumps can still attach without link-info options when the `bpf_iter_link_info` union itself is unavailable, but task-filtered fetches (`pman_iter_fetch_task()`, `pman_iter_fetch_proc_file()`, `pman_iter_fetch_proc_files()`) return `SCAP_NOT_SUPPORTED` when in-kernel task filtering is unavailable; libscap then falls back to procfs for those operations. Source: [`iterators.c:775-819, 872-953`](../../../refs/falcosecurity/libs/userspace/libpman/src/iterators.c), [`scap_procs.c:1620-1653, 1721-1742`](../../../refs/falcosecurity/libs/userspace/libscap/linux/scap_procs.c).
+1. **Global iterator disablement** — setting `engine.modern_ebpf.disable_iterators: true`, or running outside the host (root) PID namespace, disables BPF iterators in libpman. The PID-namespace guard exists because `iter/task` and `iter/task_file` programs are scoped by PID namespace, so inside a container they would not have full host-process visibility. Source: [`configuration.c:111-130`](../../../refs/falcosecurity/libs/userspace/libpman/src/configuration.c#L111-L130), [`support_probing.c:140-147`](../../../refs/falcosecurity/libs/userspace/libpman/src/support_probing.c#L140-L147).
+2. **Per-operation procfs fallback** — missing `bpf_iter_link_info.task` support is not a global iterator disable. Full-table iterator dumps can still attach without link-info options when the `bpf_iter_link_info` union itself is unavailable, but task-filtered fetches (`pman_iter_fetch_task()`, `pman_iter_fetch_proc_file()`, `pman_iter_fetch_proc_files()`) return `SCAP_NOT_SUPPORTED` when in-kernel task filtering is unavailable; libscap then falls back to procfs for those operations. Source: [`iterators.c:775-819,872-953`](../../../refs/falcosecurity/libs/userspace/libpman/src/iterators.c#L775-L819), [`scap_procs.c:1620-1653,1721-1742`](../../../refs/falcosecurity/libs/userspace/libscap/linux/scap_procs.c#L1620-L1653).
 
 **The 0.44.1 fix:** earlier code filled `bpf_iter_link_info.task.{pid,tid}` unconditionally; on kernels without task-filtering support the kernel rejected the iterator attachment with **`E2BIG`** (unsupported options provided). libs 0.25.4 first probes support (`bpf_iter_link_info_supp_info.is_available` / `.is_task_filtering_supported`), passes no attachment options when the union is unavailable, and uses procfs fallback for operations that need unavailable task filtering.
 

@@ -1,6 +1,6 @@
 # pigeon Digest
 
-> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/pigeon/`](../../refs/falcosecurity/pigeon/) | **Commit:** `43aad93` (tag `v0.3.0`, May 6, 2024)
+> **Era Relevance:** 0.45 | **Source:** [`refs/falcosecurity/pigeon/`](../../refs/falcosecurity/pigeon/)
 
 **Repository:** [falcosecurity/pigeon](https://github.com/falcosecurity/pigeon)
 **Scope:** Infra
@@ -168,7 +168,7 @@ Pigeon performs a **declarative sync** - the configuration file is the source of
 2. Delete variables that exist on GitHub but not in config
 3. Create or update variables listed in config
 
-**Source:** [`pkg/config/config.go:66-156`](../../refs/falcosecurity/pigeon/pkg/config/config.go)
+**Source:** [`pkg/config/config.go:66-156`](../../refs/falcosecurity/pigeon/pkg/config/config.go#L66-L156)
 
 ## Integration with Falco Ecosystem
 

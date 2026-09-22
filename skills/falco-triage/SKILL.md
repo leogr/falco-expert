@@ -2,7 +2,7 @@
 name: falco-triage
 description: Triage GitHub issues and pull requests across falcosecurity repositories. Fetches, categorizes, and analyzes issues/PRs using the falco-expert knowledge base for technical context, checks for duplicates and related work, evaluates PR status, and generates actionable triage reports with ready-to-run gh commands. Supports tiered (quick scan + selective deep dive) and deep-dive-all analysis modes. Read-only — never modifies issues or PRs directly.
 metadata:
-  falco-version: "0.44"
+  falco-version: "0.45"
 ---
 
 # Falco Triage
@@ -683,7 +683,7 @@ If you cannot verify something, tag it [ASSUMPTION] and move on.
 1. Is this a known architectural limitation or design decision?
 2. Is this a documented feature being misunderstood?
 3. Does this relate to an existing proposal?
-4. Has the relevant code area changed in the current era (0.44)?
+4. Has the relevant code area changed in the current era (0.45)?
 5. Is there documentation that would resolve this issue?
 
 **Output requirements:**

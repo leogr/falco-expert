@@ -1,5 +1,5 @@
 # Proposals and Architectural Decisions
-> **Era:** 0.44 | **Version:** libs 0.25.4 | **Source:** [`refs/falcosecurity/libs/`](../../../refs/falcosecurity/libs/)
+> **Era:** 0.45 | **Version:** libs 0.26.0 | **Source:** [`refs/falcosecurity/libs/`](../../../refs/falcosecurity/libs/)
 
 ## Overview
 
@@ -41,9 +41,9 @@ This digest documents the design proposals and architectural decisions that shap
 - Enables distribution packaging
 - Backward compatibility maintained
 
-**Current Values (0.44 era):**
-- API_VERSION: 10.1.0
-- SCHEMA_VERSION: 4.5.1
+**Current Values (0.45 era):**
+- API_VERSION: 11.0.0
+- SCHEMA_VERSION: 4.5.2
 
 ### Versioning Schema Amendment (20220203)
 
@@ -67,8 +67,8 @@ This digest documents the design proposals and architectural decisions that shap
 
 **Version Computation Example:**
 ```
-API_VERSION = 10.1.0
-SCHEMA_VERSION = 4.5.1
+API_VERSION = 11.0.0
+SCHEMA_VERSION = 4.5.2
 
 Driver version = max(10,4).max(1,5).max(0,1) = 10.5.1+driver
 ```
@@ -210,9 +210,9 @@ const char* (*get_required_event_schema_version)(ss_plugin_t* s);
 - Default: Schema 3.0.0 if function not implemented
 
 **Implementation:**
-- API function defined in [`plugin_api.h:1159`](../../../refs/falcosecurity/libs/userspace/plugin/plugin_api.h)
-- Symbol resolution in [`plugin_loader.c:131`](../../../refs/falcosecurity/libs/userspace/plugin/plugin_loader.c)
-- Validation logic in [`plugin.cpp:617`](../../../refs/falcosecurity/libs/userspace/libsinsp/plugin.cpp) (`check_required_schema_version` method) with default 3.0.0 fallback, major/minor/patch comparison, and error messages
+- API function defined in [`plugin_api.h:1159`](../../../refs/falcosecurity/libs/userspace/plugin/plugin_api.h#L1159)
+- Symbol resolution in [`plugin_loader.c:131`](../../../refs/falcosecurity/libs/userspace/plugin/plugin_loader.c#L131)
+- Validation logic in [`plugin.cpp:627`](../../../refs/falcosecurity/libs/userspace/libsinsp/plugin.cpp#L627) (`check_required_schema_version` method) with default 3.0.0 fallback, major/minor/patch comparison, and error messages
 - Dedicated test plugin at [`test/plugins/schema_version_test.cpp`](../../../refs/falcosecurity/libs/userspace/libsinsp/test/plugins/schema_version_test.cpp)
 
 ## Proposal In Progress
@@ -249,7 +249,7 @@ Instrumentation Overhead Analysis (modern eBPF, Redis workload):
 4. TOCTOU mitigation via per-thread-ID BPF hash maps
 5. Adapt consumers (Falco, sysdig, plugins) and rules for exit-only semantics
 
-**Implementation Progress (0.44 era):**
+**Implementation Progress (0.45 era):**
 - Modern eBPF driver: userspace-facing syscall enter event generation removed ([libs#2588](https://github.com/falcosecurity/libs/issues/2588)); specialized TOCTOU-mitigation enter programs are retained kernel-side only at [`driver/modern_bpf/programs/attached/events/toctou_mitigation/`](../../../refs/falcosecurity/libs/driver/modern_bpf/programs/attached/events/toctou_mitigation/)
 - Scap-file converter operational at [`userspace/libscap/engine/savefile/converter/`](../../../refs/falcosecurity/libs/userspace/libscap/engine/savefile/converter/) with `EF_CONVERTER_MANAGED` flag (stabilized from `EF_TMP_CONVERTER_MANAGED` in September 2025); 140 enter-event conversion rules defined in [`converter/table.cpp`](../../../refs/falcosecurity/libs/userspace/libscap/engine/savefile/converter/table.cpp)
 - Userspace filtering implemented: TOCTOU-mitigation enter events (open, openat, openat2, creat, connect, execve, execveat) are dropped from the event-processing pipeline in [`parsers.cpp`](../../../refs/falcosecurity/libs/userspace/libsinsp/parsers.cpp) and retained internally only for legacy scap-file parameter recovery

@@ -1,6 +1,6 @@
 # kernel-crawler Digest
 
-> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/kernel-crawler/`](../../refs/falcosecurity/kernel-crawler/) | **Commit:** `464fcb6` (February 16, 2026; post-0.18.0, `git describe` = `0.18.0-10-g464fcb6`)
+> **Era Relevance:** 0.45 | **Source:** [`refs/falcosecurity/kernel-crawler/`](../../refs/falcosecurity/kernel-crawler/). Use `git submodule status` for the pinned revision.
 
 **Repository:** [falcosecurity/kernel-crawler](https://github.com/falcosecurity/kernel-crawler)
 **Scope:** Infra
@@ -17,13 +17,13 @@ kernel-crawler is a critical infrastructure component that enables Falco's pre-b
 **Purpose:**
 - Discover all kernel versions available across major Linux distributions
 - Generate driverkit configuration JSON for automated driver building
-- Enable the Falco project to pre-build kernel modules and eBPF probes for thousands of kernels
+- Enable the Falco project to pre-build kernel modules for many kernels
 
 **Source:** [`README.md`](../../refs/falcosecurity/kernel-crawler/README.md)
 
 ## Why This Exists
 
-Falco requires kernel-specific drivers (kernel modules or eBPF probes) to capture system events. Users have three options:
+This pipeline supplies kernel-specific modules. Falco also embeds the modern eBPF driver, which does not require this download/build pipeline. [Source](../../refs/falcosecurity/falco-website/content/en/docs/concepts/event-sources/kernel/_index.md#L16-L39). For kernel modules, users have three options:
 
 1. **Pre-built drivers** - Download from Falco's driver repository
 2. **Dynamic build** - Build on the host at runtime (requires kernel headers)
@@ -71,7 +71,7 @@ For option 1 to work at scale, the Falco project must know which kernels exist a
                                   ┌─────────────────────┐
                                   │   driverkit        │
                                   │                     │
-                                  │  - Build .ko/.o    │
+                                  │  - Build .ko       │
                                   │  - Publish to S3   │
                                   └─────────────────────┘
 ```
@@ -112,7 +112,7 @@ For option 1 to work at scale, the Falco project must know which kernels exist a
 
 **Supported Architectures:** x86_64, aarch64
 
-**Source:** [`kernel_crawler/crawler.py:43-63`](../../refs/falcosecurity/kernel-crawler/kernel_crawler/crawler.py)
+**Source:** [`kernel_crawler/crawler.py:43-63`](../../refs/falcosecurity/kernel-crawler/kernel_crawler/crawler.py#L43-L63)
 
 ## Output Format
 
@@ -150,7 +150,7 @@ kernel-crawler generates JSON compatible with driverkit:
 - `target` - driverkit target identifier (e.g., `ubuntu-generic`, `amazonlinux2`)
 - `headers` - URLs to kernel header packages
 
-**Source:** [`kernel_crawler/repo.py:27-41`](../../refs/falcosecurity/kernel-crawler/kernel_crawler/repo.py)
+**Source:** [`kernel_crawler/repo.py:27-41`](../../refs/falcosecurity/kernel-crawler/kernel_crawler/repo.py#L27-L41)
 
 ## CLI Usage
 
@@ -235,12 +235,13 @@ Crawls mirror URLs for `linux-headers-*` packages:
 
 **Source:** [`kernel_crawler/ubuntu.py`](../../refs/falcosecurity/kernel-crawler/kernel_crawler/ubuntu.py), [`kernel_crawler/deb.py`](../../refs/falcosecurity/kernel-crawler/kernel_crawler/deb.py)
 
+The package-index parser decodes invalid UTF-8 with replacement, allowing historical indexes with non-UTF-8 metadata to be processed. Debian catches failures while loading each repository's package database, logs the error and continues collecting other repositories before dependency resolution. This does not guarantee that the resulting list covers every repository. [Parser](../../refs/falcosecurity/kernel-crawler/kernel_crawler/deb.py#L50-L62), [decoder](../../refs/falcosecurity/kernel-crawler/kernel_crawler/utils/py23.py#L8-L12), [Debian collection](../../refs/falcosecurity/kernel-crawler/kernel_crawler/debian.py#L46-L65).
+
 ### RPM-based (Amazon Linux, CentOS, Fedora, etc.)
 
-Crawls YUM/DNF repositories for `kernel-devel` packages:
-- Parses `repomd.xml` and `primary.xml`
-- Extracts kernel-devel RPM URLs
-- Supports multiple repository mirrors
+Crawls YUM/DNF repositories for kernel packages. The base RPM repository implementation reads `repomd.xml` and prefers `primary_db` SQLite metadata, which resolves transitive package dependencies. If the repository does not advertise `primary_db`, it falls back to `primary` XML. An advertised SQLite database that cannot be fetched does not trigger this fallback. [Selection and collection](../../refs/falcosecurity/kernel-crawler/kernel_crawler/rpm.py#L141-L174), [SQLite dependency query](../../refs/falcosecurity/kernel-crawler/kernel_crawler/rpm.py#L74-L91).
+
+The XML path returns only matching kernel packages, without transitive dependencies. Its version filter accepts either a version or a version-release pair, and it clears processed XML elements as it scans. Subclasses with different package selection must implement `kernel_package_match()` as well as their SQL predicate; Oracle and Photon provide these overrides. [XML parser](../../refs/falcosecurity/kernel-crawler/kernel_crawler/rpm.py#L94-L121), [selection contract](../../refs/falcosecurity/kernel-crawler/kernel_crawler/rpm.py#L51-L62), [Oracle](../../refs/falcosecurity/kernel-crawler/kernel_crawler/oracle.py#L19-L28), [Photon](../../refs/falcosecurity/kernel-crawler/kernel_crawler/photon.py#L18-L32).
 
 **Source:** [`kernel_crawler/rpm.py`](../../refs/falcosecurity/kernel-crawler/kernel_crawler/rpm.py), [`kernel_crawler/amazonlinux.py`](../../refs/falcosecurity/kernel-crawler/kernel_crawler/amazonlinux.py)
 

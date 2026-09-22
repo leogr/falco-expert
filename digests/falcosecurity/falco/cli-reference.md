@@ -1,10 +1,10 @@
 # Falco CLI Reference
 
-> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/falco/`](../../../refs/falcosecurity/falco/) | **Version:** 0.44.1
+> **Era Relevance:** 0.45 | **Source:** [`refs/falcosecurity/falco/`](../../../refs/falcosecurity/falco/) | **Version:** 0.45.0
 
 ## Overview
 
-Falco is the Cloud Native Runtime Security tool. The CLI is the primary interface for running Falco, validating rules, and introspecting the system. This reference documents all command-line options available in Falco 0.44.
+Falco is the Cloud Native Runtime Security tool. The CLI is the primary interface for running Falco, validating rules, and introspecting the system. This reference documents all command-line options available in Falco 0.45.
 
 ## Basic Usage
 
@@ -23,7 +23,7 @@ When invoked without arguments, Falco attempts to load configuration from the de
 | `--config-schema` | Print the configuration JSON schema and exit. Useful for config validation. |
 | `--rule-schema` | Print the rules JSON schema and exit. Useful for rules validation. |
 
-**Source:** [`options.cpp:139-144, 158`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp)
+**Source:** [`options.cpp:139-144, 158`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp#L139-L158)
 
 ## Rules Options
 
@@ -34,7 +34,13 @@ When invoked without arguments, Falco attempts to load configuration from the de
 | `-L` | Show name and description of all rules and exit. With `json_output`, prints details about all rules, macros, and lists in JSON format. |
 | `-l <rule>` | Show name and description of the specified rule and exit. With `json_output`, prints rule details in JSON format. |
 
-**Source:** [`options.cpp:149-150, 162, 165`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp)
+**Source:** [`options.cpp:149-150, 162, 165`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp#L149-L165)
+
+In 0.45, a failed `--validate` on a YAML mapping-root document adds a hint that configuration must be validated with `falco -c <file> --dry-run`; it does not accept configuration as a rules file. JSON validation and rule-description output replace invalid UTF-8 during serialization. Field listings no longer label generic classes (such as `evt.*`) with specific source restrictions. The option definitions themselves are unchanged from 0.44.1.
+
+Replay suppresses unsupported-event warnings; live-mode warnings point to `base_syscalls.all` and `base_syscalls.custom_set` instead of the removed `-A` flag. **Source:** [`configure_interesting_sets.cpp:40-74`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/configure_interesting_sets.cpp#L40-L74).
+
+**Source:** [`validate_rules_files.cpp:28-43,125-151`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/validate_rules_files.cpp#L28-L151), [`load_rules_files.cpp:155-164`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/load_rules_files.cpp#L155-L164), [`falco_engine.cpp:112-139`](../../../refs/falcosecurity/falco/userspace/engine/falco_engine.cpp#L112-L139), [`options.cpp`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp).
 
 ## Output Options
 
@@ -46,7 +52,7 @@ When invoked without arguments, Falco attempts to load configuration from the de
 
 > **Note:** The `-A` flag was **removed in Falco 0.39**. Use the `base_syscalls.all` configuration option instead.
 
-**Source:** [`options.cpp:160, 164, 166`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp)
+**Source:** [`options.cpp:160, 164, 166`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp#L160-L166)
 
 ## Event Sources
 
@@ -57,7 +63,7 @@ When invoked without arguments, Falco attempts to load configuration from the de
 
 Both options have no effect when reproducing events from a capture file.
 
-**Source:** [`options.cpp:145, 147`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp)
+**Source:** [`options.cpp:145, 147`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp#L145-L147)
 
 ## Introspection Commands
 
@@ -70,7 +76,7 @@ Both options have no effect when reproducing events from a capture file.
 | `--format <format>` | Print output in the specified format (`text`, `markdown`, or `json`) when used with `--list` or `--list-events`. Added in Falco 0.44. Cannot be combined with `--markdown`. |
 | `--markdown` | **DEPRECATED** in Falco 0.44 — use `--format markdown` instead. Print output in Markdown format (use with `--list` or `--list-events`). Still works but emits a runtime warning and will be removed in a future release. |
 
-**Source:** [`options.cpp:151, 155-156`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp), [`list_fields.cpp`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/list_fields.cpp)
+**Source:** [`options.cpp:151, 155-156`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp#L151-L156), [`list_fields.cpp`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/list_fields.cpp)
 
 ### Event Listing
 
@@ -81,7 +87,7 @@ Both options have no effect when reproducing events from a capture file.
 
 The `--list-events` output shows for each event: whether it is enabled by default, direction (`>` enter, `<` exit), name, and parameters with types.
 
-**Source:** [`options.cpp:148, 152`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp), [`print_syscall_events.cpp`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/print_syscall_events.cpp)
+**Source:** [`options.cpp:148, 152`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp#L148-L152), [`print_syscall_events.cpp`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/print_syscall_events.cpp)
 
 ### Plugin Introspection
 
@@ -90,7 +96,7 @@ The `--list-events` output shows for each event: whether it is enabled by defaul
 | `--list-plugins` | Print info on all loaded plugins and exit. Shows plugin count and details for each. |
 | `--plugin-info <name>` | Print detailed info for a specific plugin and exit. Shows name, author, init config schema, and suggested open parameters. `<name>` can be the plugin name or its `library_path`. |
 
-**Source:** [`options.cpp:153, 159`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp), [`list_plugins.cpp`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/list_plugins.cpp), [`print_plugin_info.cpp`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/print_plugin_info.cpp)
+**Source:** [`options.cpp:153, 159`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp#L153-L159), [`list_plugins.cpp`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/list_plugins.cpp), [`print_plugin_info.cpp`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/print_plugin_info.cpp)
 
 ### System Information
 
@@ -100,7 +106,7 @@ The `--list-events` output shows for each event: whether it is enabled by defaul
 | `--support` | Print support information bundle as JSON and exit. Includes version info, system info, command line, loaded configuration, and rules files content. |
 | `--page-size` | Print the system page size and exit. Helps choose appropriate syscall ring buffer size. |
 
-**Source:** [`options.cpp:163, 167-168`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp), [`print_version.cpp`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/print_version.cpp), [`print_support.cpp`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/print_support.cpp)
+**Source:** [`options.cpp:163, 167-168`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp#L163-L168), [`print_version.cpp`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/print_version.cpp), [`print_support.cpp`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/print_support.cpp)
 
 ## Runtime Options
 
@@ -110,7 +116,7 @@ The `--list-events` output shows for each event: whether it is enabled by defaul
 | `-P <pid_file>`, `--pidfile <pid_file>` | Write PID to the specified file path. By default, no PID file is created. |
 | `--dry-run` | Run Falco without processing events. Validates configuration and rules without starting event capture. |
 
-**Source:** [`options.cpp:146, 154, 161`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp)
+**Source:** [`options.cpp:146, 154, 161`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp#L146-L161)
 
 ## Help
 
@@ -118,7 +124,7 @@ The `--list-events` output shows for each event: whether it is enabled by defaul
 |--------|-------------|
 | `-h`, `--help` | Print the help list and exit. |
 
-**Source:** [`options.cpp:137`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp)
+**Source:** [`options.cpp:137`](../../../refs/falcosecurity/falco/userspace/falco/app/options.cpp#L137)
 
 ## Exit Codes
 
@@ -129,7 +135,7 @@ The `--list-events` output shows for each event: whether it is enabled by defaul
 
 Falco supports automatic restart on SIGHUP. The main loop re-executes `falco_run()` when the restart flag is set.
 
-**Source:** [`falco.cpp:40-71`](../../../refs/falcosecurity/falco/userspace/falco/falco.cpp)
+**Source:** [`falco.cpp:40-71`](../../../refs/falcosecurity/falco/userspace/falco/falco.cpp#L40-L71)
 
 ## Examples
 

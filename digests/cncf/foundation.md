@@ -111,10 +111,16 @@ For dependencies that don't satisfy the allowlist ([allowed-third-party-license-
 2. CNCF staff reviews and adds to the [Licensing Exception Board](https://github.com/orgs/cncf/projects/44)
 3. Staff coordinates with Legal for Legal Committee review and Governing Board presentation
 4. Vote is called per CNCF Charter procedures
-5. Approval: staff posts in the issue with link to the PR where approved
-6. Denial: issue is closed
+5. Staff applies one decision label: `license-exception/approved`, `license-exception/denied`, or `license-exception/not-eligible`. Automation opens a PR recording the outcome.
+6. A maintainer reviews and merges the PR; the decision then appears on [exceptions.cncf.io](https://exceptions.cncf.io/) and the request is closed.
 
 Exception results are documented in the [`license-exceptions/`](../../refs/cncf/foundation/license-exceptions/) directory (CSV, JSON, and SPDX formats).
+
+**Source:** [exception policy:71-83](../../refs/cncf/foundation/policies-guidance/allowed-third-party-license-policy.md#L71-L83), [decision workflow:25-188](../../refs/cncf/foundation/.github/workflows/license-exception-decision.yml#L25-L188).
+
+The decision workflow reads the five-column component table and creates one database entry per valid row. `approvedDate` is the decision date for all outcomes, including denials; it does not itself imply approval. `issueUrl` identifies the request. Programmatic consumers should use the published [JSON](https://exceptions.cncf.io/exceptions.json), [CSV](https://exceptions.cncf.io/CNCF-licensing-exceptions.csv), or [SPDX](https://exceptions.cncf.io/cncf-exceptions-current.spdx) endpoints, rather than stale build artifacts under the source site's directory. [Source: license-exceptions README:28-39,73-94,125-145](../../refs/cncf/foundation/license-exceptions/README.md#L28-L39).
+
+The [dependency licensing glossary](../../refs/cncf/foundation/policies-guidance/cncf-dependency-licensing-glossary.md) distinguishes project-distributed dependencies, user-fetched dependencies, system components, and internal build/test tooling. Internal tooling must meet all four stated criteria: build/test use only, no inclusion or injected code in shipped artifacts, no project-triggered user download, and no user installation/runtime requirement. It separately describes code separation, linking/process/network interaction, and data coupling; these categories describe usage, not automatic license approval.
 
 ---
 
@@ -182,7 +188,9 @@ Preserve existing copyright and license notices unchanged for third-party code. 
 | Container Image Guidance | [`policies-guidance/container-image-guidance.md`](../../refs/cncf/foundation/policies-guidance/container-image-guidance.md) |
 | Copyright Notices | [`copyright-notices.md`](../../refs/cncf/foundation/copyright-notices.md) |
 | License Exceptions | [`license-exceptions/`](../../refs/cncf/foundation/license-exceptions/) |
+| Decision recording | [`.github/workflows/license-exception-decision.yml`](../../refs/cncf/foundation/.github/workflows/license-exception-decision.yml) |
+| Dependency usage terms | [`policies-guidance/cncf-dependency-licensing-glossary.md`](../../refs/cncf/foundation/policies-guidance/cncf-dependency-licensing-glossary.md) |
 
 ---
 
-*Last updated: 2026-02-19*
+*Last updated: 2026-09-22*

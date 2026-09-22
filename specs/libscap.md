@@ -2,7 +2,7 @@
 
 > Low-level capture library: engine vtable abstraction, capture engines, event retrieval, ring buffer management, platform information, and statistics.
 
-**Era:** 0.44 | **Source:** [`refs/falcosecurity/libs/userspace/libscap/`](../refs/falcosecurity/libs/userspace/libscap/)
+**Era:** 0.45 | **Source:** [`refs/falcosecurity/libs/userspace/libscap/`](../refs/falcosecurity/libs/userspace/libscap/)
 
 ## Overview
 
@@ -135,7 +135,7 @@ struct scap_savefile_vtable {
 };
 ```
 
-**Source:** [`refs/falcosecurity/libs/userspace/libscap/scap_vtable.h:86-114`](../refs/falcosecurity/libs/userspace/libscap/scap_vtable.h)
+**Source:** [`refs/falcosecurity/libs/userspace/libscap/scap_vtable.h:86-114`](../refs/falcosecurity/libs/userspace/libscap/scap_vtable.h#L86-L114)
 
 ### Available Engines
 
@@ -151,7 +151,13 @@ struct scap_savefile_vtable {
 | Legacy eBPF | `engine/bpf/` (removed in libs 0.25) | `"bpf"` | Legacy eBPF probe | **Removed (libs 0.25 / Falco 0.44)** |
 | gVisor | `engine/gvisor/` (removed in libs 0.25) | `"gvisor"` | gVisor sandbox integration | **Removed (libs 0.25 / Falco 0.44)** |
 
-**Source:** [`refs/falcosecurity/libs/userspace/libscap/scap.h:80-88`](../refs/falcosecurity/libs/userspace/libscap/scap.h)
+**Source:** [`refs/falcosecurity/libs/userspace/libscap/scap.h:80-89`](../refs/falcosecurity/libs/userspace/libscap/scap.h#L80-L89)
+
+### Raw Block Engine (libs 0.26)
+
+`raw_block` consumes caller-owned memory containing complete `.scap`/pcapng blocks. `sinsp::open_raw_block(uint8_t** buffer_ptr, uint64_t* buffer_size_ptr)` supports a whole capture in memory or incremental processing. The first buffer includes the section header and metadata. `SCAP_EOF` means the current buffer is exhausted: append whole blocks and grow the size, or replace the buffer and call `sinsp::fseek(0)`. A trailing partial block fails; only host-endian buffers are supported. Buffer pointers and sizes must remain valid while the engine uses them.
+
+**Source:** [raw_block_public.h:21-71](../refs/falcosecurity/libs/userspace/libscap/engine/raw_block/raw_block_public.h#L21-L71), [sinsp.h:164-179](../refs/falcosecurity/libs/userspace/libsinsp/sinsp.h#L164-L179).
 
 ## Functional Requirements
 
@@ -160,7 +166,7 @@ struct scap_savefile_vtable {
 The primary function of libscap is event retrieval via `scap_next()`:
 
 ```c
-// From scap.h:562
+// From scap.h:561
 int32_t scap_next(scap_t* handle,
                   scap_evt** pevent,
                   uint16_t* pcpuid,
@@ -173,7 +179,7 @@ int32_t scap_next(scap_t* handle,
 |------|-------|---------|
 | `SCAP_SUCCESS` | `0` | Event returned successfully; `*pevent`, `*pcpuid`, `*pflags` contain valid data |
 | `SCAP_TIMEOUT` | `-1` | No events available within the read timeout (not an error) |
-| `SCAP_EOF` | `6` | End of offline capture file reached; no more events will arrive |
+| `SCAP_EOF` | `6` | Current offline input exhausted; raw-block input can receive additional complete blocks |
 | `SCAP_FAILURE` | `1` | An error occurred; use `scap_getlasterr()` for details |
 
 The `scap_evt` type is an alias for `struct ppm_evt_hdr`:
@@ -203,7 +209,7 @@ uint64_t scap_event_get_num(scap_t* handle);
 uint32_t scap_event_decode_params(const scap_evt* e, struct scap_sized_buffer* params);
 ```
 
-**Source:** [`refs/falcosecurity/libs/userspace/libscap/scap.h:548-607`](../refs/falcosecurity/libs/userspace/libscap/scap.h)
+**Source:** [`refs/falcosecurity/libs/userspace/libscap/scap.h:549-608`](../refs/falcosecurity/libs/userspace/libscap/scap.h#L549-L608)
 
 ### Capture Control
 
@@ -214,7 +220,7 @@ libscap provides two patterns for opening a capture:
 1. **Combined** `scap_open()` — allocates and initializes in one call:
 
 ```c
-// From scap.h:496-499
+// From scap.h:495-498
 scap_t* scap_open(scap_open_args* oargs,
                   const struct scap_vtable* vtable,
                   char* error,
@@ -224,7 +230,7 @@ scap_t* scap_open(scap_open_args* oargs,
 2. **Two-step** `scap_alloc()` + `scap_init()` — useful when the handle address is needed during initialization (e.g., for process callbacks):
 
 ```c
-// From scap.h:462-475
+// From scap.h:461-474
 scap_t* scap_alloc(void);
 int32_t scap_init(scap_t* handle,
                   scap_open_args* oargs,
@@ -332,7 +338,7 @@ int32_t scap_enable_dynamic_snaplen(scap_t* handle);
 int32_t scap_disable_dynamic_snaplen(scap_t* handle);
 ```
 
-**Source:** [`refs/falcosecurity/libs/userspace/libscap/scap_vtable.h:45-84`](../refs/falcosecurity/libs/userspace/libscap/scap_vtable.h), [`refs/falcosecurity/libs/userspace/libscap/scap.h:786-996`](../refs/falcosecurity/libs/userspace/libscap/scap.h)
+**Source:** [`refs/falcosecurity/libs/userspace/libscap/scap_vtable.h:45-84`](../refs/falcosecurity/libs/userspace/libscap/scap_vtable.h#L45-L84), [`refs/falcosecurity/libs/userspace/libscap/scap.h:787-997`](../refs/falcosecurity/libs/userspace/libscap/scap.h#L787-L997)
 
 ## Implementation Details
 
@@ -358,7 +364,7 @@ typedef struct _scap_machine_info {
 const struct _scap_machine_info* scap_get_machine_info(struct scap_platform* platform);
 ```
 
-**Source:** [`refs/falcosecurity/libs/userspace/libscap/scap_machine_info.h:40-50`](../refs/falcosecurity/libs/userspace/libscap/scap_machine_info.h)
+**Source:** [`refs/falcosecurity/libs/userspace/libscap/scap_machine_info.h:40-50`](../refs/falcosecurity/libs/userspace/libscap/scap_machine_info.h#L40-L50)
 
 #### Agent Info
 
@@ -375,7 +381,7 @@ typedef struct _scap_agent_info {
 const scap_agent_info* scap_get_agent_info(struct scap_platform* platform);
 ```
 
-**Source:** [`refs/falcosecurity/libs/userspace/libscap/scap_machine_info.h:57-62`](../refs/falcosecurity/libs/userspace/libscap/scap_machine_info.h)
+**Source:** [`refs/falcosecurity/libs/userspace/libscap/scap_machine_info.h:57-62`](../refs/falcosecurity/libs/userspace/libscap/scap_machine_info.h#L57-L62)
 
 ### Process Table Scanning
 
@@ -384,7 +390,7 @@ At capture open time, libscap scans `/proc` to build the initial process state. 
 #### Thread Info Structure
 
 ```c
-// From scap.h:246-301 (key fields shown)
+// From scap.h:245-300 (key fields shown)
 typedef struct scap_threadinfo {
     uint64_t tid;                                   // Thread/task ID
     uint64_t pid;                                   // Process ID
@@ -431,7 +437,7 @@ typedef struct scap_threadinfo {
 } scap_threadinfo;
 ```
 
-**Source:** [`refs/falcosecurity/libs/userspace/libscap/scap.h:246-301`](../refs/falcosecurity/libs/userspace/libscap/scap.h)
+**Source:** [`refs/falcosecurity/libs/userspace/libscap/scap.h:245-300`](../refs/falcosecurity/libs/userspace/libscap/scap.h#L245-L300)
 
 #### Process Scanning Callbacks
 
@@ -489,7 +495,7 @@ int32_t scap_get_fdlist(struct scap_platform* platform, struct scap_threadinfo* 
 #### Basic Statistics (`scap_stats`)
 
 ```c
-// From scap.h:127-149
+// From scap.h:126-148
 typedef struct scap_stats {
     uint64_t n_evts;                                // Total events received by driver
     uint64_t n_drops;                               // Total events dropped
@@ -517,7 +523,7 @@ int32_t scap_get_stats(scap_t* handle, scap_stats* stats);
 
 The category-specific drop counters (e.g., `n_drops_buffer_clone_fork_exit`, `n_drops_buffer_execve_exit`) provide fine-grained visibility into which event types are being lost when buffers overflow.
 
-**Source:** [`refs/falcosecurity/libs/userspace/libscap/scap.h:127-149`](../refs/falcosecurity/libs/userspace/libscap/scap.h)
+**Source:** [`refs/falcosecurity/libs/userspace/libscap/scap.h:126-148`](../refs/falcosecurity/libs/userspace/libscap/scap.h#L126-L148)
 
 #### Extended Statistics (v2 API)
 
@@ -533,7 +539,7 @@ const struct metrics_v2* scap_get_stats_v2(scap_t* handle,
 
 The `flags` parameter specifies which categories of statistics to collect. The returned `metrics_v2` array contains `*nstats` entries and remains valid until the next call.
 
-**Source:** [`refs/falcosecurity/libs/userspace/libscap/scap.h:658-671`](../refs/falcosecurity/libs/userspace/libscap/scap.h), [`refs/falcosecurity/libs/userspace/libscap/metrics_v2.h`](../refs/falcosecurity/libs/userspace/libscap/metrics_v2.h)
+**Source:** [`refs/falcosecurity/libs/userspace/libscap/scap.h:659-672`](../refs/falcosecurity/libs/userspace/libscap/scap.h#L659-L672), [`refs/falcosecurity/libs/userspace/libscap/metrics_v2.h`](../refs/falcosecurity/libs/userspace/libscap/metrics_v2.h)
 
 ### Error Handling
 
@@ -574,6 +580,8 @@ Capture files contain:
 3. **Event stream** (compressed via gzip)
 
 #### Savefile API
+
+Before conversion or downstream consumption, V2/V2_LARGE reads reject event lengths smaller than the header or larger than the block payload, parameter-length arrays extending beyond the event, and individual parameters extending past the remaining event bytes. The validator permits unused trailing event bytes; it does not require the declared parameters to consume them all. See [`scap_savefile.c:63-118,2112-2121`](../refs/falcosecurity/libs/userspace/libscap/engine/savefile/scap_savefile.c#L63-L118).
 
 ```c
 // From scap_savefile_api.h
@@ -661,14 +669,14 @@ int scap_ppm_sc_to_native_id(ppm_sc_code sc_code);
 const char* scap_get_ppm_sc_name(ppm_sc_code sc);
 ```
 
-**Source:** [`refs/falcosecurity/libs/userspace/libscap/scap.h:843-952`](../refs/falcosecurity/libs/userspace/libscap/scap.h)
+**Source:** [`refs/falcosecurity/libs/userspace/libscap/scap.h:844-953`](../refs/falcosecurity/libs/userspace/libscap/scap.h#L844-L953)
 
 ### Driver Version Compatibility
 
 ```c
-// From scap.h:104-105
-#define SCAP_MINIMUM_DRIVER_API_VERSION    PPM_API_VERSION(8, 0, 0)
-#define SCAP_MINIMUM_DRIVER_SCHEMA_VERSION PPM_API_VERSION(4, 1, 0)
+// From scap.h:103-104
+#define SCAP_MINIMUM_DRIVER_API_VERSION    PPM_API_VERSION(11, 0, 0)
+#define SCAP_MINIMUM_DRIVER_SCHEMA_VERSION PPM_API_VERSION(4, 3, 0)
 
 // Default buffer size (used before variable buffer sizing was introduced)
 #define DEFAULT_DRIVER_BUFFER_BYTES_DIM    8 * 1024 * 1024  // 8MB
@@ -681,7 +689,7 @@ uint64_t scap_get_driver_schema_version(scap_t* handle);
 bool scap_check_current_engine(scap_t* handle, const char* engine_name);
 ```
 
-**Source:** [`refs/falcosecurity/libs/userspace/libscap/scap.h:104-110`](../refs/falcosecurity/libs/userspace/libscap/scap.h)
+**Sources:** [`scap.h:103-109`](../refs/falcosecurity/libs/userspace/libscap/scap.h#L103-L109) (compatibility minimums and buffer default), [`scap.h:997-1004`](../refs/falcosecurity/libs/userspace/libscap/scap.h#L997-L1004) (driver-version queries), [`scap.h:833`](../refs/falcosecurity/libs/userspace/libscap/scap.h#L833) (engine query).
 
 ## Non-Functional Requirements
 

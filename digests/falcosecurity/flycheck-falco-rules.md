@@ -1,6 +1,6 @@
 # flycheck-falco-rules Digest
 
-> **Era Relevance:** 0.44 (OUTDATED) | **Source:** [`refs/falcosecurity/flycheck-falco-rules/`](../../refs/falcosecurity/flycheck-falco-rules/) | **Commit:** `4bdc576` (October 20, 2023)
+> **Era Relevance:** 0.45 (OUTDATED) | **Source:** [`refs/falcosecurity/flycheck-falco-rules/`](../../refs/falcosecurity/flycheck-falco-rules/)
 
 **Repository:** [falcosecurity/flycheck-falco-rules](https://github.com/falcosecurity/flycheck-falco-rules)
 **Scope:** Ecosystem
@@ -92,7 +92,7 @@ Or in `.emacs`:
 | `flycheck` | >= 0.25 | Syntax checking framework |
 | `let-alist` | >= 1.0.1 | Alist destructuring |
 
-**Source:** [`flycheck-falco-rules.el:24`](../../refs/falcosecurity/flycheck-falco-rules/flycheck-falco-rules.el)
+**Source:** [`flycheck-falco-rules.el:24`](../../refs/falcosecurity/flycheck-falco-rules/flycheck-falco-rules.el#L24)
 
 ### Default Validation Command
 
@@ -105,7 +105,7 @@ docker run --rm -v/tmp:/tmp falcosecurity/falco-no-driver falco -o json_output=T
 - Volume mount might need adjustment for rules file location
 - JSON output format may have changed
 
-**Source:** [`flycheck-falco-rules.el:34-41`](../../refs/falcosecurity/flycheck-falco-rules/flycheck-falco-rules.el)
+**Source:** [`flycheck-falco-rules.el:34-41`](../../refs/falcosecurity/flycheck-falco-rules/flycheck-falco-rules.el#L34-L41)
 
 ### JSON Parsing
 
@@ -120,7 +120,7 @@ Each error/warning contains:
 - `context.locations[].position.line` - Line number (0-indexed)
 - `context.locations[].position.column` - Column number (0-indexed)
 
-**Source:** [`flycheck-falco-rules.el:71-90`](../../refs/falcosecurity/flycheck-falco-rules/flycheck-falco-rules.el)
+**Source:** [`flycheck-falco-rules.el:71-90`](../../refs/falcosecurity/flycheck-falco-rules/flycheck-falco-rules.el#L71-L90)
 
 ## Alternative Approaches (Modern)
 

@@ -1,6 +1,6 @@
 # k8smeta Plugin - Kubernetes Metadata Enrichment
 
-**Era:** 0.44 | **Status:** Stable | **Scope:** Core
+**Era:** 0.45 | **Status:** Stable | **Scope:** Core
 
 The `k8smeta` plugin enriches Falco syscall events with Kubernetes metadata by connecting to the [`k8s-metacollector`](../k8s-metacollector.md) service. It provides fields like pod name, namespace, deployment, services, and labels for processes running inside Kubernetes pods.
 
@@ -27,7 +27,7 @@ The `k8smeta` plugin enriches Falco syscall events with Kubernetes metadata by c
 | Property | Value |
 |----------|-------|
 | Plugin Name | `k8smeta` |
-| Plugin Version | 0.4.1 |
+| Plugin Version | 0.4.2 |
 | Minimum Falco Version | 0.40.0 |
 | Plugin API Version | 3.9.0 |
 | Event Schema Version | 4.0.0 |
@@ -41,7 +41,7 @@ The k8smeta plugin implements a client-server architecture for Kubernetes metada
 
 This architecture avoids the scalability issues of having every Falco instance connect directly to the Kubernetes API server.
 
-**Source:** [`README.md:5-9`](../../../refs/falcosecurity/plugins/plugins/k8smeta/README.md)
+**Source:** [`README.md:5-9`](../../../refs/falcosecurity/plugins/plugins/k8smeta/README.md#L5-L9)
 
 ---
 
@@ -88,7 +88,7 @@ This architecture avoids the scalability issues of having every Falco instance c
                             └─────────────────┘
 ```
 
-**Source:** [`src/plugin.h:56-292`](../../../refs/falcosecurity/plugins/plugins/k8smeta/src/plugin.h)
+**Source:** [`src/plugin.h:56-292`](../../../refs/falcosecurity/plugins/plugins/k8smeta/src/plugin.h#L56-L292)
 
 ---
 
@@ -103,7 +103,7 @@ The k8smeta plugin implements four capabilities:
 | **Extract** | Provides k8smeta.* fields for rule conditions and outputs |
 | **Capture Listening** | Enriches existing thread table entries at capture start |
 
-**Source:** [`README.md:11-19`](../../../refs/falcosecurity/plugins/plugins/k8smeta/README.md)
+**Source:** [`README.md:11-19`](../../../refs/falcosecurity/plugins/plugins/k8smeta/README.md#L11-L19)
 
 ### Async Capability
 
@@ -120,7 +120,7 @@ Maintains a background thread that:
 #define ASYNC_EVENT_SOURCES { "syscall" }
 ```
 
-**Source:** [`src/shared_with_tests_consts.h:25-33`](../../../refs/falcosecurity/plugins/plugins/k8smeta/src/shared_with_tests_consts.h)
+**Source:** [`src/shared_with_tests_consts.h:25-33`](../../../refs/falcosecurity/plugins/plugins/k8smeta/src/shared_with_tests_consts.h#L25-L33)
 
 ### Parse Capability
 
@@ -136,7 +136,7 @@ PPME_SYSCALL_CLONE_20_X, PPME_SYSCALL_FORK_20_X, PPME_SYSCALL_VFORK_20_X,
 PPME_SYSCALL_CLONE3_X
 ```
 
-**Source:** [`src/shared_with_tests_consts.h:51-56`](../../../refs/falcosecurity/plugins/plugins/k8smeta/src/shared_with_tests_consts.h)
+**Source:** [`src/shared_with_tests_consts.h:51-56`](../../../refs/falcosecurity/plugins/plugins/k8smeta/src/shared_with_tests_consts.h#L51-L56)
 
 ### Extract Capability
 
@@ -146,13 +146,13 @@ Provides field extraction for syscall events. The plugin:
 3. Retrieves pod metadata from internal tables
 4. Extracts the requested field value
 
-**Source:** [`src/plugin.cpp:995-1142`](../../../refs/falcosecurity/plugins/plugins/k8smeta/src/plugin.cpp)
+**Source:** [`src/plugin.cpp:1007-1154`](../../../refs/falcosecurity/plugins/plugins/k8smeta/src/plugin.cpp#L1007-L1154)
 
 ### Capture Listening Capability
 
 At capture open time, iterates through all existing thread table entries and enriches them with pod UIDs based on their cgroup paths.
 
-**Source:** [`src/plugin.cpp:324-352`](../../../refs/falcosecurity/plugins/plugins/k8smeta/src/plugin.cpp)
+**Source:** [`src/plugin.cpp:336-364`](../../../refs/falcosecurity/plugins/plugins/k8smeta/src/plugin.cpp#L336-L364)
 
 ---
 
@@ -215,11 +215,13 @@ The plugin provides 24 fields across 6 Kubernetes resource types:
 | `k8smeta.rc.label[key]` | string | Specific label value |
 | `k8smeta.rc.labels` | string list | All labels |
 
-**Source:** [`README.md:24-54`](../../../refs/falcosecurity/plugins/plugins/k8smeta/README.md), [`src/plugin.cpp:419-542`](../../../refs/falcosecurity/plugins/plugins/k8smeta/src/plugin.cpp)
+**Source:** [`README.md:24-54`](../../../refs/falcosecurity/plugins/plugins/k8smeta/README.md#L24-L54), [`src/plugin.cpp:431-554`](../../../refs/falcosecurity/plugins/plugins/k8smeta/src/plugin.cpp#L431-L554)
 
 ---
 
 ## Configuration
+
+Purely numeric `nodeName` values are accepted as JSON integers and converted to decimal strings. This accommodates environment substitution that infers a numeric type. **Source:** [`plugin.cpp:124-130,190-206`](../../../refs/falcosecurity/plugins/plugins/k8smeta/src/plugin.cpp#L124-L130).
 
 ### Required Parameters
 
@@ -227,7 +229,7 @@ The plugin provides 24 fields across 6 Kubernetes resource types:
 |-----------|------|-------------|
 | `collectorHostname` | string | k8s-metacollector hostname/IP |
 | `collectorPort` | integer | k8s-metacollector port (default: 45000) |
-| `nodeName` | string | Kubernetes node name for filtering |
+| `nodeName` | string or integer | Kubernetes node name for filtering |
 
 ### Optional Parameters
 
@@ -237,7 +239,7 @@ The plugin provides 24 fields across 6 Kubernetes resource types:
 | `caPEMBundle` | string | (none) | Path to CA certificate for TLS |
 | `hostProc` | string | `/host` | **DEPRECATED** - No longer used |
 
-**Source:** [`src/plugin.cpp:88-143`](../../../refs/falcosecurity/plugins/plugins/k8smeta/src/plugin.cpp)
+**Source:** [`src/plugin.cpp:88-143`](../../../refs/falcosecurity/plugins/plugins/k8smeta/src/plugin.cpp#L88-L143)
 
 ### Example Configuration
 
@@ -267,7 +269,7 @@ env:
         fieldPath: spec.nodeName
 ```
 
-**Source:** [`README.md:60-109`](../../../refs/falcosecurity/plugins/plugins/k8smeta/README.md)
+**Source:** [`README.md:60-109`](../../../refs/falcosecurity/plugins/plugins/k8smeta/README.md#L60-L109)
 
 ---
 
@@ -300,7 +302,7 @@ struct resource_layout {
 };
 ```
 
-**Source:** [`src/plugin.h:28-48`](../../../refs/falcosecurity/plugins/plugins/k8smeta/src/plugin.h), [`src/plugin.h:272-279`](../../../refs/falcosecurity/plugins/plugins/k8smeta/src/plugin.h)
+**Source:** [`src/plugin.h:28-48`](../../../refs/falcosecurity/plugins/plugins/k8smeta/src/plugin.h#L28-L48), [`src/plugin.h:272-279`](../../../refs/falcosecurity/plugins/plugins/k8smeta/src/plugin.h#L272-L279)
 
 ### Thread Table Integration
 
@@ -312,7 +314,7 @@ The plugin adds a `pod_uid` field to Falco's thread table, allowing efficient lo
 #define POD_UID_FIELD_NAME "pod_uid"
 ```
 
-**Source:** [`src/shared_with_tests_consts.h:66-68`](../../../refs/falcosecurity/plugins/plugins/k8smeta/src/shared_with_tests_consts.h)
+**Source:** [`src/shared_with_tests_consts.h:66-68`](../../../refs/falcosecurity/plugins/plugins/k8smeta/src/shared_with_tests_consts.h#L66-L68)
 
 ---
 
@@ -330,7 +332,7 @@ class K8sMetaClient : public grpc::ClientReadReactor<metadata::Event>
 - **TLS**: Optional TLS with custom CA certificate
 - **Reconnection**: Automatic reconnection with backoff
 
-**Source:** [`src/grpc_client.h:27-64`](../../../refs/falcosecurity/plugins/plugins/k8smeta/src/grpc_client.h)
+**Source:** [`src/grpc_client.h:27-64`](../../../refs/falcosecurity/plugins/plugins/k8smeta/src/grpc_client.h#L27-L64)
 
 ### Event Processing
 
@@ -346,7 +348,7 @@ When an event is received from the collector:
 #define REASON_DELETE "Delete"
 ```
 
-**Source:** [`src/shared_with_tests_consts.h:73-75`](../../../refs/falcosecurity/plugins/plugins/k8smeta/src/shared_with_tests_consts.h)
+**Source:** [`src/shared_with_tests_consts.h:73-75`](../../../refs/falcosecurity/plugins/plugins/k8smeta/src/shared_with_tests_consts.h#L73-L75)
 
 ---
 
@@ -379,7 +381,7 @@ The extracted UID is normalized:
 2. Convert underscores to hyphens (systemd driver)
 3. Result: `93f64796-43b9-468d-b77b-c652c985d5e0`
 
-**Source:** [`src/plugin.cpp:55-82`](../../../refs/falcosecurity/plugins/plugins/k8smeta/src/plugin.cpp)
+**Source:** [`src/plugin.cpp:55-82`](../../../refs/falcosecurity/plugins/plugins/k8smeta/src/plugin.cpp#L55-L82)
 
 ---
 
@@ -467,7 +469,7 @@ The extracted UID is normalized:
   priority: WARNING
 ```
 
-**Source:** [`README.md:119-131`](../../../refs/falcosecurity/plugins/plugins/k8smeta/README.md)
+**Source:** [`README.md:119-131`](../../../refs/falcosecurity/plugins/plugins/k8smeta/README.md#L119-L131)
 
 ### Suggested Output Fields
 
@@ -477,7 +479,7 @@ The plugin marks two fields as suggested output fields:
 
 These will be automatically included in alert outputs.
 
-**Source:** [`src/plugin.cpp:424-432`](../../../refs/falcosecurity/plugins/plugins/k8smeta/src/plugin.cpp)
+**Source:** [`src/plugin.cpp:436-444`](../../../refs/falcosecurity/plugins/plugins/k8smeta/src/plugin.cpp#L436-L444)
 
 ---
 
@@ -498,7 +500,7 @@ The plugins are complementary:
 - **container plugin**: Container-level details from runtime
 - **k8smeta plugin**: Kubernetes object-level details from API server
 
-**Source:** [`README.md:5-9`](../../../refs/falcosecurity/plugins/plugins/k8smeta/README.md)
+**Source:** [`README.md:5-9`](../../../refs/falcosecurity/plugins/plugins/k8smeta/README.md#L5-L9)
 
 ---
 
@@ -506,7 +508,8 @@ The plugins are complementary:
 
 | Version | Release | Changes |
 |---------|---------|---------|
-| v0.4.1 | Current | Dynamic nodeName clarification |
+| v0.4.2 | Current | Accept integer-valued node names after environment substitution |
+| v0.4.1 | Previous | Dynamic nodeName clarification |
 | v0.4.0 | - | Bump to plugin API 3.9.0, event schema 4.0.0 |
 | v0.3.1 | - | Drop experimental status |
 | v0.3.0 | - | Major update, libs 0.20.0 |

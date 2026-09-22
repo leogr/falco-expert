@@ -1,5 +1,5 @@
 # libsinsp (System INSPection Library)
-> **Era:** 0.44 | **Version:** libs 0.25.4 | **Source:** [`refs/falcosecurity/libs/`](../../../refs/falcosecurity/libs/)
+> **Era:** 0.45 | **Version:** libs 0.26.0 | **Source:** [`refs/falcosecurity/libs/`](../../../refs/falcosecurity/libs/)
 
 ## Overview
 
@@ -29,29 +29,20 @@ public:
         unsigned long driver_buffer_bytes_dim = DEFAULT_DRIVER_BUFFER_BYTES_DIM,
         uint16_t cpus_for_each_buffer = DEFAULT_CPU_FOR_EACH_BUFFER,
         bool online_only = true,
-        const libsinsp::events::set<ppm_sc_code>& ppm_sc_of_interest = {});
+        const libsinsp::events::set<ppm_sc_code>& ppm_sc_of_interest = {},
+        bool disable_iterators = false);
 
     virtual void open_kmod(
         unsigned long driver_buffer_bytes_dim = DEFAULT_DRIVER_BUFFER_BYTES_DIM,
         const libsinsp::events::set<ppm_sc_code>& ppm_sc_of_interest = {});
 
-    virtual void open_bpf(
-        const std::string& bpf_path,
-        unsigned long driver_buffer_bytes_dim = DEFAULT_DRIVER_BUFFER_BYTES_DIM,
-        const libsinsp::events::set<ppm_sc_code>& ppm_sc_of_interest = {});
-
     virtual void open_savefile(const std::string& filename, int fd = 0);
+    virtual void open_raw_block(uint8_t** buffer_ptr, uint64_t* buffer_size_ptr);
 
     virtual void open_plugin(
         const std::string& plugin_name,
         const std::string& plugin_open_params,
         sinsp_plugin_platform platform_type);
-
-    virtual void open_gvisor(
-        const std::string& config_path,
-        const std::string& root_path,
-        bool no_events = false,
-        int epoll_timeout = -1);
 
     virtual void open_nodriver(bool full_proc_scan = false);
 
@@ -110,7 +101,8 @@ public:
                                   param_fmt fmt = PF_NORMAL) const;
 
     // File descriptor info
-    sinsp_fdinfo* get_fd_info() const;
+    const sinsp_fdinfo* get_fd_info() const;
+    sinsp_fdinfo* get_fd_info_mut();
     int64_t get_fd_num() const;
 
     // Event direction
@@ -215,7 +207,8 @@ public:
     uint64_t get_num_threads() const;
 
     // File descriptors
-    sinsp_fdinfo* get_fd(int64_t fd);
+    const sinsp_fdinfo* get_fd(int64_t fd) const;
+    sinsp_fdinfo* get_fd_mut(int64_t fd);
     bool loop_fds(sinsp_fdtable::fdtable_const_visitor_t visitor);
     uint64_t get_fd_usage_pct();
     uint64_t get_fd_opencount() const;
@@ -234,7 +227,6 @@ public:
     int64_t m_fd;           // File descriptor number
     scap_fd_type m_type;    // Type (file, socket, pipe, etc.)
     std::string m_name;     // Name/path
-    std::string m_oldname;  // Previous name (for tracking changes)
     uint32_t m_flags;       // Open flags
 
     // Type-specific fields
@@ -363,8 +355,7 @@ const std::shared_ptr<libsinsp::filter::ast::expr>& sinsp::get_filter_ast();
 class sinsp_filter_check {
 public:
     // Get field value from event
-    virtual uint8_t* extract(sinsp_evt* evt, OUT uint32_t* len,
-                             bool sanitize_strings = true) = 0;
+    bool extract(sinsp_evt* evt, std::vector<extract_value_t>& values);
 
     // Compare field value
     virtual bool compare(sinsp_evt* evt);
@@ -374,7 +365,7 @@ public:
 };
 
 // Example: process fields
-class sinsp_filter_check_proc : public sinsp_filter_check {
+class sinsp_filter_check_thread : public sinsp_filter_check {
     // Extracts: proc.pid, proc.name, proc.cmdline, proc.exe, etc.
 };
 
@@ -383,6 +374,14 @@ class sinsp_filter_check_fd : public sinsp_filter_check {
     // Extracts: fd.name, fd.type, fd.sip, fd.sport, etc.
 };
 ```
+
+### FD Sharing and Writable Access (libs 0.26)
+
+Forked processes have distinct FD-table owners whose contents initially share a `shared_ptr` map. A write detaches the map shallowly, then copies only the entry being modified; ordinary read lookups preserve sharing. This is separate from `CLONE_FILES`, which uses the main thread's FD table. The initial process scan also deduplicates content-identical FD entries; equality checks include dynamic state before sharing.
+
+Read through `sinsp_fdtable::find()`, `sinsp_threadinfo::get_fd()` and `sinsp_evt::get_fd_info()`, which return const FD information. Writers use `find_mut()`, `get_fd_mut()` or `get_fd_info_mut()` so copy-on-write runs. Reacquire handles after table mutation; the event tracks its own original FD name for `fd.name_changed`. The old `sinsp_fdinfo::m_oldname` and `FLAGS_IS_CLONED` are removed.
+
+**Sources:** [fdtable.h:62-159,247-270](../../../refs/falcosecurity/libs/userspace/libsinsp/fdtable.h#L62-L159), [fdtable.cpp:77-121](../../../refs/falcosecurity/libs/userspace/libsinsp/fdtable.cpp#L77-L121), [parsers.cpp:842-854](../../../refs/falcosecurity/libs/userspace/libsinsp/parsers.cpp#L842-L854), [sinsp.cpp:387](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp.cpp#L387), [event.h:445-489](../../../refs/falcosecurity/libs/userspace/libsinsp/event.h#L445-L489).
 
 ## State Tables
 

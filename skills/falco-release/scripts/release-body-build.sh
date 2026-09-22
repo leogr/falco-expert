@@ -5,7 +5,7 @@
 # step; the script prints the `gh release edit` command and never runs it.
 #
 # Purpose
-#   The falcosecurity release workflows generate the release body with leodido/rn2md from the
+#   The falcosecurity release workflows generate the release body with rn2md from the
 #   milestone's merged PRs, then append `#### Release Manager @<login>`. When that step fails
 #   (broken pin, token format, expired artifact) the body can be built here with the same tool at
 #   the same pinned commit, then applied by hand.
@@ -18,7 +18,7 @@
 # Flags
 #   --tool-repo / --tool-ref   rn2md source and revision; defaults are the values pinned by the
 #                              workflows (see "Pinned defaults" below); pass a fork revision when the
-#                              pinned build rejects the token (it validates `len=40`)
+#                              libs-pinned build rejects the token (it validates `len=40`)
 #   --branch                   rn2md `-b` (PR base filter); default: the repository's default branch,
 #                              like the action's `github.event.repository.default_branch`
 #   --tag                      release tag for the printed command and for the falco template
@@ -27,7 +27,7 @@
 #                              line; see release-body.yml:86-103 and :148-176)
 #   --falco-source-dir         checkout of falcosecurity/falco at the tag: derive the prefix from
 #                              .github/release_template.md with the LIBSVER/DRIVERVER/FALCOBUCKET/FALCOVER
-#                              substitutions of release.yaml:152-163
+#                              substitutions of release.yaml:167-178
 #   --release-manager          login for the trailer; default: `gh api user --jq .login`
 #
 # Token: read inside the script with `gh auth token` into a variable and handed to the tool through
@@ -42,12 +42,13 @@
 #       --prefix-file /abs/work/libs-badges.md --out /abs/output/body-0.26.0.md
 #   then, by hand:  gh release edit 0.26.0 -R falcosecurity/libs --notes-file /abs/output/body-0.26.0.md
 #
-# Pinned defaults (era 0.44.1 refs; the live upstream master of rn2md is the same commit):
+# Pinned defaults (era 0.45 refs; selected by target repository name):
 #   refs/falcosecurity/libs/.github/workflows/release-body.yml:106   uses: leodido/rn2md@9c351d81278644c0e17b1ca68edbdba305276c73
 #   refs/falcosecurity/libs/.github/workflows/release-body.yml:211   uses: leodido/rn2md@9c351d81278644c0e17b1ca68edbdba305276c73 # main
-#   refs/falcosecurity/falco/.github/workflows/release.yaml:166      uses: leodido/rn2md@9c351d81278644c0e17b1ca68edbdba305276c73
+#   refs/falcosecurity/falco/.github/workflows/release.yaml:181      uses: ekoops/rn2md@a30974f3c228cbca9409a3bb5b6eb17a2eeb9f71
+#   Repositories named falco use the Falco pin; other repositories retain the libs pin.
 #   Body assembly mirrored: libs release-body.yml:105-117 (notes, blank line, Release Manager),
-#   falco release.yaml:152-177 (template substitutions, notes, blank line, Release Manager).
+#   falco release.yaml:167-192 (template substitutions, notes, blank line, Release Manager).
 #   rn2md action.yml runs `./rn2md -b <branch> -r <repo> -m <milestone> -t <token>`.
 # Sources generalized: output/2026-09-22-falco-release-helper-templates/build-bodies.sh and
 #   output/2026-09-14-libs-release-bodies/.
@@ -61,7 +62,7 @@ stamp() { date -u +%FT%TZ; }
 need_abs() { case "$2" in /*) ;; *) die_usage "$1 must be an absolute path: $2";; esac; }
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 
-REPO=""; MILESTONE=""; TOOL_DIR=""; OUT=""; TOOL_REPO="leodido/rn2md"; TOOL_REF="9c351d81278644c0e17b1ca68edbdba305276c73"
+REPO=""; MILESTONE=""; TOOL_DIR=""; OUT=""; TOOL_REPO=""; TOOL_REF=""
 BRANCH=""; TAG=""; PREFIX_FILE=""; FALCO_SRC=""; RM=""
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -83,6 +84,16 @@ while [ $# -gt 0 ]; do
 done
 [ -n "$REPO" ] || die_usage "--repo is required"
 case "$REPO" in */*) ;; *) die_usage "--repo must be owner/repo";; esac
+case "$REPO" in
+  */falco)
+    DEFAULT_TOOL_REPO="ekoops/rn2md"
+    DEFAULT_TOOL_REF="a30974f3c228cbca9409a3bb5b6eb17a2eeb9f71";;
+  *)
+    DEFAULT_TOOL_REPO="leodido/rn2md"
+    DEFAULT_TOOL_REF="9c351d81278644c0e17b1ca68edbdba305276c73";;
+esac
+TOOL_REPO=${TOOL_REPO:-$DEFAULT_TOOL_REPO}
+TOOL_REF=${TOOL_REF:-$DEFAULT_TOOL_REF}
 case "$TOOL_REPO" in */*) ;; *) die_usage "--tool-repo must be owner/repo";; esac
 [ -n "$MILESTONE" ] || die_usage "--milestone is required"
 [ -n "$TOOL_DIR" ] || die_usage "--tool-dir is required"; need_abs --tool-dir "$TOOL_DIR"

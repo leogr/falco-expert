@@ -1,9 +1,9 @@
-# Falco Blog Digest - Era 0.44
+# Falco Blog Digest - Era 0.45
 
-**Context**: This digest covers the Falco blog posts from the falcosecurity/falco-website repository, optimized for Falco era 0.44 (released May 26, 2026).
+**Context**: This digest covers the Falco blog posts from the falcosecurity/falco-website repository, including Falco era 0.45 (released September 21, 2026).
 
 **Important Notes**:
-- Content from previous eras may not fully apply to era 0.44
+- Content from previous eras may not fully apply to era 0.45
 - Features introduced in earlier versions may have evolved or changed
 - Deprecated features are marked accordingly
 - Historical posts are preserved for context but should be used with caution
@@ -12,6 +12,7 @@
 
 ## Table of Contents
 
+1. [Falco 0.45.0 Release Details](#falco-0450-release-details)
 1. [Falco 0.44.0 Release Details](#falco-0440-release-details)
 2. [Falco 0.43.0 Release Details](#falco-0430-release-details)
 3. [Falco 0.43.1 Patch Release](#falco-0431-patch-release)
@@ -24,6 +25,21 @@
 10. [Historical Content Notes](#historical-content-notes)
 
 ---
+
+## Falco 0.45.0 Release Details
+
+The September 21, 2026 announcement covers libs `0.26.0`, drivers `11.0.0+driver`, falcoctl `0.14.2`, container plugin `0.7.4`, stable rules `5.2.0`, and Helm chart `9.2.0`. **Source:** [release announcement](../../../refs/falcosecurity/falco-website/content/en/blog/falco-0-45.0/index.md#L1-L16), [Kubernetes section](../../../refs/falcosecurity/falco-website/content/en/blog/falco-0-45.0/index.md#L148-L159).
+
+- Rule conditions preserve raw field bytes and accept `\xHH` byte escapes; `regex` still uses sanitized input. Text and JSON output escape control characters and replace invalid UTF-8. Review rules and output consumers that depended on the previous representation. **Source:** [matching and output](../../../refs/falcosecurity/falco-website/content/en/blog/falco-0-45.0/index.md#L37-L54).
+- Incubating reload interfaces add webserver `GET /reload` status and optional local Unix-socket `POST /reload` control. `SIGHUP` works with automatic file watching disabled, including requests arriving during restart. **Source:** [reload interfaces](../../../refs/falcosecurity/falco-website/content/en/blog/falco-0-45.0/index.md#L56-L68).
+- Package upgrades restore the selected service/driver, migrate package-default pins while preserving distinct custom pins, and preserve administrator-created service masks. falcoctl preserves DKMS installations. **Source:** [package lifecycle](../../../refs/falcosecurity/falco-website/content/en/blog/falco-0-45.0/index.md#L70-L84).
+- The modern eBPF driver protects event construction across preemption using two auxiliary segments per possible CPU, with new reentrancy/pool-exhaustion drop counters and migration diagnostics. The driver API major is `11.0.0`; deployments need compatible drivers. **Source:** [driver changes](../../../refs/falcosecurity/falco-website/content/en/blog/falco-0-45.0/index.md#L107-L118), [precise memory accounting](../../../refs/falcosecurity/falco-website/content/en/docs/concepts/event-sources/kernel/_index.md#L60-L65).
+- Container startup has a default ten-second engine timeout and background recovery for interrupted initial inspection. Sandbox rules `6.2.0` add two disabled-by-default GPU activity detections; tune legitimate GPU workloads before enabling them. **Source:** [plugins and rules](../../../refs/falcosecurity/falco-website/content/en/blog/falco-0-45.0/index.md#L120-L146).
+- Chart `9.2.0` mounts runtime socket directories and gives configuration snippets a dedicated `emptyDir`; it also adds ServiceAccount labels and revision history controls. **Source:** [chart changes](../../../refs/falcosecurity/falco-website/content/en/blog/falco-0-45.0/index.md#L148-L159).
+
+- Wildcard rule/file matching retries later candidates, so a pattern such as `*.yaml` matches `backup.yaml.yaml`. Hardening covers pidfile symlink rejection, an absolute fallback `modprobe` path, malformed replay-event checks, and FD-cache invalidation after `close_range` followed by `dup2`/`dup3`. **Source:** [matching and hardening](../../../refs/falcosecurity/falco-website/content/en/blog/falco-0-45.0/index.md#L87-L105).
+
+The older release sections below describe their original eras; their version tables are historical.
 
 ## Falco 0.44.0 Release Details
 
@@ -181,8 +197,9 @@ No driver change in 0.43.1: still ships with **9.1.0+driver** (same as 0.43.0).
 
 | Date | Version | Title | Era Relevance |
 |------|---------|-------|---------------|
-| 2026-05-26 | **0.44.0** | [Introducing Falco 0.44.0](../../../refs/falcosecurity/falco-website/content/en/blog/falco-0-44.0/index.md) | **Current Era** |
-| 2026-01-26 | 0.43.0 | [Introducing Falco 0.43.0](../../../refs/falcosecurity/falco-website/content/en/blog/falco-0-43.0/index.md) | Previous Era |
+| 2026-09-21 | **0.45.0** | [Introducing Falco 0.45.0](../../../refs/falcosecurity/falco-website/content/en/blog/falco-0-45.0/index.md) | **Current Era** |
+| 2026-05-26 | 0.44.0 | [Introducing Falco 0.44.0](../../../refs/falcosecurity/falco-website/content/en/blog/falco-0-44.0/index.md) | Previous Era |
+| 2026-01-26 | 0.43.0 | [Introducing Falco 0.43.0](../../../refs/falcosecurity/falco-website/content/en/blog/falco-0-43.0/index.md) | Historical |
 | 2025-10-22 | 0.42.0 | [Introducing Falco 0.42.0](../../../refs/falcosecurity/falco-website/content/en/blog/falco-0-42.0/index.md) | Historical (0.43 built on this) |
 | 2025-05-29 | 0.41.0 | [Introducing Falco 0.41.0](../../../refs/falcosecurity/falco-website/content/en/blog/falco-0-41.0/index.md) | Recent |
 | 2025-01-28 | 0.40.0 | [Introducing Falco 0.40.0](../../../refs/falcosecurity/falco-website/content/en/blog/falco-0-40.0/index.md) | Recent |
@@ -208,7 +225,7 @@ No driver change in 0.43.1: still ships with **9.1.0+driver** (same as 0.43.0).
 
 ## Release Announcements
 
-### Current Era (0.40.0 - 0.44.0)
+### Earlier Releases (0.40.0 - 0.44.0)
 
 #### Falco 0.42.0 (October 2025) - Foundation for 0.43
 
@@ -268,29 +285,29 @@ Key features consolidated in 0.43:
 
 ## Feature Introductions
 
-### Features Still Relevant to 0.44
+### Established Features Relevant to 0.45
 
-| Feature | Introduced | Status in 0.44 |
+| Feature | Introduced | Status in 0.45 |
 |---------|-----------|----------------|
 | Modern eBPF Probe (CO-RE) | 0.34.0 | **Sole eBPF driver** — legacy eBPF removed in 0.44 |
 | Plugin System | 0.31.0 | Stable |
 | Adaptive Syscall Selection | 0.35.0 | Stable |
 | Rule Exceptions | 0.28.0 | Stable (gained `oneof`/`anyof`/`allof` modifiers in 0.44) |
-| Falcosidekick Integration | 2019 | Stable - Now the only fan-out option (gRPC removed in 0.44) |
-| k8smeta Plugin | 2024 | Stable (v0.4.1 in 0.44) |
-| Container Plugin | 0.41.0 | Stable (v0.7.1 bundled in 0.44) |
+| Falcosidekick Integration | 2019 | Stable alert forwarding integration |
+| k8smeta Plugin | 2024 | Stable; see the [k8smeta digest](../plugins/k8smeta.md) for the current pin |
+| Container Plugin | 0.41.0 | Stable (v0.7.4 bundled in 0.45) |
 | Capture Recording | 0.42.0 | Sandbox maturity (gained `capture.max_file_size_mb` hard cap in 0.44) |
 | Append Output | 0.39.0 | Stable |
 | Static Fields | 0.42.0 | Stable |
-| Comparison list modifiers (`oneof`/`anyof`/`allof`) | 0.44.0 | **New** — Stable |
-| `--format json` for listing CLI | 0.44.0 | **New** — Stable |
+| Comparison list modifiers (`oneof`/`anyof`/`allof`) | 0.44.0 | Stable |
+| `--format json` for listing CLI | 0.44.0 | Stable |
 
 ### Key Feature Blog Posts
 
 #### Modern eBPF Probe
 - **Post**: [Getting started with modern BPF probe in Falco](../../../refs/falcosecurity/falco-website/content/en/blog/falco-modern-bpf/index.md) (2022-11-30)
 - **Post**: [Modern eBPF probe is ready to shine](../../../refs/falcosecurity/falco-website/content/en/blog/falco-modern-bpf-0-35-0/index.md) (2023-06-14)
-- **Status**: Production-ready since 0.35.0, **the sole eBPF driver in 0.44** (legacy eBPF removed)
+- **Status**: Production-ready since 0.35.0, **the sole eBPF driver in 0.45** (legacy eBPF removed)
 - **Requirements**: Linux kernel 5.8+, BTF support
 
 #### Plugin System
@@ -311,9 +328,11 @@ Key features consolidated in 0.43:
 
 ## Tutorials and How-Tos
 
-### Still Relevant Tutorials
+### Tutorials by Topic
 
-| Title | Date | Topic | 0.44 Relevance |
+The relevance labels are topic-level guidance, not a claim that every historical command or version remains valid.
+
+| Title | Date | Topic | Topic Relevance |
 |-------|------|-------|----------------|
 | [How to Deploy Falco with k8s-metacollector + k8smeta Plugin](../../../refs/falcosecurity/falco-website/content/en/blog/falco-k8smeta-plugin/index.md) | 2024-10-14 | Kubernetes enrichment | High |
 | [Deploy Falco on a Talos cluster](../../../refs/falcosecurity/falco-website/content/en/blog/talos/index.md) | 2024-07-22 | Talos Linux | High |
@@ -361,7 +380,7 @@ The "Kubernetes Response Engine" blog series demonstrates integration patterns:
 - Part 5: Falcosidekick + Argo
 - Part 6-9: Cloud Run, Cloud Functions, Flux v2, Fission
 
-**Note**: For 0.44, consider using **Falco Talon** as a dedicated response engine.
+**Falco Talon** is a dedicated response engine; see its [current digest](../falco-talon.md) for release and development-snapshot scope.
 
 ---
 
@@ -378,19 +397,19 @@ The "Kubernetes Response Engine" blog series demonstrates integration patterns:
 ### Ecosystem Tools
 
 #### Falcosidekick
-- **Latest blog-announced release**: [2.31.0](../../../refs/falcosecurity/falco-website/content/en/blog/falcosidekick-2-31-0/index.md) (February 2025); the 0.44-era reference release is 2.34.1 (no dedicated blog post)
+- **Latest blog-announced release**: [2.31.0](../../../refs/falcosecurity/falco-website/content/en/blog/falcosidekick-2-31-0/index.md) (February 2025); the [0.45-era reference release is 2.35.0](../falcosidekick/README.md) (no dedicated blog post)
 - 60+ output integrations
 - AWS Security Lake, OTLP Metrics support
 - Recommended replacement for the removed gRPC output (removed in 0.44)
 
 #### Falco Talon
-- **Latest**: [v0.3.0](../../../refs/falcosecurity/falco-website/content/en/blog/falco-talon-v0-3-0/index.md) (February 2025)
+- **Latest blog-announced release**: [v0.3.0](../../../refs/falcosecurity/falco-website/content/en/blog/falco-talon-v0-3-0/index.md) (February 2025)
 - Response engine for automated remediation
 - New `kubernetes:sysdig` actionner for syscall capture
 - S3/Minio export support
 
 #### Falcosidekick-UI
-- **Latest**: [2.2.0](../../../refs/falcosecurity/falco-website/content/en/blog/falcosidekick-ui-2-2-0/index.md) (September 2023)
+- **Latest blog-announced release**: [2.2.0](../../../refs/falcosecurity/falco-website/content/en/blog/falcosidekick-ui-2-2-0/index.md) (September 2023)
 - Real-time event visualization
 - Authentication support (can be disabled)
 
@@ -398,7 +417,7 @@ The "Kubernetes Response Engine" blog series demonstrates integration patterns:
 
 ## Historical Content Notes
 
-### Deprecated/Removed Features (Do Not Use in 0.44)
+### Deprecated/Removed Features (Current Era)
 
 | Feature | Deprecated In | Removal Status |
 |---------|--------------|----------------|
@@ -411,7 +430,7 @@ The "Kubernetes Response Engine" blog series demonstrates integration patterns:
 
 ### Configuration Changes Over Time
 
-| Old Option | New Option (0.44) |
+| Old Option | Current Option |
 |------------|-------------------|
 | `--modern_ebpf` | `engine.kind: modern_ebpf` |
 | `--nodriver` | `engine.kind: nodriver` |
@@ -426,14 +445,14 @@ The "Kubernetes Response Engine" blog series demonstrates integration patterns:
 
 ### Docker Image Evolution
 
-| Old Image | Current Equivalent (0.44) |
+| Old Image | Current Equivalent |
 |-----------|---------------------------|
 | `falcosecurity/falco-distroless` | `falcosecurity/falco:x.y.z` |
 | `falcosecurity/falco-no-driver` | `falcosecurity/falco:x.y.z-debian` |
 
 ---
 
-## Quick Reference for 0.44 Users
+## Quick Reference for 0.45 Users
 
 ### Available Driver Kinds
 
@@ -444,7 +463,7 @@ The "Kubernetes Response Engine" blog series demonstrates integration patterns:
 
 > Legacy eBPF and gVisor are no longer available — both removed in 0.44.0.
 
-### Essential Configuration for 0.44
+### Essential Configuration for 0.45
 
 ```yaml
 # Recommended engine configuration
@@ -462,7 +481,7 @@ capture:
   path_prefix: /tmp/falco
   mode: rules
   default_duration: 5000      # ms
-  # New in 0.44: hard cap on capture file size (0 = unlimited, max 1,048,576 MB)
+  # Since 0.44: hard cap on capture file size (0 = unlimited, max 1,048,576 MB)
   max_file_size_mb: 100
 
 # Static fields
@@ -481,6 +500,7 @@ Pre-existing installations must import the new GPG key for package updates:
 
 | Topic | Source File |
 |-------|-------------|
+| Falco 0.45.0 release | [`blog/falco-0-45.0/index.md`](../../../refs/falcosecurity/falco-website/content/en/blog/falco-0-45.0/index.md) |
 | Falco 0.44.0 release | [`blog/falco-0-44.0/index.md`](../../../refs/falcosecurity/falco-website/content/en/blog/falco-0-44.0/index.md) |
 | Falco 0.43.0 release | [`blog/falco-0-43.0/index.md`](../../../refs/falcosecurity/falco-website/content/en/blog/falco-0-43.0/index.md) |
 | Falco 0.42.0 release | [`blog/falco-0-42.0/index.md`](../../../refs/falcosecurity/falco-website/content/en/blog/falco-0-42.0/index.md) |
@@ -492,4 +512,4 @@ Pre-existing installations must import the new GPG key for package updates:
 | Falcosidekick 2.31.0 | [`blog/falcosidekick-2-31-0/index.md`](../../../refs/falcosecurity/falco-website/content/en/blog/falcosidekick-2-31-0/index.md) |
 | Falco Talon v0.3.0 | [`blog/falco-talon-v0-3-0/index.md`](../../../refs/falcosecurity/falco-website/content/en/blog/falco-talon-v0-3-0/index.md) |
 
-*Generated for Falco 0.44 era. Last updated: 2026-06-10*
+*Updated for Falco 0.45 era: 2026-09-22*

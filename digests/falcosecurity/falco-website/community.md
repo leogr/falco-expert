@@ -1,6 +1,6 @@
 # Falco Community Digest
 
-> AI-optimized digest for Falco 0.44
+> AI-optimized digest for Falco 0.45
 
 ## [Overview](../../../refs/falcosecurity/falco-website/content/en/community/_index.md)
 
@@ -29,7 +29,7 @@ Falco is an open source security project hosted by the CNCF. The community welco
 - **Calendar**: https://lists.cncf.io/g/cncf-falco-dev/calendar
 - **Recorded Calls**: https://www.youtube.com/playlist?list=PLgVVUpW8NIJAaZtszf1_nxB2y6mQrlY4s
 
-**Source:** [_index.md](../../../refs/falcosecurity/falco-website/content/en/community/_index.md)
+**Source:** [community layout:144](../../../refs/falcosecurity/falco-website/layouts/community/list.html#L144), [community README:38-42](../../../refs/falcosecurity/community/README.md#L38-L42).
 
 ## [How to Contribute](../../../refs/falcosecurity/falco-website/content/en/docs/contribute/_index.md)
 

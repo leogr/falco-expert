@@ -1,6 +1,6 @@
 # falco-rustlings Digest
 
-> **Era Relevance:** 0.44 (Compatible) | **Source:** [`refs/falcosecurity/falco-rustlings/`](../../refs/falcosecurity/falco-rustlings/) | **Commit:** `10adcbd` (January 16, 2025)
+> **Era Relevance:** 0.45 (historical learning material) | **Source:** [`refs/falcosecurity/falco-rustlings/`](../../refs/falcosecurity/falco-rustlings/)
 
 **Repository:** [falcosecurity/falco-rustlings](https://github.com/falcosecurity/falco-rustlings)
 **Scope:** Ecosystem

@@ -1,6 +1,6 @@
 # Falcosidekick Outputs Reference
 
-> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/falcosidekick/docs/outputs/`](../../../refs/falcosecurity/falcosidekick/docs/outputs/)
+> **Era Relevance:** 0.45 | **Source:** [`refs/falcosecurity/falcosidekick/docs/outputs/`](../../../refs/falcosecurity/falcosidekick/docs/outputs/)
 
 Complete reference for all 70+ Falcosidekick output integrations, organized by category.
 
@@ -361,13 +361,14 @@ otlp:
     duration: 1000                  # Trace duration in ms
     extraenvvars: {}
     synced: false
+    tls: false
     checkcert: true
     minimumpriority: ""
 ```
 
 **Docs:** [`docs/outputs/otlp_traces.md`](../../../refs/falcosecurity/falcosidekick/docs/outputs/otlp_traces.md)
 
-> **Robust field handling:** The OTLP Traces and Spyderbat outputs use checked type assertions when reading `output_fields`, so events whose fields are missing or of an unexpected type are handled gracefully (zero value or a returned error) instead of panicking. See [`outputs/otlp_traces.go:110-114`](../../../refs/falcosecurity/falcosidekick/outputs/otlp_traces.go) and [`outputs/spyderbat.go:152`](../../../refs/falcosecurity/falcosidekick/outputs/spyderbat.go).
+> **Robust field handling:** The OTLP Traces and Spyderbat outputs use checked type assertions when reading `output_fields`, so events whose fields are missing or of an unexpected type are handled gracefully (zero value or a returned error) instead of panicking. See [`outputs/otlp_traces.go:110-114`](../../../refs/falcosecurity/falcosidekick/outputs/otlp_traces.go#L110-L114) and [`outputs/spyderbat.go:152`](../../../refs/falcosecurity/falcosidekick/outputs/spyderbat.go#L152).
 
 ## Response Engine
 
@@ -443,6 +444,16 @@ All YAML settings can be set via environment variables:
 - Example: `slack.webhookurl` → `SLACK_WEBHOOKURL`
 
 Environment variables override YAML file settings.
+
+## Falcosidekick 2.35.0 Behavior
+
+Fan-out collects the enabled dispatches before launching them. When there is more than one output, each dispatch receives a copied `OutputFields` map and `Tags` slice; map values are copied as values, not recursively cloned. Dispatch goroutines retain panic recovery. This isolates top-level field/tag mutations between outputs.
+
+OTLP traces, logs and metrics each expose `tls` (default false) alongside `checkcert` (default true). With `checkcert: false`, `tls: true` retains encryption while skipping certificate verification; `tls: false` selects the exporter's insecure transport. With `checkcert: true`, endpoint/SDK transport configuration applies. Logs use their own settings, not the traces settings.
+
+Other verified fixes: Alertmanager accepts numeric drop counters without asserting a string; AWS S3 uploads request CRC32 checksums; PolicyReport timestamps use Unix seconds; Dynatrace checks field types; SMTP dates use RFC 2822 ordering. Telegram's host defaults to `https://api.telegram.org` even when omitted or empty.
+
+**Source:** [`handlers.go:313-597`](../../../refs/falcosecurity/falcosidekick/handlers.go), [`types.go:32-49`](../../../refs/falcosecurity/falcosidekick/types/types.go), [`otlp_logs.go:82-106`](../../../refs/falcosecurity/falcosidekick/outputs/otlp_logs.go), [`otlp_traces_init.go:39-64`](../../../refs/falcosecurity/falcosidekick/outputs/otlp_traces_init.go), [`otlp_metrics.go:149-176`](../../../refs/falcosecurity/falcosidekick/outputs/otlp_metrics/otlp_metrics.go), [`alertmanager.go:75-106`](../../../refs/falcosecurity/falcosidekick/outputs/alertmanager.go), [`aws.go:168-179`](../../../refs/falcosecurity/falcosidekick/outputs/aws.go), [`policyreport.go:180-191`](../../../refs/falcosecurity/falcosidekick/outputs/policyreport.go), [`dynatrace.go:80-114`](../../../refs/falcosecurity/falcosidekick/outputs/dynatrace.go), [`smtp.go:25`](../../../refs/falcosecurity/falcosidekick/outputs/smtp.go), [`config.go:409-412,934-936`](../../../refs/falcosecurity/falcosidekick/config.go).
 
 ## Sources
 

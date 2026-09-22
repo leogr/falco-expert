@@ -1,6 +1,6 @@
 # Falco Architecture
 
-> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/falco/`](../../../refs/falcosecurity/falco/) | **Version:** 0.44.1
+> **Era Relevance:** 0.45 | **Source:** [`refs/falcosecurity/falco/`](../../../refs/falcosecurity/falco/) | **Version:** 0.45.0
 
 ## Overview
 
@@ -121,48 +121,47 @@ int main(int argc, char **argv) {
 
 ### Startup Sequence (run_steps)
 
-The startup sequence is defined in [`app.cpp:56-88`](../../../refs/falcosecurity/falco/userspace/falco/app/app.cpp). Each action is executed in order:
+The ordered actions are defined in [`app.cpp:63-92`](../../../refs/falcosecurity/falco/userspace/falco/app/app.cpp#L63-L92):
 
 | Step | Action | Purpose |
 |------|--------|---------|
-| 1 | `print_help` | Display help and exit if `-h` |
-| 2 | `print_config_schema` | Output config JSON schema if requested |
+| 1 | `print_help` | Display help text and exit if `-h` flag |
+| 2 | `print_config_schema` | Output configuration JSON schema if requested |
 | 3 | `print_rule_schema` | Output rule JSON schema if requested |
 | 4 | `print_ignored_events` | List ignored events if requested |
 | 5 | `print_syscall_events` | List syscall events if requested |
-| 6 | `load_config` | Parse falco.yaml configuration |
-| 7 | `print_kernel_version` | Log kernel version info (when using a kernel driver) |
-| 8 | `print_version` | Show Falco version if `--version` |
+| 6 | **`load_config`** | **Parse `falco.yaml` configuration file** |
+| 7 | `print_kernel_version` | Show kernel version if requested |
+| 8 | `print_version` | Show Falco version if requested |
 | 9 | `print_page_size` | Display system page size |
-| 11 | `require_config_file` | Validate config file exists |
-| 12 | `print_plugin_info` | Show plugin info if requested |
-| 13 | `list_plugins` | List available plugins if requested |
-| 14 | **`load_plugins`** | Load all configured plugins |
-| 15 | **`init_inspectors`** | Create sinsp inspectors per source |
-| 16 | **`init_falco_engine`** | Initialize rule engine with sources |
-| 17 | `list_fields` | List available fields if requested |
-| 18 | `select_event_sources` | Apply `--enable-source`/`--disable-source` |
-| 19 | `validate_rules_files` | Validate rules syntax |
-| 20 | **`load_rules_files`** | Load and compile rules |
-| 21 | `print_support` | Output support info if requested |
-| 22 | **`init_outputs`** | Initialize output channels |
-| 23 | `create_signal_handlers` | Set up SIGINT, SIGHUP, SIGUSR1 |
-| 24 | `create_requested_paths` | Create dirs for outputs/captures |
-| 25 | `pidfile` | Write PID file if configured |
-| 26 | `configure_interesting_sets` | Compute syscall sets for filtering |
-| 27 | `configure_syscall_buffer_size` | Set driver buffer size |
-| 28 | `configure_syscall_buffer_num` | Set number of buffers |
-| 29 | `start_webserver` | Start health/metrics webserver |
-| 30 | **`process_events`** | Main event loop (blocking) |
+| 10 | `require_config_file` | Validate that config file exists |
+| 11 | `print_plugin_info` | Show plugin info if `--plugin-info` requested |
+| 12 | `list_plugins` | List available plugins if `--list-plugins` requested |
+| 13 | **`load_plugins`** | **Load all configured plugins into offline_inspector** |
+| 14 | **`init_inspectors`** | **Create sinsp inspectors per event source** |
+| 15 | **`init_falco_engine`** | **Initialize rule engine with sources, filter/formatter factories** |
+| 16 | `list_fields` | List available fields if `--list` requested |
+| 17 | `select_event_sources` | Apply `--enable-source` / `--disable-source` filters |
+| 18 | `validate_rules_files` | Validate rules syntax (dry-run validation) |
+| 19 | **`load_rules_files`** | **Load and compile detection rules** |
+| 20 | `print_support` | Output support info if requested |
+| 21 | **`init_outputs`** | **Initialize output channels (stdout, file, syslog, http, etc.)** |
+| 22 | `create_signal_handlers` | Initialize persistent SIGHUP handling, install other signal handlers, start restart worker |
+| 23 | `pidfile` | Write PID file if `--pidfile` configured |
+| 24 | `configure_interesting_sets` | Compute syscall sets for kernel-level filtering |
+| 25 | `configure_syscall_buffer_size` | Set driver ring buffer size |
+| 26 | `configure_syscall_buffer_num` | Set number of ring buffers |
+| 27 | `start_webserver` | Start optional Unix reload listener and health/metrics webserver (non-minimal live mode) |
+| 28 | **`process_events`** | **Main event loop (blocking until termination)** |
 
 ### Teardown Sequence
 
-Teardown runs regardless of success/failure ([`app.cpp:90-95`](../../../refs/falcosecurity/falco/userspace/falco/app/app.cpp)):
+Teardown runs regardless of success/failure ([`app.cpp:97-102`](../../../refs/falcosecurity/falco/userspace/falco/app/app.cpp#L97-L102)):
 
 | Step | Action | Purpose |
 |------|--------|---------|
-| 1 | `unregister_signal_handlers` | Reset signal handlers to default |
-| 2 | `stop_webserver` | Stop health webserver |
+| 1 | `unregister_signal_handlers` | Stop restart worker; reset SIGINT/SIGTERM/SIGUSR1; preserve SIGHUP |
+| 2 | `stop_webserver` | Stop Unix reload listener and health/metrics webserver |
 | 3 | `cleanup_outputs` | Reset outputs (prints stats internally) |
 | 4 | `close_inspectors` | Close all sinsp inspectors |
 
@@ -202,6 +201,9 @@ struct state {
 
     // Servers (conditional compilation)
     falco_webserver webserver;
+#ifdef __linux__
+    falco_reload_control reload_control;
+#endif
 };
 ```
 
@@ -250,7 +252,7 @@ The main event loop is in [`process_events.cpp`](../../../refs/falcosecurity/fal
 **Capture Mode** (trace file):
 ```cpp
 // process_events.cpp:517-524
-if(s.is_capture_mode()) {
+if(s.is_replaying()) {
     res = open_offline_inspector(s);
     process_inspector_events(s, s.offline_inspector, statsw, "", nullptr, &res);
     s.offline_inspector->close();
@@ -278,7 +280,7 @@ for(const auto& source : s.enabled_sources) {
 
 ### The do_inspect Loop
 
-Core event processing ([`process_events.cpp:104-365`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/process_events.cpp)):
+Core event processing ([`process_events.cpp:105-369`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/process_events.cpp#L105-L369)):
 
 ```cpp
 while(1) {
@@ -315,7 +317,7 @@ while(1) {
 
 ### Rule Matching
 
-The rule matching is performed by `falco_engine::process_event()` ([`falco_engine.h:259-262`](../../../refs/falcosecurity/falco/userspace/engine/falco_engine.h)):
+The rule matching is performed by `falco_engine::process_event()` ([`falco_engine.h:259-262`](../../../refs/falcosecurity/falco/userspace/engine/falco_engine.h#L259-L262)):
 
 ```cpp
 std::unique_ptr<std::vector<rule_result>> process_event(
@@ -348,7 +350,7 @@ else {
 }
 ```
 
-**Filter Factory Setup** ([`init_falco_engine.cpp:114-127`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/init_falco_engine.cpp)):
+**Filter Factory Setup** ([`init_falco_engine.cpp:114-127`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/init_falco_engine.cpp#L114-L127)):
 
 ```cpp
 void add_source_to_engine(state& s, const std::string& src) {
@@ -364,7 +366,7 @@ void add_source_to_engine(state& s, const std::string& src) {
 
 ### libscap Integration
 
-Driver selection is handled in [`helpers_inspector.cpp:43-149`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/helpers_inspector.cpp):
+Driver selection is handled in [`helpers_inspector.cpp:130-226`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/helpers_inspector.cpp#L130-L226):
 
 | Engine Mode | Inspector Call |
 |-------------|----------------|
@@ -466,38 +468,25 @@ if(s.enabled_sources.size() > 1) {
 
 ## Hot Reload
 
-### restart_handler
+Falco reloads by validating a temporary dry-run state, tearing down the active run, and executing the full startup sequence again within the same process. File watching (`watch_config_files`), SIGHUP and the optional Unix HTTP control listener all use this path. Validation failure emits an internal critical alert and leaves the running state active; success does not guarantee later resource acquisition will succeed.
 
-The [`restart_handler`](../../../refs/falcosecurity/falco/userspace/falco/app/restart_handler.h) watches files/directories using inotify:
+| Signal | Effect |
+|--------|--------|
+| `SIGINT` / `SIGTERM` | Trigger an atomic termination flag |
+| `SIGUSR1` | Trigger an atomic output-reopen flag |
+| `SIGHUP` | Increment a lock-free request counter and wake a process-lifetime eventfd |
 
-```cpp
-class restart_handler {
-    using on_check_t = std::function<bool()>;  // Validation callback
-    using watch_list_t = std::vector<std::string>;
+The SIGHUP handler and descriptor survive run teardown. The restart worker handles request counters and inotify events outside signal context, validates after debounce, and repeats validation for intervening requests/changes. It is started even with file watching disabled; inotify is allocated only when paths are watched.
 
-    restart_handler(on_check_t on_check,
-                    const watch_list_t& watch_files,
-                    const watch_list_t& watch_dirs);
-};
-```
+**Source:** [`create_signal_handlers.cpp:35-117,151-230`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/create_signal_handlers.cpp#L35-L230), [`restart_handler.cpp:71-282`](../../../refs/falcosecurity/falco/userspace/falco/app/restart_handler.cpp#L71-L282), [`app.cpp:55-121`](../../../refs/falcosecurity/falco/userspace/falco/app/app.cpp#L55-L121).
 
-### Signal Handling
+### Reload Status and Control (0.45)
 
-Signal handlers trigger atomic flags ([`create_signal_handlers.cpp`](../../../refs/falcosecurity/falco/userspace/falco/app/actions/create_signal_handlers.cpp)):
+`GET /reload` exposes `instance_id`, `started_generation`, `applied_generation`, `rejected_generation`, and `ready` on the TCP webserver and optional Unix listener. Readiness means every enabled live source has started capture; stopping/failing sources or teardown clear it. A failed validation can leave the prior run ready while advancing `rejected_generation`.
 
-| Signal | Handler | Effect |
-|--------|---------|--------|
-| `SIGINT`/`SIGTERM` | `g_terminate_signal.trigger()` | Graceful shutdown |
-| `SIGHUP` | `restart_handler->trigger()` | Hot restart |
-| `SIGUSR1` | `g_reopen_outputs_signal.trigger()` | Reopen output files |
+`reload_control.enabled` starts a separate Linux, non-minimal Unix listener, independent of `webserver.enabled`. Only this listener accepts `POST /reload`. A bodyless, queryless request returns 202 with a generation baseline. Clients finish writes first and observe the same instance until `ready=true` and `applied_generation > max(baseline, rejected_generation)`; they retry GET through reload outages and request again after an instance change. HTTP 200 from GET alone does not establish reload success. See [reload configuration](configuration.md#hot-reload) for permissions and failure semantics.
 
-### Hot Restart Process
-
-1. `SIGHUP` received or file change detected
-2. Validation: dry-run with new config/rules
-3. If valid: `s.restart.store(true)` and break from event loop
-4. Main loop restarts: `falco_run()` called again
-5. Full re-initialization with updated config/rules
+**Source:** [`reload_control.cpp:210-334`](../../../refs/falcosecurity/falco/userspace/falco/reload_control.cpp#L210-L334), [`reload_state.cpp:37-76`](../../../refs/falcosecurity/falco/userspace/falco/app/reload_state.cpp#L37-L76), [`webserver.cpp:50-60`](../../../refs/falcosecurity/falco/userspace/falco/webserver.cpp#L50-L60), [`falco.yaml:967-994`](../../../refs/falcosecurity/falco/falco.yaml#L967-L994).
 
 ## Build System
 

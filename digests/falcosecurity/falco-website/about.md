@@ -1,6 +1,8 @@
 # Falco About and Marketing Content Digest
 
-Era: 0.44
+Era: 0.45
+
+The about pages and case studies did not change between the era pins. Numerical claims below summarize those published pages; they are not live measurements. Current driver and metadata guidance takes precedence over stale FAQ examples.
 
 ## What is Falco
 
@@ -246,7 +248,7 @@ The Falco Project provides thousands of prebuilt drivers for major Linux distrib
 ### Can I build the kernel driver for custom kernels?
 
 Yes:
-- **Kernel module/old eBPF**: Need extracted kernel headers
+- **Kernel module**: Needs matching kernel headers
 - **Modern eBPF** (kernels >= 5.8): No kernel headers needed (uses BTF/eBPF CORE)
 
 ### How to reduce excessive notifications?
@@ -255,7 +257,6 @@ Yes:
 - Use tags for rule filtering
 - Override default macros
 - Configure minimum rule priority threshold
-- Use rate limiter (may reduce threat visibility)
 
 ### Falco not triggering alerts - what's wrong?
 
@@ -272,7 +273,7 @@ Falco supports specific system call event types (see documentation). By default,
 
 ### Do I need -k flag for Kubernetes metadata?
 
-No. Fields like `k8s.ns.name`, `k8s.pod.name`, `k8s.pod.id`, `k8s.pod.labels` are populated from container runtime without the Kubernetes Metadata Enrichment (-k) option.
+The old `-k` option is absent from the current CLI. Load and configure the container plugin to obtain `k8s.*` fields from the container runtime; the richer `k8smeta.*` fields come from the separate Kubernetes metadata plugin. [Source: current CLI](../../../refs/falcosecurity/falco-website/content/en/docs/reference/daemon/cli-arguments/cli-arguments.md), [container troubleshooting](../../../refs/falcosecurity/falco-website/content/en/docs/troubleshooting/missing-fields.md#L23-L73), [k8smeta fields](../../../refs/falcosecurity/plugins/plugins/k8smeta/README.md).
 
 ### What is Falco's performance overhead?
 

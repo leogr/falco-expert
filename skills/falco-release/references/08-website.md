@@ -4,17 +4,17 @@ The website runs in parallel with the code and finishes on release day. Its rele
 
 ## Snapshot of the previous version (minor releases only)
 
-Every new minor archives a snapshot of the whole site, served from a version subdomain; the main site points at the new minor **only after** the snapshot exists ([`release.md:L12-18`](../../../refs/falcosecurity/falco-website/release.md), [`L57`](../../../refs/falcosecurity/falco-website/release.md)). Steps ([`L24-53`](../../../refs/falcosecurity/falco-website/release.md)):
+Every new minor archives a snapshot of the whole site, served from a version subdomain; the main site points at the new minor **only after** the snapshot exists ([`release.md:L12-18`](../../../refs/falcosecurity/falco-website/release.md#L12-L18), [`L57`](../../../refs/falcosecurity/falco-website/release.md#L57)). Steps ([`L24-53`](../../../refs/falcosecurity/falco-website/release.md#L24-L53)):
 
 1. Create the branch `v0.<minor>` from the default branch head (check it does not exist first).
 2. The hosting provider's branch deploy and branch subdomain are the maintainer's manual steps; ask them to confirm each before continuing.
 3. On the branch, edit the versions parameters: `archived_version: true`, `version` set to the last patch of the archived minor, and the first `versions:` block rewritten to the archived entry (`githubbranch` = the patch tag, `docsbranch` = the branch, `url` = the subdomain).
 4. Verify the archived site answers and shows the archived banner ([`scripts/wait-url-live.py`](../scripts/wait-url-live.py)).
-5. Protect the snapshot branch with a PR in the infra repository's branch-protection configuration (the live path may differ from the pinned [`config.yaml:L297-339`](../../../refs/falcosecurity/test-infra/config/config.yaml); locate it first). An infra repository mid-migration is parked: ask.
+5. Protect the snapshot branch with a PR in the infra repository's branch-protection configuration (the live path may differ from the pinned [`config.yaml:L297-339`](../../../refs/falcosecurity/test-infra/config/prow/aws/config.yaml); locate it first). An infra repository mid-migration is parked: ask.
 
 ## Version switch
 
-One PR on the default branch editing the versions parameters ([`release.md:L61-83`](../../../refs/falcosecurity/falco-website/release.md), pinned example [`params.yaml`](../../../refs/falcosecurity/falco-website/config/_default/versions/params.yaml)): set `version` to the new release and the rules versions to the tags pinned at the final release. For a **minor**, add the new first `versions:` block (default branch, main URL) and rewrite the previous block to its archived form after its snapshot exists. For a **patch of the current minor**, update the existing current-minor entry and its release tag; keep its documentation branch and main URL, leave archived entries alone, and create no snapshot or duplicate minor entry. Hold the PR until the release tag and packages exist, because the "latest" shortcodes build download links from it. Prepare it early; merge it first on release day.
+One PR on the default branch editing the versions parameters ([`release.md:L61-83`](../../../refs/falcosecurity/falco-website/release.md#L61-L83), pinned example [`params.yaml`](../../../refs/falcosecurity/falco-website/config/_default/versions/params.yaml)): set `version` to the new release and the rules versions to the tags pinned at the final release. For a **minor**, add the new first `versions:` block (default branch, main URL) and rewrite the previous block to its archived form after its snapshot exists. For a **patch of the current minor**, update the existing current-minor entry and its release tag; keep its documentation branch and main URL, leave archived entries alone, and create no snapshot or duplicate minor entry. Hold the PR until the release tag and packages exist, because the "latest" shortcodes build download links from it. Prepare it early; merge it first on release day.
 
 ## Content PRs
 
@@ -26,7 +26,7 @@ One PR on the default branch editing the versions parameters ([`release.md:L61-8
 
 ## Generated pages
 
-Regenerate the version-dependent reference pages from the **released** image, never from a candidate, with the documented commands verbatim ([`release.md:L88-90`](../../../refs/falcosecurity/falco-website/release.md)): the supported events and supported fields pages from the binary's list commands in markdown format; the CLI arguments page by hand from the binary's help when it has no generator. Check the diff: expected deltas must be explainable from the release's changes; anything else is investigated before committing. When a post-processing filter in the documented command misfires on the new output, fix the page by hand and update the command in the release document in the same PR.
+Regenerate the version-dependent reference pages from the **released** image, never from a candidate, with the documented commands verbatim ([`release.md:L88-90`](../../../refs/falcosecurity/falco-website/release.md#L88-L90)): the supported events and supported fields pages from the binary's list commands in markdown format; the CLI arguments page by hand from the binary's help when it has no generator. Check the diff: expected deltas must be explainable from the release's changes; anything else is investigated before committing. When a post-processing filter in the documented command misfires on the new output, fix the page by hand and update the command in the release document in the same PR.
 
 ## Blog post and drafts
 
@@ -36,7 +36,7 @@ Regenerate the version-dependent reference pages from the **released** image, ne
 
 ## Deploy preview as a required check
 
-The website's default branch requires the DCO check and the hosting provider's deploy-preview status, enforced for administrators too ([`config.yaml:L297-339`](../../../refs/falcosecurity/test-infra/config/config.yaml)). When the provider has an incident the status never arrives; the only way to re-fire it is a new commit SHA on the PR branch (amend, force-with-lease with the observed SHA), on a branch the agent owns, and that re-push stays a manual, consented step ([`scripts/wait-commit-status.sh`](../scripts/wait-commit-status.sh) watches the context).
+The website's default branch requires the DCO check and the hosting provider's deploy-preview status, enforced for administrators too ([`config.yaml:L297-339`](../../../refs/falcosecurity/test-infra/config/prow/aws/config.yaml)). When the provider has an incident the status never arrives; the only way to re-fire it is a new commit SHA on the PR branch (amend, force-with-lease with the observed SHA), on a branch the agent owns, and that re-push stays a manual, consented step ([`scripts/wait-commit-status.sh`](../scripts/wait-commit-status.sh) watches the context).
 
 ## Website tracking
 

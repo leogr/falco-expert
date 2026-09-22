@@ -2,7 +2,7 @@
 
 > Entry point, modular action framework, startup/teardown sequences, signal handling, hot reload, and multi-source inspector management.
 
-**Era:** 0.44 | **Source:** [`refs/falcosecurity/falco/userspace/falco/app/`](../refs/falcosecurity/falco/userspace/falco/app/)
+**Era:** 0.45 | **Source:** [`refs/falcosecurity/falco/userspace/falco/app/`](../refs/falcosecurity/falco/userspace/falco/app/)
 
 ## Overview
 
@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
 }
 ```
 
-**Source:** [`falco.cpp:59-71`](../refs/falcosecurity/falco/userspace/falco/falco.cpp)
+**Source:** [`falco.cpp:59-71`](../refs/falcosecurity/falco/userspace/falco/falco.cpp#L59-L71)
 
 The `falco_run()` function (lines 40-54) wraps `falco::app::run()` with error handling:
 
@@ -62,14 +62,14 @@ int falco_run(int argc, char **argv, bool &restart) {
 }
 ```
 
-**Source:** [`falco.cpp:40-54`](../refs/falcosecurity/falco/userspace/falco/falco.cpp)
+**Source:** [`falco.cpp:40-54`](../refs/falcosecurity/falco/userspace/falco/falco.cpp#L40-L54)
 
 ### Application State
 
 All components share a single `state` struct defined in [`state.h`](../refs/falcosecurity/falco/userspace/falco/app/state.h):
 
 ```cpp
-// state.h:46-179
+// state.h:48-168
 struct state {
     // Holds the info mapped for each loaded event source
     struct source_info {
@@ -136,6 +136,9 @@ struct state {
 
 #if !defined(_WIN32) && !defined(__EMSCRIPTEN__) && !defined(MINIMAL_BUILD)
     falco_webserver webserver;
+#ifdef __linux__
+    falco_reload_control reload_control;
+#endif
 #endif
 
     // Set by start_webserver to start prometheus metrics
@@ -143,7 +146,7 @@ struct state {
     std::function<void()> on_inspectors_opened = nullptr;
 
     // Engine mode helpers
-    inline bool is_capture_mode() const;
+    inline bool is_replaying() const;
     inline bool is_kmod() const;
     inline bool is_modern_ebpf() const;
     inline bool is_nodriver() const;
@@ -153,20 +156,20 @@ struct state {
 };
 ```
 
-**Source:** [`state.h:46-179`](../refs/falcosecurity/falco/userspace/falco/app/state.h)
+**Source:** [`state.h:48-168`](../refs/falcosecurity/falco/userspace/falco/app/state.h#L48-L168)
 
 The `source_info` struct maps each event source to its engine index, available filter fields, and assigned inspector. Key design points:
 
 - **`offline_inspector`**: Shared inspector used for plugin loading and as the single inspector in capture mode.
 - **`source_infos`**: Indexed vector providing per-source inspector and metadata for live mode.
-- **`restart`**: Atomic boolean flag set by signal handlers to trigger the hot restart loop.
+- **`restart`**: Atomic boolean flag set by event processing after a validated restart request, then returned to the outer hot restart loop.
 - **Conditional compilation**: webserver, metrics, and http_output are excluded in `MINIMAL_BUILD` and `__EMSCRIPTEN__` builds.
 
 ## Implementation Details
 
 ### Startup Sequence (run_steps)
 
-The startup sequence is an ordered list of 28 actions defined in [`app.cpp:56-85`](../refs/falcosecurity/falco/userspace/falco/app/app.cpp). Each action executes in order; if any returns `proceed = false`, the remaining run_steps are skipped (teardown always runs).
+The startup sequence is an ordered list of 28 actions defined in [`app.cpp:63-92`](../refs/falcosecurity/falco/userspace/falco/app/app.cpp#L63-L92). Each action executes in order; if any returns `proceed = false`, the remaining run_steps are skipped (teardown always runs).
 
 | Step | Action | Purpose |
 |------|--------|---------|
@@ -191,20 +194,20 @@ The startup sequence is an ordered list of 28 actions defined in [`app.cpp:56-85
 | 19 | **`load_rules_files`** | **Load and compile detection rules** |
 | 20 | `print_support` | Output support info if requested |
 | 21 | **`init_outputs`** | **Initialize output channels (stdout, file, syslog, http, etc.)** |
-| 22 | `create_signal_handlers` | Set up SIGINT, SIGTERM, SIGHUP, SIGUSR1 handlers |
+| 22 | `create_signal_handlers` | Initialize persistent SIGHUP handling, install other signal handlers, start restart worker |
 | 23 | `pidfile` | Write PID file if `--pidfile` configured |
 | 24 | `configure_interesting_sets` | Compute syscall sets for kernel-level filtering |
 | 25 | `configure_syscall_buffer_size` | Set driver ring buffer size |
 | 26 | `configure_syscall_buffer_num` | Set number of ring buffers |
-| 27 | `start_webserver` | Start health/metrics webserver (if not `MINIMAL_BUILD`) |
+| 27 | `start_webserver` | Start optional Unix reload listener and health/metrics webserver (non-minimal live mode) |
 | 28 | **`process_events`** | **Main event loop (blocking until termination)** |
 
-**Source:** [`app.cpp:56-88`](../refs/falcosecurity/falco/userspace/falco/app/app.cpp)
+**Source:** [`app.cpp:63-95`](../refs/falcosecurity/falco/userspace/falco/app/app.cpp#L63-L95)
 
 The execution loop merges results and stops on `proceed = false`:
 
 ```cpp
-// app.cpp:97-103
+// app.cpp:104-113
 falco::app::run_result res = falco::app::run_result::ok();
 for(const auto& func : run_steps) {
     res = falco::app::run_result::merge(res, func(s));
@@ -214,36 +217,36 @@ for(const auto& func : run_steps) {
 }
 ```
 
-**Source:** [`app.cpp:97-103`](../refs/falcosecurity/falco/userspace/falco/app/app.cpp)
+**Source:** [`app.cpp:104-113`](../refs/falcosecurity/falco/userspace/falco/app/app.cpp#L104-L113)
 
 ### Teardown Sequence
 
-Teardown runs unconditionally after run_steps complete (whether by success, failure, or early exit), as defined in [`app.cpp:87-93`](../refs/falcosecurity/falco/userspace/falco/app/app.cpp):
+Teardown runs unconditionally after run_steps complete (whether by success, failure, or early exit), as defined in [`app.cpp:94-100`](../refs/falcosecurity/falco/userspace/falco/app/app.cpp#L94-L100):
 
 | Step | Action | Purpose |
 |------|--------|---------|
-| 1 | `unregister_signal_handlers` | Reset signal handlers to `SIG_DFL`, stop restart_handler |
-| 2 | `stop_webserver` | Stop health/metrics webserver |
+| 1 | `unregister_signal_handlers` | Stop restart worker; reset SIGINT/SIGTERM/SIGUSR1; retain SIGHUP handler/eventfd |
+| 2 | `stop_webserver` | Stop Unix reload listener and health/metrics webserver |
 | 3 | `cleanup_outputs` | Flush and reset outputs (prints stats internally) |
 | 4 | `close_inspectors` | Close all sinsp inspectors |
 
-**Source:** [`app.cpp:87-93`](../refs/falcosecurity/falco/userspace/falco/app/app.cpp)
+**Source:** [`app.cpp:94-100`](../refs/falcosecurity/falco/userspace/falco/app/app.cpp#L94-L100)
 
 Teardown never skips steps even on failure:
 
 ```cpp
-// app.cpp:105-108
+// app.cpp:115-118
 for(const auto& func : teardown_steps) {
     res = falco::app::run_result::merge(res, func(s));
     // note: we always proceed because we don't want to miss teardown steps
 }
 ```
 
-**Source:** [`app.cpp:105-108`](../refs/falcosecurity/falco/userspace/falco/app/app.cpp)
+**Source:** [`app.cpp:115-118`](../refs/falcosecurity/falco/userspace/falco/app/app.cpp#L115-L118)
 
 ### Event Processing Loop (do_inspect)
 
-The core event processing loop is the `do_inspect()` function in [`process_events.cpp:104-365`](../refs/falcosecurity/falco/userspace/falco/app/actions/process_events.cpp). This is the inner loop where Falco spends most of its runtime.
+The core event processing loop is the `do_inspect()` function in [`process_events.cpp:105-369`](../refs/falcosecurity/falco/userspace/falco/app/actions/process_events.cpp#L105-L369). This is the inner loop where Falco spends most of its runtime.
 
 ```cpp
 // process_events.cpp:161-362 (simplified)
@@ -310,7 +313,7 @@ while(1) {
 }
 ```
 
-**Source:** [`process_events.cpp:104-365`](../refs/falcosecurity/falco/userspace/falco/app/actions/process_events.cpp)
+**Source:** [`process_events.cpp:105-369`](../refs/falcosecurity/falco/userspace/falco/app/actions/process_events.cpp#L105-L369)
 
 Key behaviors in the event loop:
 
@@ -322,126 +325,45 @@ Key behaviors in the event loop:
 
 ### Signal Handling
 
-Falco uses three global `atomic_signal_handler` instances for safe cross-thread signal communication, defined in [`signals.h`](../refs/falcosecurity/falco/userspace/falco/app/signals.h) and [`app.cpp:23-25`](../refs/falcosecurity/falco/userspace/falco/app/app.cpp):
+| Signal | Handler | Effect |
+|--------|---------|--------|
+| `SIGINT` / `SIGTERM` | `g_terminate_signal.trigger()` | Event loops exit and teardown runs |
+| `SIGUSR1` | `g_reopen_outputs_signal.trigger()` | Event loop requests output reopen for rotation |
+| `SIGHUP` | `request_reload()` | Increment a lock-free request counter and wake the restart worker through a nonblocking eventfd |
 
-```cpp
-// app.cpp:23-25
-falco::atomic_signal_handler falco::app::g_terminate_signal;
-falco::atomic_signal_handler falco::app::g_restart_signal;
-falco::atomic_signal_handler falco::app::g_reopen_outputs_signal;
-```
+The terminate/restart/reopen `atomic_signal_handler` objects provide atomic flags and a mutex-protected `handle()` method for once-only handling outside signal context. SIGHUP uses a separate process-lifetime `reload_state` and eventfd. Initialization requires its request atomics to be lock-free; its handler and descriptor remain installed through hot-restart teardown, avoiding access to destroyed per-run objects. SIGINT/SIGTERM/SIGUSR1 are reset to `SIG_DFL` during teardown.
 
-**Source:** [`signals.h`](../refs/falcosecurity/falco/userspace/falco/app/signals.h), [`app.cpp:23-25`](../refs/falcosecurity/falco/userspace/falco/app/app.cpp)
-
-Signal handlers are registered in [`create_signal_handlers.cpp:63-147`](../refs/falcosecurity/falco/userspace/falco/app/actions/create_signal_handlers.cpp):
-
-| Signal | Handler Function | Atomic Flag | Effect |
-|--------|-----------------|-------------|--------|
-| `SIGINT` | `terminate_signal_handler` | `g_terminate_signal.trigger()` | Graceful shutdown: breaks event loop, runs teardown |
-| `SIGTERM` | `terminate_signal_handler` | `g_terminate_signal.trigger()` | Graceful shutdown: breaks event loop, runs teardown |
-| `SIGHUP` | `restart_signal_handler` | `s_restarter->trigger()` | Hot restart: validates config, sets `s.restart = true` |
-| `SIGUSR1` | `reopen_outputs_signal_handler` | `g_reopen_outputs_signal.trigger()` | Reopen output files (for log rotation) |
-
-**Source:** [`create_signal_handlers.cpp:33-45`](../refs/falcosecurity/falco/userspace/falco/app/actions/create_signal_handlers.cpp)
-
-#### Atomic Signal Handler Pattern
-
-The `atomic_signal_handler` class ([`atomic_signal_handler.h`](../refs/falcosecurity/falco/userspace/falco/atomic_signal_handler.h)) provides thread-safe signal handling:
-
-- **`trigger()`**: Sets the atomic `m_triggered` flag (safe to call from signal context).
-- **`triggered()`**: Returns whether the signal has been triggered (lock-free atomic read).
-- **`handle(f)`**: Executes the handler function `f` exactly once among all concurrent callers, using a mutex for serialization. Subsequent calls return `false` until `reset()`.
-- **`reset()`**: Returns the handler to its initial non-triggered, non-handled state.
-- At startup, a lock-free check is performed; if the atomics are not lock-free, a warning is logged.
-
-**Source:** [`atomic_signal_handler.h`](../refs/falcosecurity/falco/userspace/falco/atomic_signal_handler.h)
+**Source:** [`create_signal_handlers.cpp:35-117`](../refs/falcosecurity/falco/userspace/falco/app/actions/create_signal_handlers.cpp#L35-L117), [`create_signal_handlers.cpp:211-230`](../refs/falcosecurity/falco/userspace/falco/app/actions/create_signal_handlers.cpp#L211-L230), [`atomic_signal_handler.h`](../refs/falcosecurity/falco/userspace/falco/atomic_signal_handler.h), [`reload_state.h`](../refs/falcosecurity/falco/userspace/falco/app/reload_state.h).
 
 ### Hot Reload
 
-#### restart_handler
+The Linux `restart_handler` worker runs even when `watch_config_files` is false. It creates inotify only when there are configured paths to watch. Watched files are the loaded configuration/rules files; watched directories are their configured folders. `select()` waits on inotify, a worker eventfd, and the process-lifetime reload eventfd. Shutdown wakes the worker instead of waiting for an idle poll timeout.
 
-The [`restart_handler`](../refs/falcosecurity/falco/userspace/falco/app/restart_handler.h) class watches configuration and rules files/directories using Linux inotify:
+**Source:** [`create_signal_handlers.cpp:151-201`](../refs/falcosecurity/falco/userspace/falco/app/actions/create_signal_handlers.cpp#L151-L201), [`restart_handler.cpp:71-175`](../refs/falcosecurity/falco/userspace/falco/app/restart_handler.cpp#L71-L175).
 
-```cpp
-// restart_handler.h:32-71
-class restart_handler {
-public:
-    using on_check_t = std::function<bool()>;   // Validation callback
-    using watch_list_t = std::vector<std::string>;
+The restart sequence is:
 
-    explicit restart_handler(on_check_t on_check,
-                             const watch_list_t& watch_files = {},
-                             const watch_list_t& watch_dirs = {});
+1. Receive a file change, SIGHUP, or Unix `POST /reload` request.
+2. Debounce changes, then run the application against a temporary `state` with `dry_run=true` and the original command-line options.
+3. If validation fails, record the rejected generation and emit `Falco internal: hot restart failure` at critical priority; the active run continues.
+4. If validation succeeds and no newer request/change intervenes, trigger `g_restart_signal`; a newer change causes another validation pass.
+5. Event processing sets `s.restart=true` and exits. Readiness becomes false and all teardown steps run.
+6. The outer `main()` loop calls `falco_run()` again. Configuration, rules, plugins and inspectors are reconstructed within the same process.
+7. Once every enabled live source has successfully started capture, record the applied generation and set `ready=true`.
 
-    bool start(std::string& err);  // Start inotify watcher thread
-    void stop();                    // Stop watcher thread
-    void trigger();                 // Force a restart (used by SIGHUP)
+Validation is a preflight, not an atomic transaction or rollback guarantee. Resources and filesystem state can change before actual restart, and opening capture/socket resources can still fail.
 
-private:
-    void watcher_loop() noexcept;
+**Source:** [`create_signal_handlers.cpp:168-197`](../refs/falcosecurity/falco/userspace/falco/app/actions/create_signal_handlers.cpp#L168-L197), [`restart_handler.cpp:172-282`](../refs/falcosecurity/falco/userspace/falco/app/restart_handler.cpp#L172-L282), [`app.cpp:55-121`](../refs/falcosecurity/falco/userspace/falco/app/app.cpp#L55-L121), [`process_events.cpp:157-195`](../refs/falcosecurity/falco/userspace/falco/app/actions/process_events.cpp#L157-L195), [`reload_state.cpp:37-76`](../refs/falcosecurity/falco/userspace/falco/app/reload_state.cpp#L37-L76), [`falco.cpp:59-71`](../refs/falcosecurity/falco/userspace/falco/falco.cpp#L59-L71).
 
-    int m_inotify_fd = -1;
-    std::thread m_watcher;
-    std::atomic<bool> m_stop;
-    std::atomic<bool> m_forced;
-    on_check_t m_on_check;
-    watch_list_t m_watched_dirs;
-    watch_list_t m_watched_files;
-};
-```
+#### Administrative Reload API (0.45)
 
-**Source:** [`restart_handler.h`](../refs/falcosecurity/falco/userspace/falco/app/restart_handler.h)
+The optional Linux, non-minimal `reload_control` listener serves HTTP over a filesystem Unix socket independently of the TCP health/metrics webserver. `start_webserver` validates its directory during dry-run, starts it during live startup, and stops it during teardown; replay does not start listeners. `state.reload_control` owns the per-run listener while global reload progress survives its recreation.
 
-#### Watched Files
+`POST /reload` rejects body, multipart, or query input with 400. Acceptance returns 202, a `Location: /reload` header, and `instance_id` plus `started_generation` as the baseline; an unavailable notification returns 503. `GET /reload` returns all generation fields and readiness with `Cache-Control: no-store`. GET is also available over TCP; POST is only registered on the Unix listener.
 
-When `watch_config_files: true` is set in `falco.yaml`, the restart_handler watches ([`create_signal_handlers.cpp:91-106`](../refs/falcosecurity/falco/userspace/falco/app/actions/create_signal_handlers.cpp)):
+Clients finish writing files before POST, then wait for the **same** instance with `ready=true` and `applied_generation > max(baseline, rejected_generation)`. A newer rejection indicates invalid input. Connection loss/timeout is an unknown outcome; retry status reads through listener outages, and submit a new request if process identity changed. Socket access is controlled by directory ownership/modes and group access; see [configuration](configuration.md#hot-reload) for provisioning requirements.
 
-- **Files**: All loaded config filenames + all loaded rules filenames
-- **Directories**: All loaded config folders + all loaded rules folders
-
-#### Validation Before Restart
-
-Before confirming a restart, the `on_check` callback performs a **dry-run validation** ([`create_signal_handlers.cpp:109-134`](../refs/falcosecurity/falco/userspace/falco/app/actions/create_signal_handlers.cpp)):
-
-```cpp
-// create_signal_handlers.cpp:109-134 (simplified)
-s.restarter = std::make_shared<falco::app::restart_handler>(
-    [&s] {
-        bool tmp = false;
-        bool success = false;
-        std::string err;
-        falco::app::state tmp_state(s.cmdline, s.options);
-        tmp_state.options.dry_run = true;
-        try {
-            success = falco::app::run(tmp_state, tmp, err);
-        } catch(std::exception& e) {
-            err = e.what();
-        }
-
-        if(!success && s.outputs != nullptr) {
-            std::string rule = "Falco internal: hot restart failure";
-            std::string msg = rule + ": " + err;
-            // ... emit PRIORITY_CRITICAL alert
-        }
-
-        return success;
-    },
-    files_to_watch,
-    dirs_to_watch);
-```
-
-**Source:** [`create_signal_handlers.cpp:108-136`](../refs/falcosecurity/falco/userspace/falco/app/actions/create_signal_handlers.cpp)
-
-#### Hot Restart Process
-
-1. **Trigger**: `SIGHUP` signal received or inotify detects file/directory change
-2. **Validate**: Dry-run with new config/rules (creates a temporary `state`, runs `falco::app::run()` with `dry_run = true`)
-3. **On validation failure**: Emit `PRIORITY_CRITICAL` alert ("Falco internal: hot restart failure") and abort restart
-4. **On validation success**: `g_restart_signal.trigger()` is called
-5. **Event loop break**: `do_inspect()` detects `g_restart_signal.triggered()`, sets `s.restart.store(true)`, and breaks
-6. **Teardown**: All teardown steps execute (unregister signals, stop servers, close inspectors)
-7. **Restart loop**: `falco_run()` returns `EXIT_SUCCESS` with `restart = true`, `main()` loop calls `falco_run()` again
-8. **Full re-initialization**: Entire startup sequence executes with updated config/rules
+**Source:** [`start_webserver.cpp:27-87`](../refs/falcosecurity/falco/userspace/falco/app/actions/start_webserver.cpp#L27-L87), [`reload_control.cpp:210-334`](../refs/falcosecurity/falco/userspace/falco/reload_control.cpp#L210-L334), [`webserver.cpp:50-60`](../refs/falcosecurity/falco/userspace/falco/webserver.cpp#L50-L60), [`falco.yaml:967-994`](../refs/falcosecurity/falco/falco.yaml#L967-L994).
 
 ### Inspector Management
 
@@ -456,7 +378,7 @@ In capture (replay) mode, all event sources share the single `offline_inspector`
 src_info->inspector = s.offline_inspector;
 ```
 
-The offline inspector is opened via [`helpers_inspector.cpp:30-41`](../refs/falcosecurity/falco/userspace/falco/app/actions/helpers_inspector.cpp):
+The offline inspector is opened via [`helpers_inspector.cpp:117-128`](../refs/falcosecurity/falco/userspace/falco/app/actions/helpers_inspector.cpp#L117-L128):
 
 ```cpp
 s.offline_inspector->open_savefile(s.config->m_replay.m_capture_file);
@@ -464,7 +386,7 @@ s.offline_inspector->open_savefile(s.config->m_replay.m_capture_file);
 
 #### Live Mode
 
-In live mode, each event source gets its own inspector. The driver selection logic in [`helpers_inspector.cpp:43-149`](../refs/falcosecurity/falco/userspace/falco/app/actions/helpers_inspector.cpp) determines how to open the inspector:
+In live mode, each event source gets its own inspector. The driver selection logic in [`helpers_inspector.cpp:130-226`](../refs/falcosecurity/falco/userspace/falco/app/actions/helpers_inspector.cpp#L130-L226) determines how to open the inspector:
 
 | Engine Mode | Inspector Call | Description |
 |-------------|----------------|-------------|
@@ -474,18 +396,18 @@ In live mode, each event source gets its own inspector. The driver selection log
 | Modern eBPF | `inspector->open_modern_bpf(buffer_size, cpus, true, sc_set, disable_iterators)` | CO-RE eBPF (default driver); the final `disable_iterators` arg (since 0.44.1) forces a procfs fallback instead of BPF iterators |
 | Kernel module | `inspector->open_kmod(buffer_size, sc_set)` | Classic kernel module (auto-loads via modprobe on failure) |
 
-**Source:** [`helpers_inspector.cpp:43-149`](../refs/falcosecurity/falco/userspace/falco/app/actions/helpers_inspector.cpp)
+**Source:** [`helpers_inspector.cpp:130-226`](../refs/falcosecurity/falco/userspace/falco/app/actions/helpers_inspector.cpp#L130-L226)
 
 ### Multi-Source Processing
 
-The `process_events` action in [`process_events.cpp:480-659`](../refs/falcosecurity/falco/userspace/falco/app/actions/process_events.cpp) handles both single-source and multi-source scenarios:
+The `process_events` action in [`process_events.cpp:486-668`](../refs/falcosecurity/falco/userspace/falco/app/actions/process_events.cpp#L486-L668) handles both single-source and multi-source scenarios:
 
 #### Single Source Optimization
 
 When only one event source is enabled, no additional threads are spawned. The event processing runs directly on the main thread:
 
 ```cpp
-// process_events.cpp:565-576
+// process_events.cpp:571-583
 if(s.enabled_sources.size() == 1) {
     if(s.on_inspectors_opened != nullptr) {
         s.on_inspectors_opened();
@@ -497,14 +419,14 @@ if(s.enabled_sources.size() == 1) {
 }
 ```
 
-**Source:** [`process_events.cpp:565-576`](../refs/falcosecurity/falco/userspace/falco/app/actions/process_events.cpp)
+**Source:** [`process_events.cpp:571-583`](../refs/falcosecurity/falco/userspace/falco/app/actions/process_events.cpp#L571-L583)
 
 #### Multiple Sources
 
 When multiple event sources are enabled, each source gets its own thread:
 
 ```cpp
-// process_events.cpp:577-589
+// process_events.cpp:584-597
 else {
     auto res_ptr = &ctx.res;
     auto sync_ptr = ctx.sync.get();
@@ -516,12 +438,12 @@ else {
 }
 ```
 
-**Source:** [`process_events.cpp:577-589`](../refs/falcosecurity/falco/userspace/falco/app/actions/process_events.cpp)
+**Source:** [`process_events.cpp:584-597`](../refs/falcosecurity/falco/userspace/falco/app/actions/process_events.cpp#L584-L597)
 
 Thread coordination uses a `falco::semaphore` and `source_sync_context` objects. The main thread waits for any source thread to finish; if a thread fails, `g_terminate_signal` is triggered to force all other threads to exit:
 
 ```cpp
-// process_events.cpp:607-614
+// process_events.cpp:615-622
 if(!res.success && !termination_forced) {
     falco::app::g_terminate_signal.trigger();
     falco::app::g_terminate_signal.handle([&]() {});
@@ -529,41 +451,17 @@ if(!res.success && !termination_forced) {
 }
 ```
 
-**Source:** [`process_events.cpp:607-614`](../refs/falcosecurity/falco/userspace/falco/app/actions/process_events.cpp)
+**Source:** [`process_events.cpp:615-622`](../refs/falcosecurity/falco/userspace/falco/app/actions/process_events.cpp#L615-L622)
 
 **Shared across threads**: The `falco_engine` and `falco_outputs` are shared among all source threads via shared pointers in the `state` struct.
 
 ### Pidfile Management
 
-The pidfile action ([`pidfile.cpp`](../refs/falcosecurity/falco/userspace/falco/app/actions/pidfile.cpp)) writes the current process ID to a file specified by `--pidfile`:
+The `--pidfile` action skips writes in dry-run or when no path is supplied. On POSIX it opens with `O_WRONLY | O_CREAT | O_TRUNC | O_NOFOLLOW | O_CLOEXEC` and mode 0644, writes PID plus newline, and closes the descriptor. The final path cannot be a symlink. Failure calls `exit(-1)` (normally observed as status 255 on POSIX), rather than returning an action error. On Windows the implementation checks for reparse points before `CreateFileA`; the source explicitly notes that check is not race-free.
 
-```cpp
-// pidfile.cpp:27-52
-falco::app::run_result falco::app::actions::pidfile(const falco::app::state& state) {
-    if(state.options.dry_run) {
-        return run_result::ok();
-    }
-    if(state.options.pidfilename.empty()) {
-        return run_result::ok();
-    }
+There is no unlink action for the PID file in teardown: process exit closes descriptors but does not remove the file.
 
-    int64_t self_pid = getpid();
-    std::ofstream stream;
-    stream.open(state.options.pidfilename);
-    if(!stream.good()) {
-        falco_logger::log(falco_logger::level::ERR,
-                          "Could not write pid to pidfile " + state.options.pidfilename + "...");
-        exit(-1);
-    }
-    stream << self_pid;
-    stream.close();
-    return run_result::ok();
-}
-```
-
-**Source:** [`pidfile.cpp:27-52`](../refs/falcosecurity/falco/userspace/falco/app/actions/pidfile.cpp)
-
-Note: Pidfile cleanup on exit is handled implicitly when the process terminates. There is no explicit cleanup action in the teardown sequence.
+**Source:** [`pidfile.cpp:68-150`](../refs/falcosecurity/falco/userspace/falco/app/actions/pidfile.cpp#L68-L150), [`app.cpp:94-100`](../refs/falcosecurity/falco/userspace/falco/app/app.cpp#L94-L100).
 
 ## Non-Functional Requirements
 
@@ -571,7 +469,7 @@ Note: Pidfile cleanup on exit is handled implicitly when the process terminates.
 
 2. **Validation before hot reload**: Hot restarts always perform a dry-run validation of the new configuration and rules before committing to a restart. If validation fails, a `PRIORITY_CRITICAL` alert is emitted and the running instance continues unaffected.
 
-3. **Atomic signal flags**: All signal communication uses `atomic_signal_handler` with `std::atomic<bool>` and `std::mutex` for handler-once semantics. A lock-free check is performed at startup, with a warning logged if atomics are not lock-free on the platform.
+3. **Signal safety**: SIGINT/SIGTERM/SIGUSR1 use atomic flags with mutex-protected once-only handling outside signal context. SIGHUP uses a lock-free request counter and a process-lifetime eventfd; startup fails if its atomics are not lock-free.
 
 4. **Thread safety**: Multi-source mode uses one thread per source with a semaphore-based synchronization model. The `falco_engine` and `falco_outputs` shared pointers are safely accessed from multiple threads.
 

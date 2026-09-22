@@ -1,5 +1,5 @@
 # SCAP File Format
-> **Era:** 0.44 | **Version:** libs 0.25.4 | **Source:** [`refs/falcosecurity/libs/`](../../../refs/falcosecurity/libs/)
+> **Era:** 0.45 | **Version:** libs 0.26.0 | **Source:** [`refs/falcosecurity/libs/`](../../../refs/falcosecurity/libs/)
 
 ## Overview
 
@@ -227,6 +227,10 @@ For regular files:
 
 ## Event Block Format
 
+For V2 and V2_LARGE blocks, the savefile reader validates the event before conversion or downstream consumption: the event length must contain the header and fit the block's available payload; the parameter-length array must fit the event; and each parameter must fit the remaining event bytes. The check uses 16-bit or 32-bit parameter lengths according to the event's large-payload flag. It bounds the declared parameters without requiring them to consume every remaining byte.
+
+**Source:** [`scap_savefile.c:63-118,2112-2121`](../../../refs/falcosecurity/libs/userspace/libscap/engine/savefile/scap_savefile.c#L63-L118).
+
 ### Event Header (ppm_evt_hdr)
 
 ```c
@@ -342,6 +346,12 @@ while (scap_next(handle, &evt) == SCAP_SUCCESS) {
    - Extract cpuid and event data
    - Convert V1 to V2 if needed
    - Return event pointer
+
+### Raw Block Engine (libs 0.26)
+
+`raw_block` consumes caller-owned memory containing complete `.scap`/pcapng blocks. `sinsp::open_raw_block(uint8_t** buffer_ptr, uint64_t* buffer_size_ptr)` supports a whole capture in memory or incremental processing. The first buffer includes the section header and metadata. `SCAP_EOF` means the current buffer is exhausted: append whole blocks and grow the size, or replace the buffer and call `sinsp::fseek(0)`. A trailing partial block fails; only host-endian buffers are supported. Buffer pointers and sizes must remain valid while the engine uses them.
+
+**Source:** [raw_block_public.h:21-71](../../../refs/falcosecurity/libs/userspace/libscap/engine/raw_block/raw_block_public.h#L21-L71), [sinsp.h:164-179](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp.h#L164-L179).
 
 ## Writing Implementation
 

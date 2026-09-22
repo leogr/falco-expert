@@ -1,7 +1,15 @@
 # Falco Website Data Digest
 
 > AI-optimized digest of structured data from falcosecurity/falco-website
-> Era: Falco 0.44
+> Era: Falco 0.45
+
+These statistics, adopter lists, and examples describe the pinned website data, not a live census. Some reference YAML is older than the current generated documentation; the corrections below use the release configuration and CLI reference.
+
+## Release and Site Parameters
+
+The website selects Falco 0.45.0 and rules stable 5.2.0, incubating 6.0.1, and sandbox 6.2.0. Its version menu moves 0.44 documentation to the archived site, associated with Falco 0.44.1. [Source: params.yaml:12-36](../../../refs/falcosecurity/falco-website/config/_default/versions/params.yaml#L12-L36).
+
+The announcement data schedules the KubeCon + CloudNativeCon North America 2026 registration banner from September 13 to November 12. The footer identifies Falco as a series of LF Projects, LLC and links the LF Projects policies. These are site-content settings, not changes to Falco's runtime. [Source: announcement.yaml:8-12](../../../refs/falcosecurity/falco-website/data/en/announcements/announcement.yaml#L8-L12), [config.toml:274-279](../../../refs/falcosecurity/falco-website/config/_default/config.toml#L274-L279), [footer.html:27-48](../../../refs/falcosecurity/falco-website/layouts/partials/footer.html#L27-L48).
 
 ---
 
@@ -122,6 +130,8 @@ Stay compliant in cloud-native systems with Falco's intelligent monitoring and r
 | Slack | https://slack.com/ |
 | StatsD | https://github.com/statsd/statsd |
 
+The source still lists gVisor as a marketing integration. Its Falco capture engine was removed in 0.44, so this entry does not establish current engine support. [Source: release announcement](../../../refs/falcosecurity/falco-website/content/en/blog/falco-0-44.0/index.md).
+
 ### Plugins
 
 **Source:** [aws-cloudtrail.yaml](../../../refs/falcosecurity/falco-website/data/adopters/plugins/aws-cloudtrail.yaml)
@@ -188,17 +198,18 @@ https://www.sysdig.com
 
 ## CLI Options (Quick Reference)
 
-**Source:** [cli_options.yaml](../../../refs/falcosecurity/falco-website/data/en/reference/daemon/cli_options.yaml)
+The [structured CLI data](../../../refs/falcosecurity/falco-website/data/en/reference/daemon/cli_options.yaml) still contains removed flags. The current examples below follow the [generated CLI reference](../../../refs/falcosecurity/falco-website/content/en/docs/reference/daemon/cli-arguments/cli-arguments.md#L4-L63).
 
 | Flag | Description | Default |
 |------|-------------|---------|
 | `-c` | Configuration file | `/etc/falco/falco.yaml` |
 | `-d` / `--daemon` | Run as a daemon | - |
-| `-D <pattern>` | Disable any rules matching the regex pattern (cannot be used with `-t`) | - |
-| `-e <events_file>` | Read events from file (`.scap` for sinsp events, `jsonl` for K8s audit) | - |
-| `-k` / `--k8s-api <url>` | Enable Kubernetes support by connecting to API server | - |
+| `-o <key>=<value>` | Override configuration; escape literal key punctuation with backslashes | - |
+| `--list[=<source>]` | List fields | All loaded sources |
+| `--list-events` | List defined events | - |
+| `--format text\|markdown\|json` | Select field/event list format | `text` |
 
-> Note: CLI flags `-A`, `-b`, `-S/--snaplen` were removed in 0.41. Use config options instead (`base_syscalls.all`, `falco_libs.snaplen`).
+> The old `-A`, `-b`, `-D`, `-e`, `-k`, and `-S/--snaplen` options are absent from the current CLI reference. Use current configuration for syscall selection, rule enablement, replay and plugins; do not copy these obsolete flags from the structured YAML.
 
 ---
 
@@ -206,13 +217,15 @@ https://www.sysdig.com
 
 **Source:** [config_options.yaml](../../../refs/falcosecurity/falco-website/data/en/reference/daemon/config_options.yaml)
 
+This partial table corrects stale plugin/webserver entries against [Falco 0.45 configuration](../../../refs/falcosecurity/falco/falco.yaml#L578-L594). The website YAML is not a complete current schema.
+
 ### Core Configuration
 
 | Option | Type | Description |
 |--------|------|-------------|
 | `rules_files` | List | Location of the rules file(s). Can contain one or more paths. |
 | `plugins` | List of objects | Defines the set of plugins Falco can load. Sub-keys: `name`, `library_path`, `init_config`, `open_params` |
-| `load_plugins` | List | Plugin names to actually load (optional - if not present, all plugins are loaded) |
+| `load_plugins` | List | Explicit plugin names to load; the base configuration has an empty list |
 | `watch_config_files` | Boolean | Watch config and rules files for modification and hot reload (default: true) |
 | `time_format_iso_8601` | Boolean | Display times in ISO 8601 format (default: false) |
 | `priority` | Enum | Minimum rule priority level to load/run |
@@ -233,7 +246,7 @@ https://www.sysdig.com
 | `log_stderr` | Boolean | Log Falco activity to stderr |
 | `log_syslog` | Boolean | Log Falco activity to syslog |
 | `log_level` | Enum | Minimum log level (`emergency`, `alert`, `critical`, `error`, `warning`, `notice`, `info`, `debug`) |
-| `libs_logger` | List | Configure libs logging (sub-keys: `enabled`, `severity`) |
+| `libs_logger` | Object | Configure libs logging (sub-keys: `enabled`, `severity`) |
 
 ### Output Channels
 
@@ -258,8 +271,11 @@ https://www.sysdig.com
 
 | Option | Type | Description |
 |--------|------|-------------|
-| `webserver` | Object | Embedded web server config (`enabled`, `listen_port`, `k8s_audit_endpoint`, `ssl_enabled`, `ssl_certificate`, `threadiness`) |
+| `webserver` | Object | Embedded webserver config (`enabled`, `listen_address`, `listen_port`, `k8s_healthz_endpoint`, `prometheus_metrics_enabled`, `ssl_enabled`, `ssl_certificate`, `threadiness`) |
+| `reload_control` | Object | Optional Unix-socket reload listener (`enabled: false`, `socket: /run/falco/control.sock`) |
 | ~~`grpc`~~ | — | **Removed in 0.44.0** (embedded gRPC server fully removed; Falco fails at startup if present) |
+
+**Source:** [falco.yaml:940-994](../../../refs/falcosecurity/falco/falco.yaml#L940-L994), [libs_logger:1031-1049](../../../refs/falcosecurity/falco/falco.yaml#L1031-L1049).
 
 ---
 
@@ -396,7 +412,7 @@ Performance overhead varies based on server load and workload footprint. Options
 - Memory scales with CPUs (ring buffer per CPU)
 
 ### Do I need -k flag for Kubernetes metadata?
-No, the `k8s.ns.name` and `k8s.pod.*` fields are populated from the container runtime and can be accessed without the -k flag.
+The old `-k` flag is absent from the current CLI. The loaded container plugin supplies `k8s.*` metadata from the runtime; its socket and initialization configuration determine availability. [Source: missing-fields.md:23-73](../../../refs/falcosecurity/falco-website/content/en/docs/troubleshooting/missing-fields.md#L23-L73).
 
 ---
 
@@ -459,10 +475,14 @@ No, the `k8s.ns.name` and `k8s.pod.*` fields are populated from the container ru
 
 ## Source Files Reference
 
-All data in this digest is extracted from YAML files in the falcosecurity/falco-website repository.
+The structured data is extracted from website YAML, with current CLI/configuration corrections linked above.
 
 | Section | Source Path |
 |---------|-------------|
+| Release versions | [params.yaml](../../../refs/falcosecurity/falco-website/config/_default/versions/params.yaml) |
+| Announcement banner | [announcement.yaml](../../../refs/falcosecurity/falco-website/data/en/announcements/announcement.yaml) |
+| Current CLI | [cli-arguments.md](../../../refs/falcosecurity/falco-website/content/en/docs/reference/daemon/cli-arguments/cli-arguments.md) |
+| Current configuration | [falco.yaml](../../../refs/falcosecurity/falco/falco.yaml) |
 | Key Statistics | [facts.yaml](../../../refs/falcosecurity/falco-website/data/en/facts.yaml) |
 | Features | [features.yaml](../../../refs/falcosecurity/falco-website/data/en/features.yaml) |
 | Use Cases | [usecases.yaml](../../../refs/falcosecurity/falco-website/data/en/usecases.yaml) |

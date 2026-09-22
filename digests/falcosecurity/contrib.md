@@ -1,6 +1,6 @@
 # contrib Digest
 
-> **Era Relevance:** 0.44 (OUTDATED) | **Source:** [`refs/falcosecurity/contrib/`](../../refs/falcosecurity/contrib/) | **Commit:** `eb584b5` (December 5, 2025)
+> **Era Relevance:** 0.45 (OUTDATED) | **Source:** [`refs/falcosecurity/contrib/`](../../refs/falcosecurity/contrib/)
 
 **Repository:** [falcosecurity/contrib](https://github.com/falcosecurity/contrib)
 **Scope:** Ecosystem

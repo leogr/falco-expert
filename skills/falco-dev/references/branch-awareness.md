@@ -10,7 +10,7 @@ The `master` or `main` branches of all falcosecurity repositories are **developm
 
 - Contain work-in-progress that doesn't compile
 - Be temporarily inconsistent across repositories (e.g., `falco/master` may expect a libs API that only exists in a not-yet-merged libs PR)
-- Differ from the current knowledge base era (0.44) -- the latest `master` may be ahead of or behind what this knowledge base documents
+- Differ from the current knowledge base era (0.45) -- the latest `master` may be ahead of or behind what this knowledge base documents
 
 ## Era and Target Version Validation
 
@@ -37,17 +37,17 @@ docker exec -u dev $CONTAINER_NAME bash -c "
 
 | Git State | Current Date vs Release Schedule | Likely Target |
 |-----------|----------------------------------|---------------|
-| On `master`/`main`, after latest release | Development cycle for next release | **Next era** (e.g., 0.45 if current era is 0.44) |
-| On a release branch (e.g., `release/0.44.x`) | After release of 0.44.0 | **Hotfix** for current era (0.44.x) |
-| On a specific tag (e.g., `0.44.0`) | Any | Investigation/read-only, not active development |
+| On `master`/`main`, after latest release | Development cycle for next release | **Next era** (e.g., 0.46 if current era is 0.45) |
+| On a release branch (e.g., `release/0.45.x`) | After release of 0.45.0 | **Hotfix** for current era (0.45.x) |
+| On a specific tag (e.g., `0.45.0`) | Any | Investigation/read-only, not active development |
 | On a feature branch | Check parent branch | Inherits target from parent |
 
 4. **Validate against the user's request**:
-   - If the user says "fix a bug in Falco 0.44" but `master` is already targeting 0.45, clarify whether they want a hotfix branch or a fix in `master`
+   - If the user says "fix a bug in Falco 0.45" but `master` is already targeting 0.46, clarify whether they want a hotfix branch or a fix in `master`
    - If the user says "add a feature" and the repo is on a release tag, clarify that development should happen on `master`
    - **If in doubt, ask the user** to confirm the target version before proceeding
 
-> **Why this matters:** The knowledge base documents the **current era** (0.44). If the repos being developed are already ahead (targeting 0.45), some APIs, configurations, or behaviors may have changed from what the knowledge base describes.
+> **Why this matters:** The knowledge base documents the **current era** (0.45). If the repos being developed are already ahead (targeting 0.46), some APIs, configurations, or behaviors may have changed from what the knowledge base describes.
 
 ---
 

@@ -2,7 +2,7 @@
 
 > Kubernetes Operator for Falco: instance lifecycle management, artifact distribution as native sidecar, 5 CRDs across 2 API groups, and reference protection.
 
-**Era:** 0.44 | **Source:** [`refs/falcosecurity/falco-operator/`](../refs/falcosecurity/falco-operator/)
+**Era:** 0.45 | **Source:** [`refs/falcosecurity/falco-operator/`](../refs/falcosecurity/falco-operator/)
 
 ## 1. Overview
 
@@ -225,24 +225,24 @@ Common ConfigMap/Secret keys: `rules.yaml`, `config.yaml`, `username`, `password
 | Setting | Value |
 |---------|-------|
 | Engine | `modern_ebpf` |
-| Container engines | CRI + Docker enabled |
+| Container enrichment | Requires an explicit container `Plugin` CR |
 | Outputs | stdout + syslog |
 | Webserver | Port 8765 with Prometheus metrics |
 | Security context | Privileged mode |
 | Host mounts | `/proc`, `/sys`, `/dev`, `/etc`, container runtimes |
 | Resources | Requests: 100m CPU, 512Mi; Limits: 1000m CPU, 1024Mi |
-| Probes | Liveness (60s delay), Readiness (30s delay) on `/healthz:8765` |
+| Probes | Startup: `/healthz:8765`, 3s delay, 5s period, 20 failures; liveness/readiness: no initial delay |
 | Tolerations | master + control-plane NoSchedule |
-| Default image | `docker.io/falcosecurity/falco:0.44.0` |
+| Default image | `docker.io/falcosecurity/falco:0.44.1` |
 
-**Source:** [`internal/pkg/image/const.go:28`](../refs/falcosecurity/falco-operator/internal/pkg/image/const.go) (`FalcoTag`), [`internal/pkg/resources/falco.go`](../refs/falcosecurity/falco-operator/internal/pkg/resources/falco.go) (`FalcoDefaults.ImageTag = image.FalcoTag`)
+**Source:** [`internal/pkg/image/const.go:28`](../refs/falcosecurity/falco-operator/internal/pkg/image/const.go#L28) (`FalcoTag`), [`internal/pkg/resources/falco.go`](../refs/falcosecurity/falco-operator/internal/pkg/resources/falco.go) (`FalcoDefaults.ImageTag = image.FalcoTag`)
 
 ### Deployment Mode
 
 | Setting | Value |
 |---------|-------|
 | Engine | `nodriver` (plugin-only, no kernel instrumentation) |
-| Container engines | All disabled |
+| Container enrichment | Not configured by the base configuration |
 | Designed for | Targeted analysis via plugins |
 
 ### Metacollector (Component)
@@ -254,7 +254,7 @@ Common ConfigMap/Secret keys: `rules.yaml`, `config.yaml`, `username`, `password
 | Resources | Requests: 100m CPU, 128Mi; Limits: 250m CPU, 256Mi |
 | Security context | Non-root (UID 1000), drop ALL capabilities |
 
-**Source:** [`internal/pkg/image/const.go:33`](../refs/falcosecurity/falco-operator/internal/pkg/image/const.go) (`MetacollectorTag`), [`internal/pkg/resources/metacollector.go`](../refs/falcosecurity/falco-operator/internal/pkg/resources/metacollector.go)
+**Source:** [`internal/pkg/image/const.go:33`](../refs/falcosecurity/falco-operator/internal/pkg/image/const.go#L33) (`MetacollectorTag`), [`internal/pkg/resources/metacollector.go`](../refs/falcosecurity/falco-operator/internal/pkg/resources/metacollector.go)
 
 ### Artifact Operator Sidecar
 
@@ -263,9 +263,9 @@ Common ConfigMap/Secret keys: `rules.yaml`, `config.yaml`, `username`, `password
 | Image | `docker.io/falcosecurity/artifact-operator:latest` |
 | Restart policy | `Always` (native sidecar) |
 | Environment | `POD_NAMESPACE`, `NODE_NAME` via downward API |
-| Probes | Readiness (5s delay), Liveness (15s delay) on `/healthz:8081` |
+| Probes | Startup/readiness: `/readyz:8081` (3s/5s delay); liveness: `/healthz:8081` (15s delay) |
 
-**Source:** [`internal/pkg/version/version.go`](../refs/falcosecurity/falco-operator/internal/pkg/version/version.go), [`internal/pkg/resources/falco.go:182-235`](../refs/falcosecurity/falco-operator/internal/pkg/resources/falco.go)
+**Source:** [`internal/pkg/version/version.go`](../refs/falcosecurity/falco-operator/internal/pkg/version/version.go), [`internal/pkg/resources/falco.go:182-235`](../refs/falcosecurity/falco-operator/internal/pkg/resources/falco.go#L182-L235)
 
 ## 6. Installation
 
@@ -294,8 +294,8 @@ Either method creates: 5 CRDs, `falco-operator` namespace, ServiceAccount, Clust
 |--------|--------|
 | Language | Go 1.26.0 |
 | Framework | kubebuilder v4, controller-runtime 0.24.1 |
-| K8s API | k8s.io/api v0.36.1 |
-| OCI client | oras-go/v2 2.6.0 |
+| K8s API | k8s.io/api v0.36.2 |
+| OCI client | oras-go/v2 2.6.1 |
 | Container base | `cgr.dev/chainguard/static` (non-root user 65532) |
 | Architectures | linux/amd64, linux/arm64 |
 | Testing | ginkgo/gomega, `make test` (unit), `make test-e2e` (Kind cluster) |
@@ -324,6 +324,18 @@ Either method creates: 5 CRDs, `falco-operator` namespace, ServiceAccount, Clust
 | [`plugin-system.md`](plugin-system.md) | Plugin API (Plugin CRD distributes plugin binaries) |
 | [`rules-content.md`](rules-content.md) | Detection rules (Rulesfile CRD distributes rules) |
 | [`falcoctl.md`](falcoctl.md) | Artifact management CLI (operator replaces falcoctl sidecar in operator-managed deployments) |
+
+## Era 0.45 Snapshot Scope
+
+This document covers stable operator **v0.4.1**. Its default Falco image is still **0.44.1**, and its metacollector default remains **0.1.2**; era membership does not imply all components deploy Falco 0.45 by default. The operator chart present in the separately pinned charts monorepo is a **0.5.0-rc3** application snapshot and must not be used as evidence for this stable operator's behavior.
+
+**Source:** [`image/const.go:20-34`](../refs/falcosecurity/falco-operator/internal/pkg/image/const.go), [`version-matrix.md:9-14`](../refs/falcosecurity/falco-operator/docs/version-matrix.md), [`charts/falco-operator/Chart.yaml:17-18`](../refs/falcosecurity/charts/charts/falco-operator/Chart.yaml).
+
+The instance operator accepts repeatable `--excluded-labels` patterns (`*` wildcard), exposed by the Helm `excludedLabels` array. Matching labels on Falco and Component CRs are omitted from generated resources without changing the stored CR labels. Explicit pod-template labels are retained. This supports GitOps ownership labels that should not propagate to generated resources.
+
+Artifact reconciliation preserves the existing `Programmed` condition instead of deleting it on every pass; failures converting inline Config or Rulesfile data to YAML explicitly set it to false. The base Falco configuration no longer contains removed `container_engines`, legacy eBPF, or gRPC settings. Load the container plugin with a `Plugin` CR for metadata enrichment.
+
+**Source:** [`labels.go:21-74`](../refs/falcosecurity/falco-operator/internal/pkg/instance/labels.go), [`configuration.md:165-184`](../refs/falcosecurity/falco-operator/docs/configuration.md), [`config/controller.go:222-247`](../refs/falcosecurity/falco-operator/controllers/artifact/config/controller.go), [`rulesfile/controller.go:222-260`](../refs/falcosecurity/falco-operator/controllers/artifact/rulesfile/controller.go), [`falco.go:279-487`](../refs/falcosecurity/falco-operator/internal/pkg/resources/falco.go).
 
 ## 9. Sources
 

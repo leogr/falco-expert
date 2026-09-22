@@ -1,6 +1,6 @@
 # syscalls-bumper Digest
 
-> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/syscalls-bumper/`](../../refs/falcosecurity/syscalls-bumper/) | **Commit:** `449feef` (`git describe`: `v0.5.1-5-g449feef`, December 17, 2025)
+> **Era Relevance:** 0.45 | **Source:** [`refs/falcosecurity/syscalls-bumper/`](../../refs/falcosecurity/syscalls-bumper/)
 
 **Repository:** [falcosecurity/syscalls-bumper](https://github.com/falcosecurity/syscalls-bumper)
 **Scope:** Infra
@@ -67,7 +67,7 @@ syscalls-bumper is an infrastructure automation tool that keeps the syscall tabl
    - `driver/SCHEMA_VERSION` - Bump patch version
    - `docs/report.md` - Generate syscall support report
 
-**Source:** [`main.go:130-220`](../../refs/falcosecurity/syscalls-bumper/main.go)
+**Source:** [`main.go:130-220`](../../refs/falcosecurity/syscalls-bumper/main.go#L130-L220)
 
 ## Supported Architectures
 
@@ -80,7 +80,7 @@ syscalls-bumper is an infrastructure automation tool that keeps the syscall tabl
 | `powerpc64` | `ppc64le` | IBM Power little-endian |
 | `loongarch64` | `loongarch64` | Loongson 64-bit |
 
-**Source:** [`main.go:121-128`](../../refs/falcosecurity/syscalls-bumper/main.go)
+**Source:** [`main.go:121-128`](../../refs/falcosecurity/syscalls-bumper/main.go#L121-L128)
 
 ## CLI Usage
 
@@ -112,7 +112,7 @@ syscalls-bumper -repo-root ./libs -overwrite
 syscalls-bumper -repo-root ./libs -overwrite -verbose
 ```
 
-**Source:** [`README.md`](../../refs/falcosecurity/syscalls-bumper/README.md), [`main.go:99-117`](../../refs/falcosecurity/syscalls-bumper/main.go)
+**Source:** [`README.md`](../../refs/falcosecurity/syscalls-bumper/README.md), [`main.go:99-117`](../../refs/falcosecurity/syscalls-bumper/main.go#L99-L117)
 
 ## GitHub Action Usage
 
@@ -141,7 +141,7 @@ Adds entries for new syscalls:
 #endif
 ```
 
-**Source:** [`main.go:376-389`](../../refs/falcosecurity/syscalls-bumper/main.go)
+**Source:** [`main.go:376-389`](../../refs/falcosecurity/syscalls-bumper/main.go#L376-L389)
 
 ### driver/ppm_events_public.h
 
@@ -151,7 +151,7 @@ Adds PPM_SC_* enum entries:
 PPM_SC_X(NEW_SYSCALL, <next_value>)
 ```
 
-**Source:** [`main.go:413-454`](../../refs/falcosecurity/syscalls-bumper/main.go)
+**Source:** [`main.go:413-454`](../../refs/falcosecurity/syscalls-bumper/main.go#L413-L454)
 
 ### userspace/libscap/linux/scap_ppm_sc.c
 
@@ -161,7 +161,7 @@ Adds syscalls to the PPME_GENERIC events table:
 [PPME_GENERIC_E] = {... PPM_SC_NEW_SYSCALL, -1},
 ```
 
-**Source:** [`main.go:391-411`](../../refs/falcosecurity/syscalls-bumper/main.go)
+**Source:** [`main.go:391-411`](../../refs/falcosecurity/syscalls-bumper/main.go#L391-L411)
 
 ### driver/syscall_compat_*.h
 
@@ -174,7 +174,7 @@ Generates compatibility headers for each architecture:
 #endif
 ```
 
-**Source:** [`main.go:514-540`](../../refs/falcosecurity/syscalls-bumper/main.go)
+**Source:** [`main.go:514-540`](../../refs/falcosecurity/syscalls-bumper/main.go#L514-L540)
 
 ### driver/syscall_ia32_64_map.c
 
@@ -189,13 +189,13 @@ const int g_ia32_64_map[SYSCALL_TABLE_SIZE] = {
 
 Includes special translations for ia32-only syscalls that have 64-bit equivalents (e.g., `mmap2` → `mmap`, `stat64` → `stat`).
 
-**Source:** [`main.go:555-709`](../../refs/falcosecurity/syscalls-bumper/main.go)
+**Source:** [`main.go:555-709`](../../refs/falcosecurity/syscalls-bumper/main.go#L555-L709)
 
 ### driver/SCHEMA_VERSION
 
 Bumps patch version (e.g., `1.2.3` → `1.2.4`) when syscalls are added.
 
-**Source:** [`main.go:542-553`](../../refs/falcosecurity/syscalls-bumper/main.go)
+**Source:** [`main.go:542-553`](../../refs/falcosecurity/syscalls-bumper/main.go#L542-L553)
 
 ### docs/report.md
 
@@ -209,7 +209,7 @@ Generates a Markdown report showing syscall support status:
 - 🟢 = Fully supported (has event handler)
 - 🟡 = Known but not instrumented
 
-**Source:** [`main.go:222-275`](../../refs/falcosecurity/syscalls-bumper/main.go)
+**Source:** [`main.go:222-275`](../../refs/falcosecurity/syscalls-bumper/main.go#L222-L275)
 
 ## IA32 to x64 Translation Map
 
@@ -228,7 +228,7 @@ Special translations for 32-bit syscalls that don't exist on x86_64 but have com
 | `_llseek` | 140 | `lseek` | 8 |
 | `umount` | 22 | `umount2` | 166 |
 
-**Source:** [`main.go:556-652`](../../refs/falcosecurity/syscalls-bumper/main.go)
+**Source:** [`main.go:556-652`](../../refs/falcosecurity/syscalls-bumper/main.go#L556-L652)
 
 ## Docker Image
 
@@ -244,7 +244,7 @@ docker pull falcosecurity/syscalls-bumper:latest
 
 - **[hrw/syscalls-table](https://github.com/hrw/syscalls-table)**: Source of truth for Linux syscall numbers across architectures
 
-**Source:** [`main.go:277-286`](../../refs/falcosecurity/syscalls-bumper/main.go)
+**Source:** [`main.go:277-286`](../../refs/falcosecurity/syscalls-bumper/main.go#L277-L286)
 
 ## Sources
 

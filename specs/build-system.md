@@ -2,7 +2,7 @@
 
 > CMake structure, dependencies, feature flags, driver build options, and container image build.
 
-**Era:** 0.44 | **Source:** [`refs/falcosecurity/falco/CMakeLists.txt`](../refs/falcosecurity/falco/CMakeLists.txt), [`refs/falcosecurity/libs/CMakeLists.txt`](../refs/falcosecurity/libs/CMakeLists.txt)
+**Era:** 0.45 | **Source:** [`refs/falcosecurity/falco/CMakeLists.txt`](../refs/falcosecurity/falco/CMakeLists.txt), [`refs/falcosecurity/libs/CMakeLists.txt`](../refs/falcosecurity/libs/CMakeLists.txt)
 
 ## Overview
 
@@ -207,14 +207,28 @@ Version information is embedded during CMake configuration:
 
 | Variable | Source | Example |
 |----------|--------|---------|
-| Falco version | `CMakeLists.txt` / git tag | `0.44.1` |
-| Libs version | Fetched from libs repo | `0.25.4` |
-| Driver API version | `driver/API_VERSION` | `10.1.0` |
-| Schema version | `driver/SCHEMA_VERSION` | `4.5.1` |
+| Falco version | `CMakeLists.txt` / git tag | `0.45.0` |
+| Libs version | Fetched from libs repo | `0.26.0` |
+| Driver API version | `driver/API_VERSION` | `11.0.0` |
+| Schema version | `driver/SCHEMA_VERSION` | `4.5.2` |
 | Plugin API version | `userspace/plugin/plugin_api.h` | `3.12.0` |
-| Engine version | `falco_engine_version.h` | `0.62.0` |
+| Engine version | `falco_engine_version.h` | `0.65.0` |
 
 **Source:** [`refs/falcosecurity/libs/driver/API_VERSION`](../refs/falcosecurity/libs/driver/API_VERSION), [`refs/falcosecurity/libs/driver/SCHEMA_VERSION`](../refs/falcosecurity/libs/driver/SCHEMA_VERSION)
+
+### Package Upgrade Lifecycle (0.45)
+
+Debian/RPM scripts snapshot the outgoing binary's default driver and the configured falcoctl driver pin before replacement. A configured version equal to the outgoing default follows the incoming default; other custom pins are preserved. `FALCOCTL_DRIVER_VERSION` explicitly overrides this decision, including a deliberate pin equal to the former default. `FALCO_DRIVER_CHOICE=none` skips driver configuration and installation.
+
+RPM provisioning and startup occur in `%posttrans`, after outgoing-package cleanup; building RPMs therefore requires CMake >= 3.18. Shared shell helpers are embedded at configure time so removal hooks work after payload deletion. The kmod path verifies the installed module version and can repair a missing installation through DKMS before startup. Follower masks are removed only when recorded as package-created; administrator masks are preserved.
+
+**Source:** [`functions.sh.in:20-110`](../refs/falcosecurity/falco/scripts/packaging/functions.sh.in#L20-L110), [`preinst.in:21-27`](../refs/falcosecurity/falco/scripts/debian/preinst.in#L21-L27), [`posttrans.in:24-49`](../refs/falcosecurity/falco/scripts/rpm/posttrans.in#L24-L49), [`scripts/CMakeLists.txt`](../refs/falcosecurity/falco/scripts/CMakeLists.txt), [`CMakeCPackOptions.cmake:53-56`](../refs/falcosecurity/falco/cmake/cpack/CMakeCPackOptions.cmake#L53-L56).
+
+### Bundled Release Dependencies
+
+Falco 0.45.0 selects libs 0.26.0, driver 11.0.0+driver, stable rules 5.2.0, falcoctl 0.14.2, and container plugin 0.7.4. The bundled jemalloc build on aarch64 uses `--with-lg-page=16` (64 KiB).
+
+**Source:** [`falcosecurity-libs.cmake:45`](../refs/falcosecurity/falco/cmake/modules/falcosecurity-libs.cmake#L45), [`driver.cmake:38`](../refs/falcosecurity/falco/cmake/modules/driver.cmake#L38), [`rules.cmake:21`](../refs/falcosecurity/falco/cmake/modules/rules.cmake#L21), [`falcoctl.cmake:23`](../refs/falcosecurity/falco/cmake/modules/falcoctl.cmake#L23), [`CMakeLists.txt:297`](../refs/falcosecurity/falco/CMakeLists.txt#L297), [`jemalloc.cmake:46`](../refs/falcosecurity/falco/cmake/modules/jemalloc.cmake#L46).
 
 ## Non-Functional Requirements
 

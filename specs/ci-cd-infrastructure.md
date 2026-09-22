@@ -1,30 +1,34 @@
 # CI/CD Infrastructure
 
-> Organization-wide CI/CD on Prow and AWS EKS: Prow components, cluster architecture, configuration system, Tide merge automation, branch protection, and secrets management.
+> Organization-wide CI/CD on separate AWS EKS and OCI OKE Prow installations: Prow components, cluster architecture, configuration system, Tide merge automation, branch protection, and secrets management.
 
-**Era:** 0.44 | **Source:** [`refs/falcosecurity/test-infra/`](../refs/falcosecurity/test-infra/)
+**Era:** 0.45 | **Source:** [`refs/falcosecurity/test-infra/`](../refs/falcosecurity/test-infra/)
 
 ## 1. Overview
 
-The falcosecurity GitHub organization uses [Prow](https://docs.prow.k8s.io/) as its CI/CD platform for all 34+ repositories. Prow provides webhook-driven PR testing, merge automation, job scheduling, and a web UI. The system runs on an AWS EKS cluster in the `eu-west-1` region, with job logs stored in S3 and configuration managed declaratively via YAML files in the [`test-infra`](https://github.com/falcosecurity/test-infra) repository.
+The 0.45 source pin defines separate AWS and OCI installations. AWS retains organization policy, Tide, Peribolos, branch protection and its own job catalog; OCI defines driver builds and other automation. Sections explicitly describing EKS, AWS manifests, or the older Prow tag apply to AWS only. Deployment files record desired state, not verified live cluster health.
+
+**Sources:** [config/prow/aws/config.yaml](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L525), [config/prow/aws/plugins.yaml](../refs/falcosecurity/test-infra/config/prow/aws/plugins.yaml#L67), [config/prow/oci/kustomization.yaml](../refs/falcosecurity/test-infra/config/prow/oci/kustomization.yaml#L1), [config/jobs/oci/kustomization.yaml](../refs/falcosecurity/test-infra/config/jobs/oci/kustomization.yaml#L1).
+
+The falcosecurity GitHub organization uses [Prow](https://docs.prow.k8s.io/) as its CI/CD platform for all 34+ repositories. Prow provides webhook-driven PR testing, merge automation, job scheduling, and a web UI. The AWS installation runs on an EKS cluster in the `eu-west-1` region, with job logs stored in S3 and configuration managed declaratively via YAML files in the [`test-infra`](https://github.com/falcosecurity/test-infra) repository.
 
 - **Web UI:** [prow.falco.org](https://prow.falco.org)
-- **Image version:** All Prow components are pinned to `v20240805-37a08f946`
+- **Image version:** AWS Prow components are pinned to `v20240805-37a08f946`
 - **Merge strategy:** Rebase (universal across all repos)
 - **Job log storage:** S3 (`s3://falco-prow-logs`)
-- **Deployment:** ArgoCD manages Prow component manifests on the EKS cluster
+- **Deployment:** the AWS deployment script applies Prow manifests; OCI Prow is an ArgoCD Application
 - **Secrets management:** [Pigeon](https://github.com/falcosecurity/pigeon) syncs GitHub Actions secrets/variables from 1Password
 
 **Source:** [`digests/falcosecurity/test-infra/prow-infrastructure.md`](../digests/falcosecurity/test-infra/prow-infrastructure.md), [`digests/falcosecurity/test-infra/prow-config.md`](../digests/falcosecurity/test-infra/prow-config.md)
 
 ## 2. Prow Components
 
-All Prow components are deployed in the `default` namespace on the EKS cluster. Every component uses a `nodeSelector` of `Archtype: "x86"` to pin to x86 nodes. Standard resource requests/limits: `cpu: 100m`, `memory: 256M`.
+AWS Prow components are deployed in the `default` namespace on the EKS cluster. Every component uses a `nodeSelector` of `Archtype: "x86"` to pin to x86 nodes. Standard resource requests/limits: `cpu: 100m`, `memory: 256M`.
 
 | Component | Role | Image | Replicas | Key Configuration |
 |-----------|------|-------|----------|-------------------|
 | **Hook** | Webhook handler; receives GitHub events and dispatches to plugins | `gcr.io/k8s-prow/hook` | 2 | Ports: 8888 (webhooks), 9090 (metrics). Ingress via ALB at `prow.falco.org/hook` |
-| **Deck** | Web UI; displays PR status, job logs via Spyglass | `gcr.io/k8s-prow/deck` | 1 | Ports: 8080 (UI), 9090 (metrics). Spyglass lenses: metadata, buildlog, podinfo. Size limit: 500 MB |
+| **Deck** | Web UI; displays PR status, job logs via Spyglass | `gcr.io/k8s-prow/deck` | 3 | Ports: 8080 (UI), 9090 (metrics). Spyglass lenses: metadata, buildlog, podinfo. Size limit: 500 MB |
 | **Plank** | Job controller; creates and manages ProwJob pods. Runs as a controller within Prow Controller Manager (`--enable-controller=plank`), not as a separate deployment | -- | -- | Max concurrency: 100. Pod pending timeout: 60m. Default job timeout: 24h. S3 logs to `falco-prow-logs` |
 | **Sinker** | Garbage collection; cleans up completed ProwJobs and pods | `gcr.io/k8s-prow/sinker` | 1 | Resync: 1m. Max ProwJob age: 48h. Max pod age: 24h. Terminated pod TTL: 2h |
 | **Horologium** | Periodic job scheduler; triggers cron-based ProwJobs | `gcr.io/k8s-prow/horologium` | 1 | Must not scale up. Strategy: Recreate |
@@ -32,7 +36,7 @@ All Prow components are deployed in the `default` namespace on the EKS cluster. 
 | **Tide** | Merge automation; automatically merges PRs meeting all criteria | `gcr.io/k8s-prow/tide` | 1 | Sync period: 1m. Status update period: 1m. See [Section 5](#5-tide-merge-automation) |
 | **Prow Controller Manager** | Manages ProwJob pod lifecycle; hosts the Plank controller (`--enable-controller=plank`) | `gcr.io/k8s-prow/prow-controller-manager` | 1 | Manages pod lifecycle in `test-pods` namespace. S3 via IAM role `falco-prow-test-infra-prow_s3_access` |
 
-**Source:** [`config/prow/hook.yaml`](../refs/falcosecurity/test-infra/config/prow/hook.yaml), [`config/prow/deck.yaml`](../refs/falcosecurity/test-infra/config/prow/deck.yaml), [`config/prow/prow-controller-manager.yaml`](../refs/falcosecurity/test-infra/config/prow/prow-controller-manager.yaml), [`config/prow/sinker.yaml`](../refs/falcosecurity/test-infra/config/prow/sinker.yaml), [`config/prow/horologium.yaml`](../refs/falcosecurity/test-infra/config/prow/horologium.yaml), [`config/prow/crier.yaml`](../refs/falcosecurity/test-infra/config/prow/crier.yaml), [`config/prow/tide.yaml`](../refs/falcosecurity/test-infra/config/prow/tide.yaml)
+**Source:** [`config/prow/aws/manifests/hook.yaml`](../refs/falcosecurity/test-infra/config/prow/aws/manifests/hook.yaml), [`config/prow/aws/manifests/deck.yaml`](../refs/falcosecurity/test-infra/config/prow/aws/manifests/deck.yaml), [`config/prow/aws/manifests/prow-controller-manager.yaml`](../refs/falcosecurity/test-infra/config/prow/aws/manifests/prow-controller-manager.yaml), [`config/prow/aws/manifests/sinker.yaml`](../refs/falcosecurity/test-infra/config/prow/aws/manifests/sinker.yaml), [`config/prow/aws/manifests/horologium.yaml`](../refs/falcosecurity/test-infra/config/prow/aws/manifests/horologium.yaml), [`config/prow/aws/manifests/crier.yaml`](../refs/falcosecurity/test-infra/config/prow/aws/manifests/crier.yaml), [`config/prow/aws/manifests/tide.yaml`](../refs/falcosecurity/test-infra/config/prow/aws/manifests/tide.yaml)
 
 ## 3. AWS EKS Cluster
 
@@ -43,7 +47,7 @@ All Prow components are deployed in the `default` namespace on the EKS cluster. 
 | Cluster name | `falco-prow-test-infra` |
 | Region | `eu-west-1` |
 | Provisioning | Terraform ([`config/clusters/`](../refs/falcosecurity/test-infra/config/clusters/)) |
-| Deployment | ArgoCD applications |
+| Deployment | Prow deployment script; ArgoCD add-on applications |
 
 ### Namespaces
 
@@ -67,38 +71,73 @@ Job pods and Prow components access S3 via IAM Roles for Service Accounts (IRSA)
 - **IAM role:** `falco-prow-test-infra-prow_s3_access`
 - **Credential delivery:** S3 credentials secret for sidecar log upload; Pod Identity Webhook for component-level access
 
-### ArgoCD Deployment
+### Deployment Responsibilities
 
-ArgoCD applications manage Prow component manifests. Each Prow component directory under [`config/prow/`](../refs/falcosecurity/test-infra/config/prow/) maps to an ArgoCD Application resource in [`config/clusters/`](../refs/falcosecurity/test-infra/config/clusters/).
+The AWS Prow deployment script applies its manifests and bootstraps missing ConfigMaps, preserving maps already managed by `config-updater`. AWS ArgoCD applications manage add-ons and Falco. OCI uses an ArgoCD Application for Prow itself.
 
-**Source:** [`digests/falcosecurity/test-infra/prow-infrastructure.md`](../digests/falcosecurity/test-infra/prow-infrastructure.md) (Sections 2-4)
+**Sources:** [tools/deploy_prow.sh](../refs/falcosecurity/test-infra/tools/deploy_prow.sh#L60), [config/applications/aws/falco.yaml](../refs/falcosecurity/test-infra/config/applications/aws/falco.yaml#L1), [config/applications/oci/prow.yaml](../refs/falcosecurity/test-infra/config/applications/oci/prow.yaml#L1).
+
+## OCI Platform
+
+The OCI stack is separate from AWS: OKE in `eu-frankfurt-1`, cluster `falco-prow-test-infra-oci`, Kubernetes `v1.36.1`, with pinned Oracle Linux 8.10 node images. Terraform declares three fixed platform nodes, an x86 automation pool scaling from 1 to 5, and x86/ARM driver pools scaling from 0 to 4 each. Platform nodes use E5 Flex (2 OCPUs/16Gi); automation uses E6 Flex (2/16); driver x86 uses E6 Flex and ARM uses A1 Flex (8/48), each with 200Gi boot disks. Pool values are configured capacity, not an observation of running nodes.
+
+**Sources:** [config/clusters/oci/terraform.tfvars](../refs/falcosecurity/test-infra/config/clusters/oci/terraform.tfvars#L1), [config/clusters/oci/variables.tf](../refs/falcosecurity/test-infra/config/clusters/oci/variables.tf#L114), [config/clusters/oci/cluster.tf](../refs/falcosecurity/test-infra/config/clusters/oci/cluster.tf#L38).
+
+| Concern | OCI configuration |
+|---------|-------------------|
+| Namespaces | `prow` for ProwJobs/control plane; `test-pods` for job pods |
+| Components | Hook, Deck, GHProxy, Horologium, controller manager, Crier, Sinker; no OCI Tide or needs-rebase deployment |
+| Prow version | `v20260811-cafa49460`, images from `us-docker.pkg.dev/k8s-infra-prow/images`, pinned by digest |
+| Replicas | Hook 2; Deck 2; other listed deployments 1 |
+| Plugin responsibility | Trigger-only config; merge/review/label policy remains in AWS |
+| Job queues | `artifact-index: 1`, `automation: 3`, `driverkit-x86: 4`, `driverkit-arm: 4` |
+| Logs | S3-compatible OCI Object Storage bucket named `falco-prow-logs`, accessed through the `s3-credentials` secret |
+| Public entry | Envoy Gateway/HTTPRoutes with cert-manager; OCI job links use `https://oci-prow.falco.org/view/` |
+
+**Sources:** [config/prow/oci/kustomization.yaml](../refs/falcosecurity/test-infra/config/prow/oci/kustomization.yaml#L1), [config/prow/oci/config.yaml](../refs/falcosecurity/test-infra/config/prow/oci/config.yaml#L1), [config/prow/oci/plugins.yaml](../refs/falcosecurity/test-infra/config/prow/oci/plugins.yaml#L1), [config/prow/oci/hook.yaml](../refs/falcosecurity/test-infra/config/prow/oci/hook.yaml#L73), [config/prow/oci/deck.yaml](../refs/falcosecurity/test-infra/config/prow/oci/deck.yaml#L108), [config/applications/oci/gateway.yaml](../refs/falcosecurity/test-infra/config/applications/oci/gateway.yaml#L1), [config/clusters/oci/storage.tf](../refs/falcosecurity/test-infra/config/clusters/oci/storage.tf#L1).
+
+ArgoCD's OCI Prow Application tracks `master` and renders the OCI Prow Kustomization, which includes the explicit job catalog. ConfigMaps are reconciled through GitOps, with prune/self-heal enabled. The bootstrap script installs ArgoCD chart 10.1.4 using a temporary kubeconfig bound to the intended OKE cluster, then applies the app-of-apps resource. Administrative IAM prerequisites live in a separate bootstrap stack.
+
+**Sources:** [config/applications/oci/prow.yaml](../refs/falcosecurity/test-infra/config/applications/oci/prow.yaml#L10), [config/jobs/oci/kustomization.yaml](../refs/falcosecurity/test-infra/config/jobs/oci/kustomization.yaml#L1), [tools/deploy_argocd_oci.sh](../refs/falcosecurity/test-infra/tools/deploy_argocd_oci.sh#L20), [config/applications/oci/bootstrap/applications.yaml](../refs/falcosecurity/test-infra/config/applications/oci/bootstrap/applications.yaml#L1), [config/clusters/oci/bootstrap/README.md](../refs/falcosecurity/test-infra/config/clusters/oci/bootstrap/README.md#L1).
+
+OCI log storage is private and versioned: current `logs/` and `pr-logs/` objects expire after 10 days, previous versions after 3 days, and incomplete multipart uploads after 7 days. The log-storage admission policy supplies `AWS_REQUEST_CHECKSUM_CALCULATION=WHEN_REQUIRED` to matching Prow uploader containers. Driver artifacts use a different path: OCI builders assume the AWS `falco-prow-driver-publisher` role to publish under `falco-distribution/driver/*`; the role trusts only the configured OKE issuer and `test-pods:driver-kit` service account and grants read/write/ACL access for that prefix.
+
+**Sources:** [config/clusters/oci/storage.tf](../refs/falcosecurity/test-infra/config/clusters/oci/storage.tf#L15), [config/prow/oci/log-storage-policy.yaml](../refs/falcosecurity/test-infra/config/prow/oci/log-storage-policy.yaml#L1), [config/clusters/aws/bootstrap/driver-publishing/iam.tf](../refs/falcosecurity/test-infra/config/clusters/aws/bootstrap/driver-publishing/iam.tf#L1), [config/clusters/aws/bootstrap/driver-publishing/variables.tf](../refs/falcosecurity/test-infra/config/clusters/aws/bootstrap/driver-publishing/variables.tf#L29).
+
+OCI jobs use dedicated automation or driver pools. Admission policy denies host namespaces, host paths and host ports, and permits privilege only for the pinned Docker native sidecar. Non-root build and automation containers run with automatic Kubernetes token mounting disabled; the driver publisher receives a specifically projected AWS token. This policy is scoped to OCI `test-pods`, not a description of the retained AWS jobs.
+
+**Sources:** [config/prow/oci/driverkit-policy.yaml](../refs/falcosecurity/test-infra/config/prow/oci/driverkit-policy.yaml#L11), [config/jobs/oci/build-drivers/build-new-debian.yaml](../refs/falcosecurity/test-infra/config/jobs/oci/build-drivers/build-new-debian.yaml#L16).
+
+OCI runs Falco through operator chart 0.3.1 and a Falco DaemonSet resource pinned to **0.44.1** at this snapshot. The AWS Falco application separately pins chart 9.2.0 and Falco **0.45.0**, with container plugin 0.7.4 and k8smeta 0.4.2. Do not infer that both clusters track the KB era's Falco version.
+
+**Sources:** [config/applications/oci/falco-operator.yaml](../refs/falcosecurity/test-infra/config/applications/oci/falco-operator.yaml#L10), [config/applications/oci/falco/falco-instance.yaml](../refs/falcosecurity/test-infra/config/applications/oci/falco/falco-instance.yaml#L1), [config/applications/aws/falco.yaml](../refs/falcosecurity/test-infra/config/applications/aws/falco.yaml#L10).
 
 ## 4. Prow Configuration
 
-Configuration is split across two primary files in [`config/`](../refs/falcosecurity/test-infra/config/):
+AWS configuration is split across two primary files in [`config/`](../refs/falcosecurity/test-infra/config/):
 
 ### 4.1 Core Configuration (config.yaml)
 
-**Source:** [`config/config.yaml`](../refs/falcosecurity/test-infra/config/config.yaml)
+**Source:** [`config/prow/aws/config.yaml`](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml)
 
 #### Deck (UI)
 
 | Setting | Value | Line Reference |
 |---------|-------|----------------|
-| Header color | `#00AEC7` (Falco Teal) | [config.yaml:L3](../refs/falcosecurity/test-infra/config/config.yaml) |
-| Spyglass size limit | 500 MB | [config.yaml:L7](../refs/falcosecurity/test-infra/config/config.yaml) |
-| Spyglass lenses | metadata, buildlog, podinfo | [config.yaml:L8-L22](../refs/falcosecurity/test-infra/config/config.yaml) |
+| Header color | `#00AEC7` (Falco Teal) | [config.yaml:L3](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L3) |
+| Spyglass size limit | 500 MB | [config.yaml:L7](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L7) |
+| Spyglass lenses | metadata, buildlog, podinfo | [config.yaml:L8-L22](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L8-L22) |
 
 #### Plank (Job Controller)
 
 | Setting | Value | Line Reference |
 |---------|-------|----------------|
-| Max concurrency | `100` | [config.yaml:L24](../refs/falcosecurity/test-infra/config/config.yaml) |
-| Pod pending timeout | `60m` | [config.yaml:L24-L44](../refs/falcosecurity/test-infra/config/config.yaml) |
-| Default job timeout | `24h` (accommodates driverkit builder jobs) | [config.yaml:L34](../refs/falcosecurity/test-infra/config/config.yaml) |
-| Grace period | `10m` | [config.yaml:L32-L44](../refs/falcosecurity/test-infra/config/config.yaml) |
-| S3 bucket | `s3://falco-prow-logs` | [config.yaml:L42](../refs/falcosecurity/test-infra/config/config.yaml) |
-| Path strategy | `explicit` | [config.yaml:L32-L44](../refs/falcosecurity/test-infra/config/config.yaml) |
+| Max concurrency | `100` | [config.yaml:L24](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L24) |
+| Pod pending timeout | `60m` | [config.yaml:L24-L44](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L24-L44) |
+| Default job timeout | `24h` (accommodates driverkit builder jobs) | [config.yaml:L34](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L34) |
+| Grace period | `10m` | [config.yaml:L32-L44](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L32-L44) |
+| S3 bucket | `s3://falco-prow-logs` | [config.yaml:L42](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L42) |
+| Path strategy | `explicit` | [config.yaml:L32-L44](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L32-L44) |
 
 **Utility images** (Prow sidecar containers, all `v20240805-37a08f946` from `gcr.io/k8s-prow/`):
 - `clonerefs` -- clones source code
@@ -106,20 +145,20 @@ Configuration is split across two primary files in [`config/`](../refs/falcosecu
 - `entrypoint` -- wraps job commands
 - `sidecar` -- uploads logs and artifacts to S3
 
-**Source:** [config.yaml:L36-L40](../refs/falcosecurity/test-infra/config/config.yaml)
+**Source:** [config.yaml:L36-L40](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L36-L40)
 
 #### Sinker (Garbage Collection)
 
 | Setting | Value | Line Reference |
 |---------|-------|----------------|
-| Resync period | `1m` | [config.yaml:L46-L50](../refs/falcosecurity/test-infra/config/config.yaml) |
-| Max ProwJob age | `48h` | [config.yaml:L46-L50](../refs/falcosecurity/test-infra/config/config.yaml) |
-| Max pod age | `24h` | [config.yaml:L46-L50](../refs/falcosecurity/test-infra/config/config.yaml) |
-| Terminated pod TTL | `2h` | [config.yaml:L46-L50](../refs/falcosecurity/test-infra/config/config.yaml) |
+| Resync period | `1m` | [config.yaml:L46-L50](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L46-L50) |
+| Max ProwJob age | `48h` | [config.yaml:L46-L50](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L46-L50) |
+| Max pod age | `24h` | [config.yaml:L46-L50](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L46-L50) |
+| Terminated pod TTL | `2h` | [config.yaml:L46-L50](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L46-L50) |
 
 ### 4.2 Plugin Configuration (plugins.yaml)
 
-**Source:** [`config/plugins.yaml`](../refs/falcosecurity/test-infra/config/plugins.yaml)
+**Source:** [`config/prow/aws/plugins.yaml`](../refs/falcosecurity/test-infra/config/prow/aws/plugins.yaml)
 
 Plugins are enabled per-repository (no org-wide plugin list). A common set appears across virtually all repos:
 
@@ -158,25 +197,27 @@ Plugins are enabled per-repository (no org-wide plugin list). A common set appea
 | `golint` | Go-based repos (20+ repos) | Go linting |
 | `require-matching-label` | Most repos | Enforces `kind/*` labels on PRs or issues |
 
-**Source:** [plugins.yaml:L502-L1554](../refs/falcosecurity/test-infra/config/plugins.yaml) (per-repo plugin lists), [plugins.yaml:L1556-L1741](../refs/falcosecurity/test-infra/config/plugins.yaml) (external plugins)
+**Source:** [plugins.yaml:L524-L1617](../refs/falcosecurity/test-infra/config/prow/aws/plugins.yaml#L524-L1617) (per-repo plugin lists), [plugins.yaml:L1618-L1810](../refs/falcosecurity/test-infra/config/prow/aws/plugins.yaml#L1618-L1810) (external plugins)
 
 ## 5. Tide Merge Automation
 
-Tide is the merge controller that automatically merges PRs meeting all criteria. Configuration at [config.yaml:L485-L1186](../refs/falcosecurity/test-infra/config/config.yaml).
+For `test-infra`, Tide also lists `Terraform OCI / plan`, `validate-dbg`, and `build-update-dbg-image` as **required if present**. `skip-unknown-contexts` does not make these configured contexts optional once reported. [config/prow/aws/config.yaml](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L525).
+
+Tide is the merge controller that automatically merges PRs meeting all criteria. Configuration at [config.yaml:L525-L1263](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L525-L1263).
 
 ### Global Settings
 
 | Setting | Value | Line Reference |
 |---------|-------|----------------|
-| Target URL | `https://prow.falco.org/tide` | [config.yaml:L486](../refs/falcosecurity/test-infra/config/config.yaml) |
-| `skip-unknown-contexts` | `true` -- only branch-protection-defined checks gate merges | [config.yaml:L488](../refs/falcosecurity/test-infra/config/config.yaml) |
-| `from-branch-protection` | `true` -- derive required checks from branch protection config | [config.yaml:L489](../refs/falcosecurity/test-infra/config/config.yaml) |
+| Target URL | `https://prow.falco.org/tide` | [config.yaml:L526](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L526) |
+| `skip-unknown-contexts` | `true` -- branch-protection checks and configured required-if-present contexts gate merges | [config.yaml:L528](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L528) |
+| `from-branch-protection` | `true` -- derive required checks from branch protection config | [config.yaml:L529](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L529) |
 
 ### Merge Method
 
 All 36+ falcosecurity repositories use the **rebase** merge method without exception.
 
-**Source:** [config.yaml:L490-L536](../refs/falcosecurity/test-infra/config/config.yaml)
+**Source:** [config.yaml:L538-L586](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L538-L586)
 
 ### Merge Criteria
 
@@ -199,11 +240,11 @@ A PR is eligible for Tide merge when all of the following are satisfied:
 - `reviewApprovedRequired: true` -- at least one GitHub review approval
 - All required status checks passing (derived from branch protection)
 
-**Source:** [config.yaml:L537-L1186](../refs/falcosecurity/test-infra/config/config.yaml)
+**Source:** [config.yaml:L587-L1263](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L587-L1263)
 
 ## 6. Branch Protection
 
-Branch protection rules are configured centrally by Prow and enforced via the `branchprotector` periodic job. Full configuration at [config.yaml:L52-L477](../refs/falcosecurity/test-infra/config/config.yaml).
+Branch protection rules are configured centrally by Prow and enforced via the `branchprotector` periodic job. Full configuration at [config.yaml:L52-L518](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L52-L518).
 
 ### Global Defaults
 
@@ -219,29 +260,33 @@ These defaults apply to all protected branches across the organization unless ov
 | Required approving review count | `1` |
 | Strict status checks | `false` -- PRs are not required to be up-to-date (rebase merge + needs-rebase plugin handle this) |
 
-**Source:** [config.yaml:L52-L65](../refs/falcosecurity/test-infra/config/config.yaml)
+**Source:** [config.yaml:L52-L65](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L52-L65)
 
 ### Org-Wide Required Status Check
 
 All falcosecurity repositories require the **`dco`** status check at the org level.
 
-**Source:** [config.yaml:L67-L71](../refs/falcosecurity/test-infra/config/config.yaml)
+**Source:** [config.yaml:L67-L71](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L67-L71)
 
 ### Key Repository-Specific Overrides
 
 | Repository | Required Approvals | Extra Required Checks | Line Reference |
 |------------|-------------------|----------------------|----------------|
-| `falco` | **2** | `test-dev-packages / test-packages`, `test-dev-packages-arm64 / test-packages`, `format code` | [config.yaml:L158-L200](../refs/falcosecurity/test-infra/config/config.yaml) |
-| `libs` | **2** | 14 checks: build (amd64/arm64, 4 modes each), test-drivers, test-libs-static, test-scap, format code | [config.yaml:L352-L406](../refs/falcosecurity/test-infra/config/config.yaml) |
-| `charts` | 1 (default) | `test`, `readme`, `linkChecker`, `go-unit-tests` | [config.yaml:L81-L90](../refs/falcosecurity/test-infra/config/config.yaml) |
-| `falcoctl` | 1 (default) | `test`, 3 `build` (linux/darwin amd64/arm64, windows amd64), `Lint golang files`, `Enforce go.mod tidiness` | [config.yaml:L245-L264](../refs/falcosecurity/test-infra/config/config.yaml) |
-| `driverkit` | 1 (default) | `build-test-dev (amd64) / build-test`, `build-test-dev (arm64) / build-test`, `Enforce go.mod tidiness` | [config.yaml:L129-L137](../refs/falcosecurity/test-infra/config/config.yaml) |
-| `falcosidekick` | 1 (default) | `Run unit tests`, `lint`, `build-image` | [config.yaml:L201-L209](../refs/falcosecurity/test-infra/config/config.yaml) |
-| `falco-website` | 1 (default) | `netlify/falcosecurity/deploy-preview`. Multiple version branches (v0.26-v0.42) protected | [config.yaml:L285-L325](../refs/falcosecurity/test-infra/config/config.yaml) |
-| `test-infra` | 1 (default) | `check-prow-config`, `manifests-validation` | [config.yaml:L466-L473](../refs/falcosecurity/test-infra/config/config.yaml) |
-| `plugins` | 1 (default) | `build-plugins / build-packages-x86_64`, `build-plugins / build-packages-aarch64`, `get-changed-plugins / get-values` | [config.yaml:L427-L435](../refs/falcosecurity/test-infra/config/config.yaml) |
+| `falco` | **2** | `test-dev-packages / test-packages`, `test-dev-packages-arm64 / test-packages`, `format code` | [config.yaml:L156-L202](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L156-L202) |
+| `libs` | **2** | 14 checks: build (amd64/arm64, 4 modes each), test-drivers, test-libs-static, test-scap, format code | [config.yaml:L372-L433](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L372-L433) |
+| `charts` | 1 (default) | `test`, `readme`, `linkChecker`, `go-unit-tests` | [config.yaml:L81-L88](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L81-L88) |
+| `falcoctl` | 1 (default) | `test`, 5 `build` (linux/darwin amd64/arm64, windows amd64), `Lint golang files`, `Enforce go.mod tidiness` | [config.yaml:L261-L280](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L261-L280) |
+| `driverkit` | 1 (default) | `build-test-dev (amd64) / build-test`, `build-test-dev (arm64) / build-test`, `Enforce go.mod tidiness` | [config.yaml:L127-L135](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L127-L135) |
+| `falcosidekick` | 1 (default) | `Run unit tests`, `lint`, `build-image` | [config.yaml:L203-L211](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L203-L211) |
+| `falco-website` | 1 (default) | `netlify/falcosecurity/deploy-preview`. Multiple version branches (v0.26-v0.44) protected | [config.yaml:L301-L345](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L301-L345) |
+| `test-infra` | 1 (default) | `check-prow-config`, `manifests-validation` | [config.yaml:L506-L513](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L506-L513) |
+| `plugins` | 1 (default) | `build-plugins / build-packages-x86_64`, `build-plugins / build-packages-aarch64`, `get-changed-plugins / get-values` | [config.yaml:L453-L461](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L453-L461) |
 
 > **Note:** `falco` and `libs` both require **2 approving reviews** (vs. the global default of 1), reflecting their status as core repositories with the highest quality gates.
+
+The protected branches include Falco `release/0.45.x`, libs `release/0.26.x`, and website `v0.44`. Falco Operator requires `e2e-chainsaw-summary`, `lint-summary`, `unit-tests`, `helm-chart-check`, and `manifests-check`.
+
+**Source:** [AWS branch protection](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml#L156-L433).
 
 ## 7. Secrets Management (Pigeon)
 
@@ -323,6 +368,8 @@ Secret values are looked up by name (title) in the 1Password vault, retrieving t
 
 ## 8. Config Propagation
 
+OCI configuration follows the [OCI Platform](#oci-platform) ArgoCD/Kustomize path. The plugin and manual uploader below apply to AWS.
+
 Prow configuration changes in `test-infra` propagate to the live cluster through two mechanisms.
 
 ### 8.1 config-updater Plugin (Immediate)
@@ -331,19 +378,19 @@ The `config-updater` plugin is enabled **only** on the `test-infra` repository. 
 
 | File Pattern | ConfigMap Name | Options |
 |-------------|---------------|---------|
-| `config/config.yaml` | `config` | -- |
-| `config/plugins.yaml` | `plugins` | -- |
-| `config/jobs/**/*.yaml` | `job-config` | `gzip: true` |
+| `config/prow/aws/config.yaml` | `config` | -- |
+| `config/prow/aws/plugins.yaml` | `plugins` | -- |
+| `config/jobs/aws/**/*.yaml` | `job-config` | `gzip: true` |
 
 Prow components watch these ConfigMaps and **hot-reload** their configuration. Changes take effect immediately upon merge without restart.
 
-**Source:** [plugins.yaml:L65-L73](../refs/falcosecurity/test-infra/config/plugins.yaml)
+**Source:** [plugins.yaml:L67-L77](../refs/falcosecurity/test-infra/config/prow/aws/plugins.yaml#L67-L77)
 
-### 8.2 update-jobs Postsubmit (Backup)
+### 8.2 Manual Config Uploader
 
-The `update-jobs-pr` postsubmit job runs after every merge to `master` in `test-infra`. It uses a custom `update-jobs` image to process job configuration files from `config/jobs/` and update the `job-config` ConfigMap. This serves as a backup mechanism to the `config-updater` plugin.
+The former `update-jobs-pr` postsubmit is no longer configured. The retained uploader is a manual tool that replaces selected, existing ConfigMaps. AWS deployment only bootstraps missing maps; it preserves existing configuration owned by `config-updater`. See the [deployment implementation](../refs/falcosecurity/test-infra/tools/deploy_prow.sh#L60-L84).
 
-**Source:** [`config/jobs/update-jobs/update-jobs.yaml`](../refs/falcosecurity/test-infra/config/jobs/update-jobs/update-jobs.yaml)
+**Source:** [`prow/update-jobs/README.md`](../refs/falcosecurity/test-infra/prow/update-jobs/README.md)
 
 ### 8.3 Config Validation
 
@@ -351,27 +398,34 @@ Configuration integrity is ensured by two mechanisms:
 
 1. **Presubmit** (`check-prow-config`): Runs on every PR to `test-infra`'s `master` branch. Uses `gcr.io/k8s-prow/checkconfig:v20240805-37a08f946` to validate `config.yaml`, `plugins.yaml`, and all job configs.
 
-2. **Periodic** (`check-prow-config-periodic`): Runs every 1 hour as a safety net to catch drift between ConfigMaps and the git source.
+2. **Periodic** (`check-prow-config-periodic`): Runs every 1 hour to revalidate the checked-out Git configuration.
 
 Both use the same validation command:
 ```
-checkconfig --config-path=config/config.yaml --job-config-path=config/jobs --plugin-config=config/plugins.yaml
+checkconfig --config-path=config/prow/aws/config.yaml --job-config-path=config/jobs/aws --plugin-config=config/prow/aws/plugins.yaml
 ```
 
-**Source:** [`config/jobs/check-prow-config/check-prow-config.yaml`](../refs/falcosecurity/test-infra/config/jobs/check-prow-config/check-prow-config.yaml)
+**Source:** [`config/jobs/aws/check-prow-config/check-prow-config.yaml`](../refs/falcosecurity/test-infra/config/jobs/aws/check-prow-config/check-prow-config.yaml)
+
+
+### Validation and Reconciliation in 0.45
+
+AWS and OCI have separate reusable validation workflows. AWS validates its manifests and job directory. OCI extracts embedded Prow config from its ConfigMaps, validates the OCI job YAML with the pinned current `checkconfig`, renders Kustomize, and validates manifests/CRDs against the configured Kubernetes version. The AWS hourly `check-prow-config-periodic` validates the checked-out Git configuration; it does not read live ConfigMaps to compare cluster drift.
+
+**Sources:** [.github/workflows/ci-aws.yml](../refs/falcosecurity/test-infra/.github/workflows/ci-aws.yml#L1), [.github/workflows/ci-oci.yml](../refs/falcosecurity/test-infra/.github/workflows/ci-oci.yml#L1), [tools/ci/verify-prow.sh](../refs/falcosecurity/test-infra/tools/ci/verify-prow.sh#L12), [tools/ci/verify-manifests.sh](../refs/falcosecurity/test-infra/tools/ci/verify-manifests.sh#L57), [config/jobs/aws/check-prow-config/check-prow-config.yaml](../refs/falcosecurity/test-infra/config/jobs/aws/check-prow-config/check-prow-config.yaml#L20).
 
 ## 9. Container Images
 
 ### Standard Prow Images
 
-All core Prow components use images from `gcr.io/k8s-prow/*`, pinned to version `v20240805-37a08f946`:
+AWS core Prow components use images from `gcr.io/k8s-prow/*`, pinned to version `v20240805-37a08f946`:
 - `hook`, `deck`, `sinker`, `horologium`, `crier`, `tide`, `prow-controller-manager` (includes Plank controller)
 - Utility images: `clonerefs`, `initupload`, `entrypoint`, `sidecar`
 - Validation: `checkconfig`
 
 ### Custom Images
 
-Custom images are hosted in ECR:
+Retained AWS custom images are hosted in ECR; OCI jobs use GHCR images, with pins in their job manifests:
 
 ```
 292999226676.dkr.ecr.eu-west-1.amazonaws.com/test-infra/*
@@ -396,14 +450,14 @@ These include job-specific images for driver building, config updates, and other
 | Prow components and AWS infrastructure | [`digests/falcosecurity/test-infra/prow-infrastructure.md`](../digests/falcosecurity/test-infra/prow-infrastructure.md) |
 | Prow configuration, plugins, Tide, branch protection | [`digests/falcosecurity/test-infra/prow-config.md`](../digests/falcosecurity/test-infra/prow-config.md) |
 | Secrets management (Pigeon) | [`digests/falcosecurity/pigeon.md`](../digests/falcosecurity/pigeon.md) |
-| Core Prow config (deck, plank, sinker, branch protection, tide) | [`config/config.yaml`](../refs/falcosecurity/test-infra/config/config.yaml) |
-| Plugin configuration (approve, lgtm, dco, size, triggers, per-repo plugins) | [`config/plugins.yaml`](../refs/falcosecurity/test-infra/config/plugins.yaml) |
-| Config validation (presubmit + periodic) | [`config/jobs/check-prow-config/check-prow-config.yaml`](../refs/falcosecurity/test-infra/config/jobs/check-prow-config/check-prow-config.yaml) |
-| Job config update postsubmit | [`config/jobs/update-jobs/update-jobs.yaml`](../refs/falcosecurity/test-infra/config/jobs/update-jobs/update-jobs.yaml) |
+| Core Prow config (deck, plank, sinker, branch protection, tide) | [`config/prow/aws/config.yaml`](../refs/falcosecurity/test-infra/config/prow/aws/config.yaml) |
+| Plugin configuration (approve, lgtm, dco, size, triggers, per-repo plugins) | [`config/prow/aws/plugins.yaml`](../refs/falcosecurity/test-infra/config/prow/aws/plugins.yaml) |
+| Config validation (presubmit + periodic) | [`config/jobs/aws/check-prow-config/check-prow-config.yaml`](../refs/falcosecurity/test-infra/config/jobs/aws/check-prow-config/check-prow-config.yaml) |
+| Manual config uploader | [`prow/update-jobs/README.md`](../refs/falcosecurity/test-infra/prow/update-jobs/README.md) |
 | Pigeon entry point | [`refs/falcosecurity/pigeon/main.go`](../refs/falcosecurity/pigeon/main.go) |
 | Pigeon config parsing | [`refs/falcosecurity/pigeon/pkg/config/config.go`](../refs/falcosecurity/pigeon/pkg/config/config.go) |
 | Pigeon 1Password integration | [`refs/falcosecurity/pigeon/pkg/pigeon/secrets_onepassword.go`](../refs/falcosecurity/pigeon/pkg/pigeon/secrets_onepassword.go) |
-| Hook deployment manifest | [`config/prow/hook.yaml`](../refs/falcosecurity/test-infra/config/prow/hook.yaml) |
-| Deck deployment manifest | [`config/prow/deck.yaml`](../refs/falcosecurity/test-infra/config/prow/deck.yaml) |
-| Prow Controller Manager deployment manifest | [`config/prow/prow-controller-manager.yaml`](../refs/falcosecurity/test-infra/config/prow/prow-controller-manager.yaml) |
-| Crier deployment manifest | [`config/prow/crier.yaml`](../refs/falcosecurity/test-infra/config/prow/crier.yaml) |
+| Hook deployment manifest | [`config/prow/aws/manifests/hook.yaml`](../refs/falcosecurity/test-infra/config/prow/aws/manifests/hook.yaml) |
+| Deck deployment manifest | [`config/prow/aws/manifests/deck.yaml`](../refs/falcosecurity/test-infra/config/prow/aws/manifests/deck.yaml) |
+| Prow Controller Manager deployment manifest | [`config/prow/aws/manifests/prow-controller-manager.yaml`](../refs/falcosecurity/test-infra/config/prow/aws/manifests/prow-controller-manager.yaml) |
+| Crier deployment manifest | [`config/prow/aws/manifests/crier.yaml`](../refs/falcosecurity/test-infra/config/prow/aws/manifests/crier.yaml) |

@@ -1,6 +1,6 @@
 # falco-playground Digest
 
-> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/falco-playground/`](../../refs/falcosecurity/falco-playground/) | **Commit:** `d5042a3` (May 11, 2026; `git describe` = `v0.1.1-3-gd5042a3`)
+> **Era Relevance:** 0.45 | **Source:** [`refs/falcosecurity/falco-playground/`](../../refs/falcosecurity/falco-playground/)
 
 **Repository:** [falcosecurity/falco-playground](https://github.com/falcosecurity/falco-playground)
 **Scope:** Infra
@@ -10,19 +10,9 @@ Browser-based playground for creating, editing, and validating Falco rules using
 
 ---
 
-> **IMPORTANT STATUS NOTICE**
+> **Scope:** This Sandbox project validates rules using the WebAssembly artifact loaded by its build. The release workflow reads the historical Falco 0.37.1 URL from its stable-URL file, while development/PR workflows download artifacts from Falco CI. Do not infer the live deployment's version from the repository snapshot. **Sources:** [release workflow](../../refs/falcosecurity/falco-playground/.github/workflows/release.yaml#L52-L65), [development workflow](../../refs/falcosecurity/falco-playground/.github/workflows/deploy.yaml#L21-L44), [stable URL](../../refs/falcosecurity/falco-playground/falco_stable_url.txt).
 >
-> This project is **experimental and not actively curated** (~3 years without major updates). The deployed application at [play.falco.org](https://play.falco.org/) runs **Falco 0.37.1** (wasm), which is significantly behind the current era (0.44).
->
-> **Why it remains relevant:**
-> 1. **User perspective**: Demonstrates an interactive playground for rule authors - a valuable UX pattern for future development
-> 2. **Technical proof-of-concept**: Proves Falco can run in WebAssembly within a browser
-> 3. **Wasm build validation**: The Falco wasm build is automatically built by CI (though not officially supported), and this project validates that build works
->
-> **Current limitations:**
-> - Rule syntax and available fields may differ from current Falco version
-> - No active maintenance or feature development
-> - Should not be used as reference for current Falco capabilities
+> The 0.45-era source adds automatic schema extraction from the selected Wasm binary before tests and builds. This synchronizes editor schema with that artifact; it does not establish parity with a separately installed Falco version. **Source:** [schema extraction](../../refs/falcosecurity/falco-playground/scripts/extract-schema.mjs#L135-L175).
 
 ---
 
@@ -30,7 +20,7 @@ Browser-based playground for creating, editing, and validating Falco rules using
 
 Falco Playground is a client-side web application that allows users to write and validate Falco rules directly in the browser. It loads a WebAssembly build of Falco and runs rule validation entirely client-side without any backend server.
 
-**Live deployment:** https://play.falco.org/ (based on Falco 0.37.1)
+**Deployment URL:** [play.falco.org](https://play.falco.org/); the live artifact version was not checked in this source review.
 
 **Key features:**
 - Monaco-based code editor with Falco rule syntax highlighting
@@ -115,7 +105,7 @@ falco -r rule.yaml -o engine.kind=replay -o engine.replay.capture_file=capture.s
 
 ### Wasm Artifact Source
 
-The wasm build is downloaded from:
+The release workflow uses the stable artifact URL:
 ```
 https://download.falco.org/packages/wasm-dev/falco-0.37.1-wasm.tar.gz
 ```
@@ -143,6 +133,8 @@ This artifact contains:
 ## Features
 
 ### Rule Editor
+
+The schema generator runs the loaded Wasm binary with `--rule-schema`, parses its JSON output and writes the editor schema. It supplies the Wasm bytes directly and drains buffered stdout after exit before parsing. [Implementation](../../refs/falcosecurity/falco-playground/scripts/extract-schema.mjs#L72-L169).
 - Monaco-based editor with YAML support
 - Falco rule schema validation
 - Syntax highlighting for Falco rule language
@@ -179,8 +171,8 @@ The application is deployed to AWS S3 and served via CloudFront:
 **Release process:**
 1. Create GitHub release
 2. CI downloads Falco wasm artifact
-3. Builds React application
-4. Uploads to S3, invalidates CloudFront cache
+3. Extracts the rule schema from that artifact, runs Cypress, and builds the application
+4. Publishes release assets; for the latest stable release, uploads to S3 and invalidates CloudFront
 
 **Source:** [`.github/workflows/release.yaml`](../../refs/falcosecurity/falco-playground/.github/workflows/release.yaml)
 
@@ -193,7 +185,7 @@ The application is deployed to AWS S3 and served via CloudFront:
 2. Select a successful workflow
 3. Download `falco-*-wasm.tar.gz` artifact
 
-**Current deployed version:** Falco 0.37.1
+**Release input:** Falco 0.37.1 in the stable-URL file; development/PR workflows use Falco CI artifacts.
 
 **Source:** [`readme.md`](../../refs/falcosecurity/falco-playground/readme.md)
 
@@ -207,6 +199,9 @@ npm install
 # Move falco.wasm to public/
 # Move falco.js to src/Hooks/
 
+# Generate editor schema from the downloaded Wasm binary
+npm run extract-schema
+
 # Start development server
 npm run dev
 
@@ -218,14 +213,14 @@ npm run cy:run
 
 ## Future Potential
 
-While currently unmaintained, this project demonstrates valuable patterns:
+This project demonstrates patterns that can inform future work:
 
 1. **Interactive rule development** - Rules can be validated instantly without Falco installation
 2. **Educational tool** - Learn Falco rule syntax in a safe environment
 3. **Browser-based security tooling** - Proves Falco can run client-side
 4. **Capture file analysis** - Test rules against real event captures
 
-**Potential improvements (if revived):**
+**Potential improvements:**
 - Update to current Falco version
 - Add rule suggestions/autocomplete
 - Include more example rules

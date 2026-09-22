@@ -63,11 +63,11 @@ See [`digests/falcosecurity/evolution.md`](digests/falcosecurity/evolution.md) f
 
 Information in this repo is organized by Falco version "eras". The Falco version indicates the era of the collected information.
 
-### Current Era: 0.44
+### Current Era: 0.45
 
-- **Released**: May 26, 2026
-- **Development cycle**: January 28, 2026 → May 26, 2026
-- Patch versions (e.g., 0.44.x) belong to the same era
+- **Released**: September 21, 2026
+- **Development cycle**: May 26, 2026 → September 21, 2026
+- Patch versions (e.g., 0.45.x) belong to the same era
 
 ### Era Snapshots
 
@@ -101,12 +101,12 @@ How to verify the era/version for each repository in [`refs/`](refs/):
 
 | Repository | Verification method |
 |------------|---------------------|
-| `falco` | Git tag (e.g., `0.44.1`). Also: [`cmake/modules/falco-version.cmake`](refs/falcosecurity/falco/cmake/modules/falco-version.cmake) |
-| `libs` | Git tag (e.g., `0.25.4`). Also: [`cmake/modules/versions.cmake`](refs/falcosecurity/libs/cmake/modules/versions.cmake) |
-| `rules` | Git tag (e.g., `falco-incubating-rules-6.0.1`). Also: [`registry.yaml`](refs/falcosecurity/rules/registry.yaml) |
-| `charts` | Git tag (e.g., `falco-9.1.0`). Also: [`charts/falco/Chart.yaml`](refs/falcosecurity/charts/charts/falco/Chart.yaml) → `version` and `appVersion` |
-| `falcoctl` | Git tag (e.g., `v0.13.0`) |
-| `plugins` | Git tag per plugin (e.g., `plugins/container/v0.7.1`). Also: individual plugin `CMakeLists.txt` or `go.mod` |
+| `falco` | Git tag (e.g., `0.45.0`). Also: [`cmake/modules/falco-version.cmake`](refs/falcosecurity/falco/cmake/modules/falco-version.cmake) |
+| `libs` | Git tag (e.g., `0.26.0`). Also: [`cmake/modules/versions.cmake`](refs/falcosecurity/libs/cmake/modules/versions.cmake) |
+| `rules` | Git tag (e.g., `falco-rules-5.2.0`). Also: [`registry.yaml`](refs/falcosecurity/rules/registry.yaml) |
+| `charts` | Git tag (e.g., `falco-9.2.0`). Also: [`charts/falco/Chart.yaml`](refs/falcosecurity/charts/charts/falco/Chart.yaml) → `version` and `appVersion` |
+| `falcoctl` | Git tag (e.g., `v0.14.2`) |
+| `plugins` | Git tag per plugin (e.g., `plugins/container/v0.7.4`). Also: individual plugin `CMakeLists.txt` or `go.mod` |
 | `falco-website` | Check [`config/_default/versions/params.yaml`](refs/falcosecurity/falco-website/config/_default/versions/params.yaml) → `version` field |
 | `evolution` | Not version-specific; governance applies to current era |
 | Other repos | Git tag or branch shown by `git submodule status`; use development cycle time window for indirect mapping |
@@ -114,7 +114,7 @@ How to verify the era/version for each repository in [`refs/`](refs/):
 ### Mixed-Era Content
 
 Some repositories (e.g., `falco-website`) contain content from multiple eras:
-- **Current era content**: Directly applicable to the current era (0.44)
+- **Current era content**: Directly applicable to the current era (0.45)
 - **Previous era content**: May be useful for historical context but does not necessarily apply to the current era
 
 When creating digests and specs, judge each piece of content:

@@ -2,7 +2,7 @@
 
 This digest provides a comprehensive overview of The Falco Project governance, organization structure, and repository ecosystem. It is derived from the [falcosecurity/evolution](https://github.com/falcosecurity/evolution) repository.
 
-**Applicable to**: Falco 0.44 era (current)
+**Applicable to**: Falco 0.45 era (current)
 
 ---
 
@@ -184,6 +184,8 @@ The project adheres to these fundamental principles:
 
 ## Maintainers
 
+The following lists and affiliation counts reflect the generated registry updated September 14, 2026. They describe that snapshot. **Source:** [MAINTAINERS.md](../../refs/falcosecurity/evolution/MAINTAINERS.md#L7-L77).
+
 ### Core Maintainers
 
 Core Maintainers are maintainers of at least one core repository. They form the team that drives the direction, values, and governance of the overall project.
@@ -191,7 +193,7 @@ Core Maintainers are maintainers of at least one core repository. They form the 
 | Name | GitHub | Company |
 |------|--------|---------|
 | Aldo Lacuku | [@alacuku](https://github.com/alacuku) | Kong |
-| Andrea Terzolo | [@andreagit97](https://github.com/andreagit97) | SUSE |
+| Alessandro Cannarella | [@c2ndev](https://github.com/c2ndev) | Sysdig |
 | Angelo Puglisi | [@deepskyblue86](https://github.com/deepskyblue86) | Sysdig |
 | Carlos Tadeu Panato Junior | [@cpanato](https://github.com/cpanato) | Chainguard |
 | Federico Di Pierro | [@fededp](https://github.com/fededp) | Sysdig |
@@ -204,11 +206,12 @@ Core Maintainers are maintainers of at least one core repository. They form the 
 | Lorenzo Susini | [@loresuso](https://github.com/loresuso) | Sysdig |
 | Luca Guerra | [@lucaguerra](https://github.com/lucaguerra) | Sysdig |
 | Mark Stemm | [@mstemm](https://github.com/mstemm) | Sysdig |
-| Massimiliano Giovagnoli | [@maxgio92](https://github.com/maxgio92) | Chainguard |
 | Mauro Ezequiel Moltrasio | [@molter73](https://github.com/molter73) | RedHat |
 | Michele Zuccala | [@zuc](https://github.com/zuc) | Sysdig |
+| Roberto Scolaro | [@therealbobo](https://github.com/therealbobo) | Sysdig |
 | Samuel Gaist | [@sgaist](https://github.com/sgaist) | Idiap Research Institute |
 | Thomas Labarussias | [@issif](https://github.com/issif) | Yubo |
+
 
 ### All Maintainers
 
@@ -218,9 +221,9 @@ The complete list of maintainers across all repositories:
 |------|--------|---------|
 | Ahmed Amin | [@ahmedameenaim](https://github.com/ahmedameenaim) | Zartis |
 | Aldo Lacuku | [@alacuku](https://github.com/alacuku) | Kong |
-| Andrea Terzolo | [@andreagit97](https://github.com/andreagit97) | SUSE |
+| Alessandro Cannarella | [@c2ndev](https://github.com/c2ndev) | Sysdig |
 | Angelo Puglisi | [@deepskyblue86](https://github.com/deepskyblue86) | Sysdig |
-| Aurelie Vache | [@scraly](https://github.com/scraly) | OVHcloud |
+| Aurélie Vache | [@scraly](https://github.com/scraly) | OVHcloud |
 | Carlos Tadeu Panato Junior | [@cpanato](https://github.com/cpanato) | Chainguard |
 | David Windsor | [@dwindsor](https://github.com/dwindsor) | Independent |
 | Edd Wilder-James | [@ewilderj](https://github.com/ewilderj) | Independent |
@@ -256,24 +259,31 @@ The complete list of maintainers across all repositories:
 | Sverre Boschman | [@sboschman](https://github.com/sboschman) | Topicus.Education |
 | Teryl Taylor | [@terylt](https://github.com/terylt) | IBM |
 | Thomas Labarussias | [@issif](https://github.com/issif) | Yubo |
-| Vicente Javier Jimenez Miras | [@vjjmiras](https://github.com/vjjmiras) | Independent |
+| Vicente Javier Jiménez Miras | [@vjjmiras](https://github.com/vjjmiras) | Independent |
+
 
 ### Company Affiliations Summary
 
 | Company | Core Maintainers | All Maintainers |
 |---------|-----------------|-----------------|
-| Sysdig | 10 | 17 |
-| Chainguard | 2 | 2 |
-| IBM | 0 | 3 |
+| Sysdig | 12 | 17 |
 | Independent | 0 | 5 |
-| Kong | 1 | 1 |
-| SUSE | 1 | 1 |
-| Replit | 1 | 1 |
-| RedHat | 1 | 1 |
-| Wireshark Foundation | 1 | 1 |
+| IBM | 0 | 3 |
+| Chainguard | 1 | 2 |
+| Amazon | 0 | 1 |
+| Ca' Foscari University of Venice | 0 | 1 |
 | Idiap Research Institute | 1 | 1 |
+| Kong | 1 | 1 |
+| LOVOO | 0 | 1 |
+| Numberly | 0 | 1 |
+| OVHcloud | 0 | 1 |
+| RedHat | 1 | 1 |
+| Replit | 1 | 1 |
+| Secureworks | 0 | 1 |
+| Topicus.Education | 0 | 1 |
+| Wireshark Foundation | 1 | 1 |
 | Yubo | 1 | 1 |
-| Others | 0 | 7 |
+| Zartis | 0 | 1 |
 
 ---
 
@@ -365,4 +375,4 @@ This digest was created from the following source files in the [falcosecurity/ev
 
 ---
 
-*Last updated: 2026-02-03*
+*Last updated: 2026-09-22*

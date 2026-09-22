@@ -1,5 +1,5 @@
 # Kernel Instrumentation
-> **Era:** 0.44 | **Version:** libs 0.25.4 | **Source:** [`refs/falcosecurity/libs/`](../../../refs/falcosecurity/libs/)
+> **Era:** 0.45 | **Version:** libs 0.26.0 | **Source:** [`refs/falcosecurity/libs/`](../../../refs/falcosecurity/libs/)
 
 ## Overview
 
@@ -208,7 +208,7 @@ struct {
     __type(value, struct counter_map);
 } counter_maps;
 
-// Per-CPU auxiliary buffer for event construction
+// Per-CPU pool of task-owned auxiliary buffers
 struct {
     __uint(type, BPF_MAP_TYPE_ARRAY);
     __type(key, uint32_t);
@@ -222,7 +222,7 @@ struct {
 // From ptrace.bpf.c
 SEC("tp_btf/sys_exit")
 int BPF_PROG(ptrace_x, struct pt_regs *regs, long ret) {
-    // Get auxiliary map for this CPU
+    // Claim an auxiliary segment for this task
     struct auxiliary_map *auxmap = auxmap__get();
     if (!auxmap)
         return 0;
@@ -378,7 +378,7 @@ int f_sys_open_x(struct event_filler_arguments *args) {
 │                 ▼                                                 │
 │  ┌─────────────────────────────────────┐                         │
 │  │       Syscall Handler Program        │                         │
-│  │  - Get auxiliary_map for this CPU   │                         │
+│  │  - Claim task-owned auxiliary segment   │                         │
 │  │  - Extract args from pt_regs        │                         │
 │  │  - Build event in aux buffer        │                         │
 │  └──────────────┬──────────────────────┘                         │
@@ -476,6 +476,14 @@ UF_USED        = (1 << 0),  // Syscall is implemented/used
 UF_NEVER_DROP  = (1 << 1),  // Critical, never sample
 UF_ALWAYS_DROP = (1 << 2),  // Low-value, always drop
 ```
+
+### Auxiliary Buffer Ownership and Drop Accounting (libs 0.26)
+
+Variable-size events claim task-owned segments from an auxiliary-buffer pool with `AUXMAP_POOL_DEPTH = 2` segments per possible CPU. Tail-called continuations recover the task's owned segment, including after CPU migration; a full pool or lost ownership drops the event instead of submitting overwritten data. The driver probes atomic compare-and-swap support and libpman adapts the program for older kernels.
+
+`n_drops_auxmap_reentrancy`, `n_drops_auxmap_reentrancy_tail_call`, and `n_drops_auxmap_pool_full` expose these paths. The tail-call counter is a subset of reentrancy drops. `n_auxmap_migrations` counts recovered builds, not drops. Aggregate `n_drops` and per-CPU drop totals include reentrancy and full-pool drops; legacy `scap_stats.n_preemptions` receives their sum. Attempted events that drop in these paths are included in `n_evts`.
+
+**Sources:** [struct_definitions.h:18-94](../../../refs/falcosecurity/libs/driver/modern_bpf/shared_definitions/struct_definitions.h#L18-L94), [auxmap_store_params.h:64-134,192-278,347-378](../../../refs/falcosecurity/libs/driver/modern_bpf/helpers/store/auxmap_store_params.h#L64-L134), [maps.c:440-508](../../../refs/falcosecurity/libs/userspace/libpman/src/maps.c#L440-L508), [stats.c:174-183,278-315](../../../refs/falcosecurity/libs/userspace/libpman/src/stats.c#L174-L183).
 
 ## TOCTOU Mitigation
 

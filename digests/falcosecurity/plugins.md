@@ -1,6 +1,6 @@
 # Falco Plugins Repository
 
-**Era:** 0.44 | **Status:** Stable | **Scope:** Core
+**Era:** 0.45 | **Status:** Stable | **Scope:** Core
 
 The [`plugins`](../../refs/falcosecurity/plugins/) repository is the central hub for the Falco Plugin ecosystem. It serves dual purposes:
 
@@ -8,6 +8,8 @@ The [`plugins`](../../refs/falcosecurity/plugins/) repository is the central hub
 2. **Monorepo**: Official plugins hosted and maintained by The Falco Project with robust release and distribution processes
 
 **Source:** [`README.md`](../../refs/falcosecurity/plugins/README.md)
+
+This era uses a development-cycle source snapshot. Plugins have independent version tags; the monorepo pin does not imply a coordinated release of every plugin. See each plugin digest for its applicable version. **Source:** [`release workflow`](../../refs/falcosecurity/plugins/.github/workflows/release.yml).
 
 ## Table of Contents
 
@@ -55,7 +57,7 @@ The following data sources are reserved and cannot be used by plugins:
 - `internal` - Used internally by Falco
 - `plugins` - Reserved
 
-**Source:** [`registry.yaml:29`](../../refs/falcosecurity/plugins/registry.yaml)
+**Source:** [`registry.yaml:29`](../../refs/falcosecurity/plugins/registry.yaml#L29)
 
 ### Reserved Plugin IDs
 

@@ -2,10 +2,10 @@
 
 Kubernetes Operator for managing Falco deployments, auxiliary components, and runtime artifacts (rules, plugins, configuration).
 
-**Applicable to**: Falco 0.44 era
+**Applicable to**: Falco 0.45 era
 **Repository status**: Incubating
 **License**: Apache-2.0
-**Pinned version**: v0.3.0 (released 2026-05-28)
+**Pinned version**: v0.4.1
 
 ---
 
@@ -32,7 +32,7 @@ Kubernetes Operator for managing Falco deployments, auxiliary components, and ru
 
 ## Overview
 
-The Falco Operator brings Kubernetes-native lifecycle management to Falco deployments. It consists of two complementary binaries and five CRDs across two API groups ([README.md:19-69](../../refs/falcosecurity/falco-operator/README.md)):
+The Falco Operator brings Kubernetes-native lifecycle management to Falco deployments. It consists of two complementary binaries and five CRDs across two API groups ([README.md:19-69](../../refs/falcosecurity/falco-operator/README.md#L19-L69)):
 
 1. **Instance Operator** (`instance-operator` binary) — Manages Falco deployment lifecycle and auxiliary components (e.g., k8s-metacollector) via `instance.falcosecurity.dev/v1alpha1` CRDs
 2. **Artifact Operator** (`artifact-operator` binary) — Manages rules, plugins, and configuration fragments via `artifact.falcosecurity.dev/v1alpha1` CRDs; runs as a sidecar in Falco pods
@@ -68,9 +68,9 @@ The Falco controller ([controllers/instance/falco/controller.go](../../refs/falc
 8. Set finalizer for graceful deletion
 9. Generate and apply the DaemonSet or Deployment using Server-Side Apply (SSA) with managed fields diff detection to avoid unnecessary API writes
 
-The controller uses a managed fields comparison ([`controllerhelper.Diff`](../../refs/falcosecurity/falco-operator/internal/pkg/controllerhelper/diff.go)) to skip SSA patches when the desired state matches the existing resource, which avoids spurious `resourceVersion` bumps on Kubernetes < 1.31 ([controller.go:273-274](../../refs/falcosecurity/falco-operator/controllers/instance/falco/controller.go)).
+The controller uses a managed fields comparison ([`controllerhelper.Diff`](../../refs/falcosecurity/falco-operator/internal/pkg/controllerhelper/diff.go)) to skip SSA patches when the desired state matches the existing resource, which avoids spurious `resourceVersion` bumps on Kubernetes < 1.31 ([controller.go:295-296](../../refs/falcosecurity/falco-operator/controllers/instance/falco/controller.go#L295-L296)).
 
-The controller emits Kubernetes events for resource creation, updates, errors, dual deployment cleanup, and availability state changes ([controller.go:309-333](../../refs/falcosecurity/falco-operator/controllers/instance/falco/controller.go)).
+The controller emits Kubernetes events for resource creation, updates, errors, dual deployment cleanup, and availability state changes ([controller.go:331-355](../../refs/falcosecurity/falco-operator/controllers/instance/falco/controller.go#L331-L355)).
 
 #### Component Controller
 
@@ -105,7 +105,7 @@ Runs as a **native sidecar** (Kubernetes 1.29+ feature) in each Falco pod. It ma
 - **Plugin Controller** — Downloads plugin `.so` files from OCI registries; manages plugin configuration
 - **Config Controller** — Writes YAML configuration fragments to filesystem with priority ordering; supports both inline config and ConfigMapRef
 
-**Source-change detection (since v0.3.0):** Each OCI-backed artifact records a `SourceSignature` — a SHA-256 fingerprint over the resolved OCI reference, registry options (plain-HTTP, TLS skip-verify), and the referenced auth Secret's credentials ([artifact/signature.go](../../refs/falcosecurity/falco-operator/internal/pkg/artifact/signature.go), [artifact/types.go](../../refs/falcosecurity/falco-operator/internal/pkg/artifact/types.go)). When the source identity changes — including a rotated auth Secret — the artifact is re-pulled. To react promptly, the Rulesfile and Plugin controllers **watch the auth Secrets** they reference (via a Secret→artifact index) and re-reconcile on change ([rulesfile/controller.go](../../refs/falcosecurity/falco-operator/controllers/artifact/rulesfile/controller.go), [plugin/controller.go](../../refs/falcosecurity/falco-operator/controllers/artifact/plugin/controller.go)). The generated Falco instance receives `secrets` get/list/watch through a **namespaced Role** (`RoleRules`), not its ClusterRole — the instance's ClusterRole grants only `nodes` get/list/watch ([resources/falco.go:128-145](../../refs/falcosecurity/falco-operator/internal/pkg/resources/falco.go)). This is a source-identity fingerprint for change detection, **not** cryptographic (e.g. cosign) signature verification.
+**Source-change detection (since v0.3.0):** Each OCI-backed artifact records a `SourceSignature` — a SHA-256 fingerprint over the resolved OCI reference, registry options (plain-HTTP, TLS skip-verify), and the referenced auth Secret's credentials ([artifact/signature.go](../../refs/falcosecurity/falco-operator/internal/pkg/artifact/signature.go), [artifact/types.go](../../refs/falcosecurity/falco-operator/internal/pkg/artifact/types.go)). When the source identity changes — including a rotated auth Secret — the artifact is re-pulled. To react promptly, the Rulesfile and Plugin controllers **watch the auth Secrets** they reference (via a Secret→artifact index) and re-reconcile on change ([rulesfile/controller.go](../../refs/falcosecurity/falco-operator/controllers/artifact/rulesfile/controller.go), [plugin/controller.go](../../refs/falcosecurity/falco-operator/controllers/artifact/plugin/controller.go)). The generated Falco instance receives `secrets` get/list/watch through a **namespaced Role** (`RoleRules`), not its ClusterRole — the instance's ClusterRole grants only `nodes` get/list/watch ([resources/falco.go:128-145](../../refs/falcosecurity/falco-operator/internal/pkg/resources/falco.go#L128-L145)). This is a source-identity fingerprint for change detection, **not** cryptographic (e.g. cosign) signature verification.
 
 Artifacts are shared between the sidecar and the Falco container via `emptyDir` volumes at three mount paths ([mounts/consts.go](../../refs/falcosecurity/falco-operator/internal/pkg/mounts/consts.go)):
 - `/etc/falco/config.d` — Configuration fragments
@@ -348,7 +348,7 @@ All condition types are defined in [api/common/v1alpha1/types.go](../../refs/fal
 | `Programmed` | True/False/Unknown | Whether the artifact was successfully programmed into Falco |
 | `ResolvedRefs` | True/False | Whether all references (ConfigMaps, Secrets) were resolved |
 
-**Common ConfigMap/Secret keys** ([types.go:57-69](../../refs/falcosecurity/falco-operator/api/common/v1alpha1/types.go)):
+**Common ConfigMap/Secret keys** ([types.go:57-69](../../refs/falcosecurity/falco-operator/api/common/v1alpha1/types.go#L57-L69)):
 - `ConfigMapRulesKey` = `rules.yaml`
 - `ConfigMapConfigKey` = `config.yaml`
 - `SecretUsernameKey` = `username`
@@ -365,25 +365,25 @@ The operator applies type-specific defaults via the `InstanceDefaults` registry 
 | Setting | Value |
 |---------|-------|
 | Engine | `modern_ebpf` (full syscall monitoring) |
-| Container engines | CRI + Docker enabled |
+| Container enrichment | Requires an explicit container `Plugin` CR |
 | Outputs | stdout + syslog |
 | Webserver | Enabled on port 8765 with Prometheus metrics |
 | Security context | Privileged mode |
 | Host mounts | `/proc`, `/sys`, `/dev`, `/etc`, container runtimes |
 | Resources | Requests: 100m CPU, 512Mi memory; Limits: 1000m CPU, 1024Mi memory |
-| Probes | Liveness (60s delay), Readiness (30s delay) on `/healthz:8765` |
+| Probes | Startup: `/healthz:8765`, 3s delay, 5s period, 20 failures; liveness/readiness: no initial delay |
 | Tolerations | master + control-plane NoSchedule |
 | Update strategy | RollingUpdate |
-| Default Falco image | `docker.io/falcosecurity/falco:0.44.0` |
+| Default Falco image | `docker.io/falcosecurity/falco:0.44.1` |
 
-**Source:** [resources/falco.go](../../refs/falcosecurity/falco-operator/internal/pkg/resources/falco.go), [`image/const.go:28`](../../refs/falcosecurity/falco-operator/internal/pkg/image/const.go)
+**Source:** [resources/falco.go](../../refs/falcosecurity/falco-operator/internal/pkg/resources/falco.go), [`image/const.go:28`](../../refs/falcosecurity/falco-operator/internal/pkg/image/const.go#L28)
 
 ### Falco Deployment Mode
 
 | Setting | Value |
 |---------|-------|
 | Engine | `nodriver` (plugin-only, no kernel instrumentation) |
-| Container engines | All disabled |
+| Container enrichment | Not configured by the base configuration |
 | Designed for | Targeted analysis via plugins |
 
 ### Metacollector (Component)
@@ -405,10 +405,10 @@ The operator applies type-specific defaults via the `InstanceDefaults` registry 
 - Image: `docker.io/falcosecurity/artifact-operator:latest` (configurable at build time via ldflags)
 - Native sidecar with `restartPolicy: Always`
 - Receives `POD_NAMESPACE` and `NODE_NAME` via downward API
-- Readiness probe (5s delay) + Liveness probe (15s delay) on `/healthz:8081`
+- Startup and readiness probes use `/readyz:8081` (3s/5s delay); liveness uses `/healthz:8081` (15s delay)
 - Shared `emptyDir` volumes for config, rulesfiles, and plugins
 
-**Source:** [version/version.go](../../refs/falcosecurity/falco-operator/internal/pkg/version/version.go), [resources/falco.go:182-235](../../refs/falcosecurity/falco-operator/internal/pkg/resources/falco.go)
+**Source:** [version/version.go](../../refs/falcosecurity/falco-operator/internal/pkg/version/version.go), [resources/falco.go:182-235](../../refs/falcosecurity/falco-operator/internal/pkg/resources/falco.go#L182-L235)
 
 ---
 
@@ -443,7 +443,7 @@ Either method creates: 5 CRDs, the `falco-operator` namespace, ServiceAccount, C
 | `artifact.falcosecurity.dev` | configs, plugins, rulesfiles (+ /status) | create, delete, get, list, patch, update, watch |
 | `discovery.k8s.io` | endpointslices | get, list, watch |
 
-**Source:** [controllers/instance/falco/controller.go:79-90](../../refs/falcosecurity/falco-operator/controllers/instance/falco/controller.go), [controllers/instance/component/controller.go:75-78](../../refs/falcosecurity/falco-operator/controllers/instance/component/controller.go)
+**Source:** [controllers/instance/falco/controller.go:96-107](../../refs/falcosecurity/falco-operator/controllers/instance/falco/controller.go#L96-L107), [controllers/instance/component/controller.go:90-93](../../refs/falcosecurity/falco-operator/controllers/instance/component/controller.go#L90-L93)
 
 ---
 
@@ -453,8 +453,8 @@ Either method creates: 5 CRDs, the `falco-operator` namespace, ServiceAccount, C
 |--------|--------|
 | Language | Go 1.26.0 |
 | Framework | kubebuilder v4, controller-runtime 0.24.1 |
-| K8s API | k8s.io/api v0.36.1 |
-| OCI client | oras-go/v2 2.6.0 |
+| K8s API | k8s.io/api v0.36.2 |
+| OCI client | oras-go/v2 2.6.1 |
 | Container base | `cgr.dev/chainguard/static` (non-root user 65532) |
 | Architectures | linux/amd64, linux/arm64 |
 | Binaries | `instance-operator` (instance controllers), `artifact-operator` (sidecar) |
@@ -479,6 +479,18 @@ Either method creates: 5 CRDs, the `falco-operator` namespace, ServiceAccount, C
 **Source:** [go.mod](../../refs/falcosecurity/falco-operator/go.mod), [Makefile](../../refs/falcosecurity/falco-operator/Makefile), [OWNERS](../../refs/falcosecurity/falco-operator/OWNERS)
 
 ---
+
+## Era 0.45 Snapshot Scope
+
+This document covers stable operator **v0.4.1**. Its default Falco image is still **0.44.1**, and its metacollector default remains **0.1.2**; era membership does not imply all components deploy Falco 0.45 by default. The operator chart present in the separately pinned charts monorepo is a **0.5.0-rc3** application snapshot and must not be used as evidence for this stable operator's behavior.
+
+**Source:** [`image/const.go:20-34`](../../refs/falcosecurity/falco-operator/internal/pkg/image/const.go), [`version-matrix.md:9-14`](../../refs/falcosecurity/falco-operator/docs/version-matrix.md), [`charts/falco-operator/Chart.yaml:17-18`](../../refs/falcosecurity/charts/charts/falco-operator/Chart.yaml).
+
+The instance operator accepts repeatable `--excluded-labels` patterns (`*` wildcard), exposed by the Helm `excludedLabels` array. Matching labels on Falco and Component CRs are omitted from generated resources without changing the stored CR labels. Explicit pod-template labels are retained. This supports GitOps ownership labels that should not propagate to generated resources.
+
+Artifact reconciliation preserves the existing `Programmed` condition instead of deleting it on every pass; failures converting inline Config or Rulesfile data to YAML explicitly set it to false. The base Falco configuration no longer contains removed `container_engines`, legacy eBPF, or gRPC settings. Load the container plugin with a `Plugin` CR for metadata enrichment.
+
+**Source:** [`labels.go:21-74`](../../refs/falcosecurity/falco-operator/internal/pkg/instance/labels.go), [`configuration.md:165-184`](../../refs/falcosecurity/falco-operator/docs/configuration.md), [`config/controller.go:222-247`](../../refs/falcosecurity/falco-operator/controllers/artifact/config/controller.go), [`rulesfile/controller.go:222-260`](../../refs/falcosecurity/falco-operator/controllers/artifact/rulesfile/controller.go), [`falco.go:279-487`](../../refs/falcosecurity/falco-operator/internal/pkg/resources/falco.go).
 
 ## Sources
 
@@ -508,4 +520,4 @@ Either method creates: 5 CRDs, the `falco-operator` namespace, ServiceAccount, C
 
 ---
 
-*Last updated: 2026-06-15*
+*Last updated: 2026-09-22*

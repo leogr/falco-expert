@@ -2,7 +2,7 @@
 
 > Kernel-level event capture: modern eBPF driver, kernel module, syscall table, event model, and architecture support.
 
-**Era:** 0.44 | **Source:** [`refs/falcosecurity/libs/driver/`](../refs/falcosecurity/libs/driver/)
+**Era:** 0.45 | **Source:** [`refs/falcosecurity/libs/driver/`](../refs/falcosecurity/libs/driver/)
 
 ## Overview
 
@@ -213,7 +213,7 @@ Both drivers instrument syscalls via raw tracepoints:
 
 ## Modern eBPF Driver (Default)
 
-The modern eBPF driver is the default since Falco 0.35. It uses CO-RE (Compile Once, Run Everywhere) technology for portable, efficient syscall capture without requiring kernel headers at runtime.
+The modern eBPF driver is the default since Falco 0.38. It uses CO-RE (Compile Once, Run Everywhere) technology for portable, efficient syscall capture without requiring kernel headers at runtime.
 
 **Requirements:** Linux kernel >= 5.8 with BTF support
 
@@ -284,7 +284,7 @@ struct { __uint(type, BPF_MAP_TYPE_PROG_ARRAY); } syscall_exit_extra_tail_table;
 // Per-CPU ring buffers for event delivery
 struct { __uint(type, BPF_MAP_TYPE_ARRAY_OF_MAPS); } ringbuf_maps;
 
-// Per-CPU auxiliary maps for event staging
+// Per-CPU pools of task-owned auxiliary segments for event staging
 struct { __uint(type, BPF_MAP_TYPE_ARRAY); } auxiliary_maps;
 
 // Per-CPU event counters (totals, drops by category)
@@ -306,7 +306,7 @@ struct { __uint(type, BPF_MAP_TYPE_ARRAY); } capture_settings;
 Events with dynamic-length parameters (strings, buffers) use the auxiliary map for staging:
 
 ```c
-// Get auxiliary map for this CPU
+// Claim an auxiliary segment for this task
 struct auxiliary_map *auxmap = auxmap__get();
 
 // Write event header
@@ -399,6 +399,14 @@ inspector.open_modern_bpf(
 ### BPF Iterators for State Synchronization
 
 The modern eBPF driver uses BPF iterator programs (`iter/task`, `iter/task_file`) to **synchronously** fetch process and file-descriptor state from the kernel — populating the initial process table at startup and healing state after event drops, faster and more reliably than walking procfs. Falco 0.44.1 (libs 0.25.4) adds a `disable_iterators` parameter (exposed as the `engine.modern_ebpf.disable_iterators` config key) that globally disables BPF iterators and forces procfs fallback. libs also globally disables iterators when Falco runs outside the host (root) PID namespace because the iterator programs are PID-namespace-scoped. Missing `bpf_iter_link_info.task` support is narrower: it makes task-filtered fetch operations return `SCAP_NOT_SUPPORTED` and fall back to procfs, while full-table iterator dumps can still attach without link-info options when the union itself is unavailable. The earlier unguarded use of `bpf_iter_link_info.task.{pid,tid}` caused `E2BIG` on kernels without task-filtering support. See [`digests/falcosecurity/libs/modern-bpf.md`](../digests/falcosecurity/libs/modern-bpf.md).
+
+### Auxiliary Buffer Ownership and Drop Accounting (libs 0.26)
+
+Variable-size events claim task-owned segments from an auxiliary-buffer pool with `AUXMAP_POOL_DEPTH = 2` segments per possible CPU. Tail-called continuations recover the task's owned segment, including after CPU migration; a full pool or lost ownership drops the event instead of submitting overwritten data. The driver probes atomic compare-and-swap support and libpman adapts the program for older kernels.
+
+`n_drops_auxmap_reentrancy`, `n_drops_auxmap_reentrancy_tail_call`, and `n_drops_auxmap_pool_full` expose these paths. The tail-call counter is a subset of reentrancy drops. `n_auxmap_migrations` counts recovered builds, not drops. Aggregate `n_drops` and per-CPU drop totals include reentrancy and full-pool drops; legacy `scap_stats.n_preemptions` receives their sum. Attempted events that drop in these paths are included in `n_evts`.
+
+**Sources:** [struct_definitions.h:18-94](../refs/falcosecurity/libs/driver/modern_bpf/shared_definitions/struct_definitions.h#L18-L94), [auxmap_store_params.h:64-134,192-278,347-378](../refs/falcosecurity/libs/driver/modern_bpf/helpers/store/auxmap_store_params.h#L64-L134), [maps.c:440-508](../refs/falcosecurity/libs/userspace/libpman/src/maps.c#L440-L508), [stats.c:174-183,278-315](../refs/falcosecurity/libs/userspace/libpman/src/stats.c#L174-L183).
 
 ## Kernel Module (kmod)
 

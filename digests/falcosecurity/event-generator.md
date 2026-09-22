@@ -4,7 +4,7 @@ Testing and demonstration tool for generating synthetic security events detected
 
 **Repository:** [falcosecurity/event-generator](https://github.com/falcosecurity/event-generator)
 **Version:** v0.13.0
-**Era:** 0.44
+**Era:** 0.45
 **Scope:** Ecosystem
 **Status:** Incubating
 **Compatibility:** Requires Falco 0.37.0 or newer
@@ -51,7 +51,7 @@ The `Helper` interface provides utilities for actions:
 - Kubernetes resource building (`ResourceBuilder()`)
 - Container detection (`InContainer()`)
 
-**Source:** [`events/interfaces.go:34-74`](../../refs/falcosecurity/event-generator/events/interfaces.go)
+**Source:** [`events/interfaces.go:34-74`](../../refs/falcosecurity/event-generator/events/interfaces.go#L34-L74)
 
 ### Action Options
 
@@ -141,7 +141,7 @@ Some actions are disabled by default because:
 
 Use `--all` flag to include disabled actions.
 
-**Source:** [`events/syscall/change_thread_namespace.go:29-32`](../../refs/falcosecurity/event-generator/events/syscall/change_thread_namespace.go)
+**Source:** [`events/syscall/change_thread_namespace.go:29-32`](../../refs/falcosecurity/event-generator/events/syscall/change_thread_namespace.go#L29-L32)
 
 ## Kubernetes Audit Actions
 

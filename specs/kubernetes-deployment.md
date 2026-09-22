@@ -2,11 +2,11 @@
 
 > Helm-chart-based Kubernetes deployment: DaemonSet vs Deployment topology, pod architecture, driver configuration, artifact management, volume architecture, RBAC, and ecosystem integration.
 
-**Era:** 0.44 | **Source:** [`refs/falcosecurity/charts/`](../refs/falcosecurity/charts/), [`refs/falcosecurity/deploy-kubernetes/`](../refs/falcosecurity/deploy-kubernetes/)
+**Era:** 0.45 | **Source:** [`refs/falcosecurity/charts/`](../refs/falcosecurity/charts/), [`refs/falcosecurity/deploy-kubernetes/`](../refs/falcosecurity/deploy-kubernetes/)
 
 ## Overview
 
-Helm charts are the primary method for deploying Falco and its ecosystem components in Kubernetes. The [falcosecurity/charts](../refs/falcosecurity/charts/) repository provides five production-ready charts that cover the core runtime security engine, alert forwarding, automated response, metadata enrichment, and test event generation.
+Helm charts are the primary method for deploying Falco and its ecosystem components in Kubernetes. The [falcosecurity/charts](../refs/falcosecurity/charts/) repository provides six charts that cover the core runtime security engine, alert forwarding, automated response, metadata enrichment, and test event generation.
 
 **Helm Repository:** `https://falcosecurity.github.io/charts`
 
@@ -21,11 +21,11 @@ helm repo update
 
 | Chart | Version | AppVersion | Purpose |
 |-------|---------|------------|---------|
-| [`falco`](../refs/falcosecurity/charts/charts/falco/) | 9.1.0 | 0.44.1 | Core Falco deployment (DaemonSet or Deployment) |
-| [`falco-operator`](../refs/falcosecurity/charts/charts/falco-operator/) | 0.2.0 | 0.3.0 | Kubernetes Operator for managing Falco instances |
-| [`falcosidekick`](../refs/falcosecurity/charts/charts/falcosidekick/) | 0.13.1 | 2.31.1 | Alert forwarding to 60+ outputs |
-| [`falco-talon`](../refs/falcosecurity/charts/charts/falco-talon/) | 0.4.0 | 0.3.0 | Automated response actions |
-| [`k8s-metacollector`](../refs/falcosecurity/charts/charts/k8s-metacollector/) | 0.3.0 | 0.1.2 | Kubernetes metadata enrichment via gRPC |
+| [`falco`](../refs/falcosecurity/charts/charts/falco/) | 9.2.0 | 0.45.0 | Core Falco deployment (DaemonSet or Deployment) |
+| [`falco-operator`](../refs/falcosecurity/charts/charts/falco-operator/) | 0.4.0-rc3 | 0.5.0-rc3 | Kubernetes Operator for managing Falco instances |
+| [`falcosidekick`](../refs/falcosecurity/charts/charts/falcosidekick/) | 0.14.0 | 2.31.1 | Alert forwarding to 60+ outputs |
+| [`falco-talon`](../refs/falcosecurity/charts/charts/falco-talon/) | 0.4.2 | 0.3.0 | Automated response actions |
+| [`k8s-metacollector`](../refs/falcosecurity/charts/charts/k8s-metacollector/) | 0.3.2 | 0.1.4 | Kubernetes metadata enrichment via gRPC |
 | [`event-generator`](../refs/falcosecurity/charts/charts/event-generator/) | 0.4.0 | 0.13.0 | Test event generation for rule validation |
 
 Pre-rendered Kubernetes manifests (generated from these charts with default values) are also available in [falcosecurity/deploy-kubernetes](../refs/falcosecurity/deploy-kubernetes/) for direct `kubectl apply -k` deployment without Helm.
@@ -63,22 +63,22 @@ Each Falco pod consists of **2 init containers** (run sequentially before the ma
 │  Init Containers (run sequentially):                                 │
 │  ┌──────────────────────────┐  ┌──────────────────────────────────┐ │
 │  │  falco-driver-loader     │  │  falcoctl-artifact-install       │ │
-│  │  image: falco-driver-    │  │  image: falcoctl:0.13.0          │ │
-│  │         loader:0.44.1    │  │                                  │ │
+│  │  image: falco-driver-    │  │  image: falcoctl:0.14.2          │ │
+│  │         loader:0.45.0    │  │                                  │ │
 │  │                          │  │  - Downloads rules + plugins     │ │
 │  │  - Downloads/builds      │  │  - Writes to emptyDir volumes    │ │
 │  │    kernel driver          │  │  - Uses falcoctl index           │ │
 │  │  - Writes driver config  │  │                                  │ │
 │  │    to emptyDir            │  │  Default refs:                   │ │
 │  │                          │  │    falco-rules:5                 │ │
-│  │  Skipped when driver     │  │    container plugin:0.7.1        │ │
+│  │  Skipped when driver     │  │    container plugin:0.7.4        │ │
 │  │  is not needed           │  │                                  │ │
 │  └──────────────────────────┘  └──────────────────────────────────┘ │
 ├──────────────────────────────────────────────────────────────────────┤
 │  Runtime Containers (run in parallel):                               │
 │  ┌──────────────────────────┐  ┌──────────────────────────────────┐ │
 │  │  falco                   │  │  falcoctl-artifact-follow        │ │
-│  │  image: falco:0.44.1     │  │  image: falcoctl:0.13.0          │ │
+│  │  image: falco:0.45.0     │  │  image: falcoctl:0.14.2          │ │
 │  │                          │  │                                  │ │
 │  │  - Main Falco process    │  │  - Watches for rule/plugin       │ │
 │  │  - Loads driver           │  │    updates from OCI registries   │ │
@@ -100,7 +100,7 @@ Each Falco pod consists of **2 init containers** (run sequentially before the ma
 
 **Health probes** (startup, liveness, readiness) all use `/healthz` on port 8765.
 
-> **Note:** The image tags shown above reflect the current-era chart defaults from [`values.yaml`](../refs/falcosecurity/charts/charts/falco/values.yaml) (falco/falco-driver-loader default to the chart `appVersion` 0.44.1 in chart 9.1.0; `falcoctl.image.tag` is pinned to `0.13.0`). The pre-rendered manifests in [`deploy-kubernetes`](../refs/falcosecurity/deploy-kubernetes/) still carry older tags (e.g., `falco:0.43.1`, `falcoctl:0.12.2`) because they lag the chart.
+> **Note:** The diagram reflects Helm chart 9.2.0 defaults: Falco 0.45.0 and falcoctl 0.14.2. The separately pinned pre-rendered manifests still deploy Falco 0.44.1 with falcoctl 0.13.0; see [deploy-kubernetes](../digests/falcosecurity/deploy-kubernetes.md).
 
 **Source:** [`daemonset.yaml`](../refs/falcosecurity/deploy-kubernetes/kubernetes/falco/templates/daemonset.yaml), [`values.yaml`](../refs/falcosecurity/charts/charts/falco/values.yaml)
 
@@ -126,7 +126,7 @@ helm install falco falcosecurity/falco --set driver.kind=modern_ebpf
 helm install falco falcosecurity/falco --set driver.kind=kmod
 ```
 
-> **Note:** With `modern_ebpf`, the driver loader init container still runs but only generates configuration -- it does not download a separate driver binary, since the probe is embedded in the Falco binary itself.
+> **Note:** Explicit `driver.kind=modern_ebpf` omits the driver loader init container. With `auto`, the enabled loader runs and can select the embedded modern eBPF probe. [Source: `_helpers.tpl:357-363`](../refs/falcosecurity/charts/charts/falco/templates/_helpers.tpl).
 
 ### Security Contexts per Driver Type
 
@@ -166,7 +166,7 @@ args:
 
 **Default artifacts installed:**
 - `falco-rules:5` -- stable Falco detection rules
-- `ghcr.io/falcosecurity/plugins/plugin/container:0.7.1` -- container metadata plugin
+- `ghcr.io/falcosecurity/plugins/plugin/container:0.7.4` -- container metadata plugin
 
 ### Sidecar: `falcoctl-artifact-follow`
 
@@ -179,7 +179,7 @@ args:
   - --log-format=json
 ```
 
-Checks for updates every **168 hours (1 week)** by default. When an update is found, it downloads the new artifact and triggers a Falco hot reload via the `/versions` endpoint compatibility check.
+Checks for updates every **168 hours (1 week)** by default. The `/versions` request checks compatibility; after download, Falco's file watcher observes changed artifacts and reloads when `watch_config_files` is enabled.
 
 ### Install and Follow Refs Pattern
 
@@ -209,8 +209,8 @@ falcoctl:
 ```bash
 # Include incubating rules
 helm install falco falcosecurity/falco \
-  --set "falcoctl.config.artifact.install.refs={falco-rules:5,falco-incubating-rules:5}" \
-  --set "falcoctl.config.artifact.follow.refs={falco-rules:5,falco-incubating-rules:5}"
+  --set "falcoctl.config.artifact.install.refs={falco-rules:5,falco-incubating-rules:6}" \
+  --set "falcoctl.config.artifact.follow.refs={falco-rules:5,falco-incubating-rules:6}"
 
 # K8s audit plugin artifacts
 helm install falco falcosecurity/falco -f values-k8saudit.yaml
@@ -238,18 +238,20 @@ These provide read access to the host filesystem for driver loading, kernel inst
 | `sys-module-fs` | `/sys/module` | Kernel module info |
 | `sys-fs` | `/sys/kernel` | Kernel tracing (tracefs/debugfs) |
 
-### Container Runtime Socket Volumes (6 volumes)
+### Container Runtime Socket Directory Volumes
 
-These allow the container plugin to query container runtime APIs for metadata enrichment:
+The chart mounts runtime directories, while the plugin opens socket files within them:
 
-| Volume | Host Path | Container Runtime |
-|--------|-----------|-------------------|
-| `container-engine-socket-0` | `/var/run/docker.sock` | Docker |
-| `container-engine-socket-1` | `/run/podman/podman.sock` | Podman |
-| `container-engine-socket-2` | `/run/host-containerd/containerd.sock` | Containerd (host) |
-| `container-engine-socket-3` | `/run/containerd/containerd.sock` | Containerd |
-| `container-engine-socket-4` | `/run/crio/crio.sock` | CRI-O |
-| `container-engine-socket-5` | `/run/k3s/containerd/containerd.sock` | K3s |
+| Volume | Host Directory | Runtime |
+|--------|----------------|---------|
+| `container-engine-socket-0` | `/var/run` | Docker |
+| `container-engine-socket-1` | `/run/podman` | Podman |
+| `container-engine-socket-2` | `/run/host-containerd` | Containerd (host) |
+| `container-engine-socket-3` | `/run/containerd` | Containerd |
+| `container-engine-socket-4` | `/run/crio` | CRI-O |
+| `container-engine-socket-5` | `/run/k3s/containerd` | K3s |
+
+**Source:** [`_helpers.tpl:447-514`](../refs/falcosecurity/charts/charts/falco/templates/_helpers.tpl), [`values.yaml:399-431`](../refs/falcosecurity/charts/charts/falco/values.yaml).
 
 ### EmptyDir Volumes (5 volumes)
 
@@ -300,7 +302,7 @@ Custom rules files are mounted into `/etc/falco/rules.d/` and loaded after the s
 
 | Setting | Default | Description |
 |---------|---------|-------------|
-| `driver.kind` | `auto` | Driver selection (auto, modern_ebpf, kmod, ebpf, gvisor) |
+| `driver.kind` | `auto` | Driver selection (auto, modern_ebpf, kmod) |
 | `driver.enabled` | `true` | Enable/disable kernel driver |
 | `controller.kind` | `daemonset` | DaemonSet or Deployment |
 | `controller.deployment.replicas` | `1` | Replica count (Deployment mode only) |
@@ -322,7 +324,7 @@ Custom rules files are mounted into `/etc/falco/rules.d/` and loaded after the s
 
 ## RBAC Model
 
-The Falco chart creates a namespace-scoped RBAC model. In the current era (chart 9.1.0), there are no ClusterRole or ClusterRoleBinding resources -- only a namespace-scoped Role is created.
+The Falco chart creates a namespace-scoped RBAC model. In the current era (chart 9.2.0), there are no ClusterRole or ClusterRoleBinding resources -- only a namespace-scoped Role is created.
 
 ### Resources Created
 
@@ -435,7 +437,7 @@ helm install falco falcosecurity/falco -f values-syscall-k8saudit.yaml --namespa
 ```yaml
 driver:
   enabled: true
-  kind: module
+  kind: kmod
 controller:
   kind: daemonset        # Required for syscall capture
 collectors:
@@ -522,10 +524,10 @@ Centralized Kubernetes metadata streaming service that provides full K8s metadat
 collectors:
   kubernetes:
     enabled: true        # Deploys k8s-metacollector as dependency
-    pluginRef: "ghcr.io/falcosecurity/plugins/plugin/k8smeta:0.4.1"
+    pluginRef: "ghcr.io/falcosecurity/plugins/plugin/k8smeta:0.4.2"
 ```
 
-Enables enrichment fields such as `k8s.ns.name`, `k8s.pod.name`, `k8s.deployment.name` beyond what the container plugin provides.
+Enables enrichment fields such as `k8smeta.ns.name`, `k8smeta.pod.name`, `k8smeta.deployment.name` beyond what the container plugin provides.
 
 **Source:** [`digests/falcosecurity/charts.md`](../digests/falcosecurity/charts.md) (K8s-Metacollector Chart)
 
@@ -610,6 +612,18 @@ helm install falco falcosecurity/falco \
 | [`kernel-instrumentation.md`](kernel-instrumentation.md) | Kernel driver types (modern_ebpf, kmod) configured via driver.kind |
 | [`metrics-and-observability.md`](metrics-and-observability.md) | Internal metrics and Prometheus integration (metrics endpoint, ServiceMonitor) |
 | [`output-system.md`](output-system.md) | Alert output channels (http_output to falcosidekick, stdout, gRPC) |
+
+### Chart 9.2.0 Behavior
+
+Container-runtime hostPath volumes mount each socket's **parent directory** under `/host`, deduplicated by directory, so replacement sockets after a runtime restart remain visible. Plugin configuration still specifies socket file paths on the host. The Falco container always mounts the `specialized-falco-configs` emptyDir at `/etc/falco/config.d`, including when the driver loader and both falcoctl containers are disabled, to shadow image-provided snippets. The falcoctl ConfigMap volume is only rendered when an artifact container uses it.
+
+Both controllers support `revisionHistoryLimit`, including an explicit zero; unset values leave the Kubernetes default. `serviceAccount.labels` adds custom ServiceAccount labels. The Falco chart depends on falcosidekick `0.14.*`, metacollector `0.3.*`, and Talon `0.4.*`.
+
+**Source:** [`_helpers.tpl:447-514`](../refs/falcosecurity/charts/charts/falco/templates/_helpers.tpl), [`pod-template.tpl:147-161,224-284`](../refs/falcosecurity/charts/charts/falco/templates/pod-template.tpl), [`daemonset.yaml:20-22`](../refs/falcosecurity/charts/charts/falco/templates/daemonset.yaml), [`deployment.yaml:18-20`](../refs/falcosecurity/charts/charts/falco/templates/deployment.yaml), [`serviceaccount.yaml:11-17`](../refs/falcosecurity/charts/charts/falco/templates/serviceaccount.yaml), [`Chart.yaml:20-32`](../refs/falcosecurity/charts/charts/falco/Chart.yaml).
+
+The chart's HTTP output mTLS settings configure **outgoing alerts**. They do not enable client-certificate authentication on the k8saudit webhook; that listener uses its own HTTPS server certificate configuration.
+
+**Source:** [`README.md:274-284`](../refs/falcosecurity/charts/charts/falco/README.md).
 
 ## Sources
 

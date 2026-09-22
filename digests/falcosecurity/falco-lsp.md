@@ -2,12 +2,15 @@
 
 Language Server Protocol implementation and VS Code extension for Falco rules development, providing real-time diagnostics, code completion, formatting, and cross-file analysis.
 
-**Applicable to**: Falco 0.44 era (current)
+**Applicable to**: Falco 0.45 era (current)
 **Repository status**: Incubating (Ecosystem)
 **License**: Apache-2.0
-**Pinned version**: post-v0.1.0 (commit `aa8c175`, `git describe` = `v0.1.0-13-gaa8c175`, dated 2026-05-06). The latest released tag is 0.1.1 (2026-02-06), but the [`refs/`](../../refs/) submodule is pinned to a later commit on a different branch than the 0.1.1 tag, so the era reference is the commit, not a clean tag.
+**Pinned version**: post-v0.1.0 (commit `26bd7fd`, `git describe` = `v0.1.0-16-g26bd7fd`, dated 2026-06-17). The latest released tag is 0.1.1 (2026-02-06), but the [`refs/`](../../refs/) submodule is pinned to a later commit on a different branch than the 0.1.1 tag, so the era reference is the commit, not a clean tag.
 
 ---
+
+
+The era transition changes only the extension dependency lockfile; parser, analyzer, schema and field-registry source files are unchanged from the preceding pin. This does not establish parity with Falco 0.45's engine: validate rule compatibility with the actual target Falco binary when authoritative validation is needed. [Source diff](https://github.com/falcosecurity/falco-lsp/compare/aa8c17510b13d3f75c20735290f3a21784411719...26bd7fdef8583f73071527db86d1513aea760482).
 
 ## Table of Contents
 
@@ -25,7 +28,7 @@ Language Server Protocol implementation and VS Code extension for Falco rules de
 
 ## Overview
 
-falco-lsp provides comprehensive language tooling for Falco security rules through three components ([README.md:32-56](../../refs/falcosecurity/falco-lsp/README.md)):
+falco-lsp provides comprehensive language tooling for Falco security rules through three components ([README.md:32-56](../../refs/falcosecurity/falco-lsp/README.md#L32-L56)):
 
 1. **`falco-lang` CLI** — Command-line tool for validation and formatting (Go binary)
 2. **Language Server** — LSP implementation for IDE integration (Go, stdio transport)
@@ -287,4 +290,4 @@ Supports dynamic fields with wildcard patterns (e.g., `evt.arg.*`, `thread.cap_*
 
 ---
 
-*Last updated: 2026-02-19*
+*Last updated: 2026-09-22*

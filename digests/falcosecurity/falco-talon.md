@@ -1,6 +1,6 @@
 # falco-talon Digest
 
-> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/falco-talon/`](../../refs/falcosecurity/falco-talon/) | **Commit:** `6115a15` (April 28, 2026; post-v0.3.0, `git describe` = `v0.3.0-93-g6115a15`)
+> **Era Relevance:** 0.45 | **Source:** [`refs/falcosecurity/falco-talon/`](../../refs/falcosecurity/falco-talon/) | **Snapshot:** `d273e35` (post-v0.3.0 development)
 
 **Repository:** [falcosecurity/falco-talon](https://github.com/falcosecurity/falco-talon)
 **Scope:** Ecosystem
@@ -13,7 +13,7 @@ Response Engine for managing threats in Kubernetes by reacting to Falco events w
 
 ## NOTICE: Experimental Project
 
-**This project is experimental with unknown current maintenance status.**
+**This project is Incubating; the pinned development snapshot includes changes after the latest v0.3.0 release.**
 
 - Status is **Incubating** (not yet stable)
 - First GA release (0.1.0) was September 5, 2024
@@ -106,7 +106,7 @@ Actionners are the implementations that perform response actions. Format: `<cate
 | `kubernetes:tcpdump` | Capture network traffic | `k8s.ns.name`, `k8s.pod.name` |
 | `kubernetes:sysdig` | Capture system activity with sysdig | `k8s.ns.name`, `k8s.pod.name` |
 
-**Source:** [`actionners/actionners.go:74-92`](../../refs/falcosecurity/falco-talon/actionners/actionners.go)
+**Source:** [`actionners/actionners.go:76-94`](../../refs/falcosecurity/falco-talon/actionners/actionners.go#L76-L94)
 
 ### Network Policy Actionners
 
@@ -115,7 +115,7 @@ Actionners are the implementations that perform response actions. Format: `<cate
 | `calico:networkpolicy` | Create a Calico NetworkPolicy |
 | `cilium:networkpolicy` | Create a Cilium NetworkPolicy |
 
-**Source:** [`actionners/actionners.go:90-91`](../../refs/falcosecurity/falco-talon/actionners/actionners.go)
+**Source:** [`actionners/actionners.go:92-93`](../../refs/falcosecurity/falco-talon/actionners/actionners.go#L92-L93)
 
 ### Cloud Actionners
 
@@ -124,7 +124,7 @@ Actionners are the implementations that perform response actions. Format: `<cate
 | `aws:lambda` | Invoke an AWS Lambda function |
 | `gcp:function` | Invoke a GCP Cloud Function |
 
-**Source:** [`actionners/actionners.go:88-89`](../../refs/falcosecurity/falco-talon/actionners/actionners.go)
+**Source:** [`actionners/actionners.go:90-91`](../../refs/falcosecurity/falco-talon/actionners/actionners.go#L90-L91)
 
 ## Notifiers
 
@@ -139,7 +139,7 @@ Notifiers send notifications about action results.
 | `loki` | Send to Grafana Loki |
 | `elasticsearch` | Send to Elasticsearch |
 
-**Source:** [`notifiers/notifiers.go:46-56`](../../refs/falcosecurity/falco-talon/notifiers/notifiers.go)
+**Source:** [`notifiers/notifiers.go:46-56`](../../refs/falcosecurity/falco-talon/notifiers/notifiers.go#L46-L56)
 
 ## Outputs
 
@@ -152,7 +152,7 @@ Outputs store artifacts created by actionners (logs, tcpdump captures, downloade
 | `aws:s3` | Upload to AWS S3 |
 | `gcp:gcs` | Upload to Google Cloud Storage |
 
-**Source:** [`outputs/outputs.go:34-44`](../../refs/falcosecurity/falco-talon/outputs/outputs.go)
+**Source:** [`outputs/outputs.go:34-44`](../../refs/falcosecurity/falco-talon/outputs/outputs.go#L34-L44)
 
 ## Configuration
 
@@ -239,7 +239,7 @@ Rules define which Falco events trigger which actions.
     - <notifier_name>
 ```
 
-**Source:** [`internal/rules/rules.go:18-54`](../../refs/falcosecurity/falco-talon/internal/rules/rules.go)
+**Source:** [`internal/rules/rules.go:18-54`](../../refs/falcosecurity/falco-talon/internal/rules/rules.go#L18-L54)
 
 ### Actions and Action Templates
 
@@ -279,7 +279,7 @@ Actions can be defined inline or as reusable templates. Template actions are mer
 **Priority comparators:** `=`, `>`, `>=`, `<`, `<=`
 **Output field comparators:** `=`, `!=`
 
-**Source:** [`internal/rules/rules.go:536-649`](../../refs/falcosecurity/falco-talon/internal/rules/rules.go)
+**Source:** [`internal/rules/rules.go:546-672`](../../refs/falcosecurity/falco-talon/internal/rules/rules.go#L546-L672)
 
 ## Event Structure
 
@@ -300,7 +300,7 @@ type Event struct {
 }
 ```
 
-**Source:** [`internal/events/events.go:13-24`](../../refs/falcosecurity/falco-talon/internal/events/events.go)
+**Source:** [`internal/events/events.go:14-25`](../../refs/falcosecurity/falco-talon/internal/events/events.go#L14-L25)
 
 ## Example: Terminate Pod Action
 
@@ -330,7 +330,7 @@ rules:
   verbs: [get]
 ```
 
-**Source:** [`actionners/kubernetes/terminate/terminate.go:27-55`](../../refs/falcosecurity/falco-talon/actionners/kubernetes/terminate/terminate.go)
+**Source:** [`actionners/kubernetes/terminate/terminate.go:27-55`](../../refs/falcosecurity/falco-talon/actionners/kubernetes/terminate/terminate.go#L27-L55)
 
 ## Installation
 
@@ -409,6 +409,16 @@ falco-talon version             # Print version
 | 0.1.0 | 2024-09-05 | First GA release (13 actionners, 6 notifiers, 3 outputs) |
 
 **Source:** [`CHANGELOG.md`](../../refs/falcosecurity/falco-talon/CHANGELOG.md)
+
+## Era 0.45 Development Snapshot
+
+The pin includes post-v0.3.0 changes; these features must not be attributed to the v0.3.0 release image without checking its source. Rule checking, startup and rule-file reload share validation of actionners, action parameters, required outputs and output parameters. Action templates can inherit an output target and allocate its parameter map when needed. YAML errors identify the file that failed.
+
+The event consumer recovers panics raised synchronously while processing an individual event and logs the failure. Event accessors accept strings and numeric JSON values and ignore unsupported types; remote protocol lookup falls back to `fd.sproto`. This is a bounded recovery mechanism, not a guarantee that arbitrary failures in other goroutines are contained.
+
+Output storage implementations share timestamped object-key construction with deterministic fallback ordering. Other fixes include resolving `daemonsets` through the DaemonSet client, using `allow_namespaces` to decide whether to construct Cilium namespace egress rules, honoring configured `otel.timeout`, and populating text SMTP bodies.
+
+**Source:** [`rule_validation.go:10-95`](../../refs/falcosecurity/falco-talon/cmd/rule_validation.go), [`server.go:35-49,100-121`](../../refs/falcosecurity/falco-talon/cmd/server.go), [`rules.go:244-312`](../../refs/falcosecurity/falco-talon/internal/rules/rules.go), [`actionners.go:471-505`](../../refs/falcosecurity/falco-talon/actionners/actionners.go), [`events.go:58-153`](../../refs/falcosecurity/falco-talon/internal/events/events.go), [`helpers.go:17-47`](../../refs/falcosecurity/falco-talon/outputs/helpers/helpers.go), [`client.go:293-325`](../../refs/falcosecurity/falco-talon/internal/kubernetes/client/client.go), [`networkpolicy.go:376-399`](../../refs/falcosecurity/falco-talon/actionners/cilium/networkpolicy/networkpolicy.go), [`configuration.go:95-106`](../../refs/falcosecurity/falco-talon/configuration/configuration.go), [`smtp.go:164-178`](../../refs/falcosecurity/falco-talon/notifiers/smtp/smtp.go).
 
 ## Sources
 

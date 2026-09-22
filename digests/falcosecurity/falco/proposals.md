@@ -1,6 +1,6 @@
 # Falco Proposals
 
-> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/falco/proposals/`](../../../refs/falcosecurity/falco/proposals/)
+> **Era Relevance:** 0.45 | **Source:** [`refs/falcosecurity/falco/proposals/`](../../../refs/falcosecurity/falco/proposals/)
 
 This digest documents the design proposals that shaped falcosecurity/falco. Understanding these provides context for why the system is designed the way it is.
 
@@ -138,7 +138,7 @@ Multiple SDKs exist: Go ([`plugin-sdk-go`](../plugin-sdk-go.md)), C++ ([`plugin-
 - GitHub Project ("Falco Roadmap") for tracking
 - Monthly Core Maintainer planning sessions
 
-**Implementation:** Adopted. The 3-releases-per-year cadence is active (Falco 0.43 released January 28, 2026, matching the "last Monday of January" target). GitHub Milestones are used for release planning.
+**Implementation:** Adopted. The 3-releases-per-year cadence is active (Falco 0.43 released January 28, 2026, within the January release window). GitHub Milestones are used for release planning.
 
 **Source:** [`proposals/20230511-roadmap-management.md`](../../../refs/falcosecurity/falco/proposals/20230511-roadmap-management.md)
 
@@ -211,7 +211,7 @@ Multiple SDKs exist: Go ([`plugin-sdk-go`](../plugin-sdk-go.md)), C++ ([`plugin-
 
 **Source:** [`proposals/20251215-legacy-bpf-grpc-output-gvisor-engine-deprecation.md`](../../../refs/falcosecurity/falco/proposals/20251215-legacy-bpf-grpc-output-gvisor-engine-deprecation.md)
 
-### Multi-thread Falco Design (20251205) — New in 0.44
+### Multi-thread Falco Design (20251205) — Design Merged in 0.44
 
 **Status:** Design proposal merged in Falco 0.44 (high-level design)
 
@@ -243,7 +243,7 @@ Multiple SDKs exist: Go ([`plugin-sdk-go`](../plugin-sdk-go.md)), C++ ([`plugin-
 
 **Proposed Solution:** A comprehensive gRPC-based API with six services: Outputs (streaming), Drops (streaming), Version (unary), Configs (unary), Rules (unary), and Inputs (bidirectional streaming).
 
-**Status:** Only **Outputs** and **Version** services were implemented as part of the gRPC server (now deprecated). The Rules, Configs, Inputs, and Drops services were never implemented. The broader vision was partially superseded by the plugin system (custom inputs), falcoctl (external config/rules management), and HTTP output.
+**Status:** Only **Outputs** and **Version** services were implemented as part of the gRPC server (removed in 0.44). The Rules, Configs, Inputs, and Drops services were never implemented. The broader vision was partially superseded by the plugin system (custom inputs), falcoctl (external config/rules management), and HTTP output.
 
 **Source:** [`proposals/20191030-api.md`](../../../refs/falcosecurity/falco/proposals/20191030-api.md)
 

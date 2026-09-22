@@ -1,6 +1,6 @@
 # plugin-sdk-rs Digest
 
-> **Era Relevance:** 0.44 | **Source:** [`refs/falcosecurity/plugin-sdk-rs/`](../../refs/falcosecurity/plugin-sdk-rs/) | **Commit:** `2a5228e` (`git describe`: `v0.5.0-61-g2a5228e`, May 25, 2026)
+> **Era Relevance:** 0.45 | **Source:** [`refs/falcosecurity/plugin-sdk-rs/`](../../refs/falcosecurity/plugin-sdk-rs/) | **Commit:** `1a7e29e` (development-cycle source snapshot beyond the v0.5.0 release)
 
 **Repository:** [falcosecurity/plugin-sdk-rs](https://github.com/falcosecurity/plugin-sdk-rs)
 **Scope:** Ecosystem
@@ -154,7 +154,7 @@ impl Plugin for MyPlugin {
 }
 ```
 
-**Source:** [`falco_plugin/src/base/mod.rs:19-288`](../../refs/falcosecurity/plugin-sdk-rs/falco_plugin/src/base/mod.rs)
+**Source:** [`falco_plugin/src/base/mod.rs:19-288`](../../refs/falcosecurity/plugin-sdk-rs/falco_plugin/src/base/mod.rs#L19-L288)
 
 ## Event Sourcing Plugin
 
@@ -366,11 +366,9 @@ impl CaptureListenPlugin for MyListener {
         Ok(())
     }
 
-    fn capture_close(&mut self, input: &CaptureListenInput) -> Result<(), anyhow::Error> {
+    fn capture_close(&mut self, _input: &CaptureListenInput) -> Result<(), anyhow::Error> {
         // Stop background tasks
-        for routine in self.routines.drain(..) {
-            input.thread_pool.unsubscribe(&routine)?;
-        }
+        self.routines.clear(); // Routine::drop unsubscribes
         Ok(())
     }
 }
@@ -380,6 +378,20 @@ capture_listen_plugin!(MyListener);
 ```
 
 **Source:** [`falco_plugin/src/listen/mod.rs`](../../refs/falcosecurity/plugin-sdk-rs/falco_plugin/src/listen/mod.rs)
+
+`Routine` owns its subscription and unsubscribes on drop; the thread pool no longer exposes an explicit `unsubscribe` method. Dropping does not stop a callback already running. The SDK documents a possible small allocation leak when drop races with callback startup and recommends cooperative stop signalling where practical.
+
+**Sources:** [`listen/routine.rs`](../../refs/falcosecurity/plugin-sdk-rs/falco_plugin/src/listen/routine.rs), [`listen/mod.rs:9-20`](../../refs/falcosecurity/plugin-sdk-rs/falco_plugin/src/listen/mod.rs#L9-L20).
+
+## Exported Tables and Panic Handling
+
+Exported and nested state tables use the owning `export::Table<K, E>` directly, replacing the earlier boxed table interface. Retain exported tables in plugin state for the required lifetime. Fields still use `Public`, `Private` or `Readonly` wrappers; nested tables use `Table` itself.
+
+**Source:** [`tables/export/mod.rs:3-35`](../../refs/falcosecurity/plugin-sdk-rs/falco_plugin/src/tables/export/mod.rs#L3-L35).
+
+The SDK's `catch_panic` helper converts unwinding panics into errors at protected C ABI callbacks, including plugin initialization and destruction. This is scoped to wrapped callbacks; it is not a guarantee that every background routine or aborting panic is recoverable.
+
+**Sources:** [`error/panic.rs:1-19`](../../refs/falcosecurity/plugin-sdk-rs/falco_plugin/src/error/panic.rs#L1-L19), [`base/wrappers.rs:77-90,157-171`](../../refs/falcosecurity/plugin-sdk-rs/falco_plugin/src/base/wrappers.rs#L157-L171).
 
 ## Event Types
 
@@ -483,6 +495,8 @@ fn new(input: Option<&TablesInput>, config: Self::ConfigType)
 | Feature | Description |
 |---------|-------------|
 | `thread-safe-tables` | Use `parking_lot` for thread-safe table access |
+| `dylib-examples` | Default feature enabling dynamic-library examples |
+| `miri` | Enables thread-safe tables for Miri testing |
 
 **Source:** [`falco_plugin/Cargo.toml`](../../refs/falcosecurity/plugin-sdk-rs/falco_plugin/Cargo.toml)
 

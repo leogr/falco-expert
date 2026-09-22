@@ -4,6 +4,8 @@
 
 Static analysis of the Falco 0.44.0 binary installation including dependencies, plugins, and system requirements. Data sourced from the official `falcosecurity/falco:0.44.0` (Wolfi-based) container image.
 
+> Historical measurement: this report describes the 0.44.0 image, not the living 0.45 era. Re-measure binary sizes, dependencies and plugin requirements from the target release before using these values for deployment decisions.
+
 ## Quick Reference
 
 | Property | Value |

@@ -1,8 +1,8 @@
 # Falco Community Repository Digest
 
 **Source:** [`refs/falcosecurity/community/`](../../refs/falcosecurity/community/)
-**Era:** 0.44
-**Last Updated:** 2026-05-27
+**Era:** 0.45
+**Last Updated:** 2026-09-22
 
 ## Overview
 
@@ -292,8 +292,8 @@ Historical meeting notes are stored in [`meeting-notes/`](../../refs/falcosecuri
 ### Coverage
 
 - **Earliest:** June 2019 (first Office Hours)
-- **Latest:** February 2026 (current era)
-- **Release notes:** 0.28.0 through 0.43.0 (0.44.0 meeting notes pending publication upstream)
+- **Latest published release-cycle notes:** May 2026, in the [0.44.0 archive](../../refs/falcosecurity/community/meeting-notes/release-0.44.0.md#L1-L51)
+- **Release notes:** 0.28.0 through 0.44.0; the pinned archive does not yet include a 0.45.0 file
 
 ### Key Historical Documents
 
@@ -306,9 +306,13 @@ Historical meeting notes are stored in [`meeting-notes/`](../../refs/falcosecuri
 | [2024-02-01-Falco-Core-Maintainers.md](../../refs/falcosecurity/community/meeting-notes/2024-02-01-Falco-Core-Maintainers.md) | Falco 1.0 roadmap discussion |
 | [2025-02-20-Falco-Core-Maintainers.md](../../refs/falcosecurity/community/meeting-notes/2025-02-20-Falco-Core-Maintainers.md) | 1.0 roadmap status, K8s operator |
 
-### Most Recent Published Release Notes (0.43)
+### Most Recent Published Release Notes (0.44)
 
-The [release-0.43.0.md](../../refs/falcosecurity/community/meeting-notes/release-0.43.0.md) file is the latest published release-notes file in the community repo at the time of the 0.44 era pin. It documents the 0.43 release cycle (Oct 2025 - Jan 2026):
+The [release-0.44.0.md](../../refs/falcosecurity/community/meeting-notes/release-0.44.0.md#L1-L176) archive covers February through May 2026 discussions: BPF iterators, the multi-thread initiative, Falco Operator and its chart, falco-lsp, UTF-8 handling, and Prempti joining the organization. These are meeting records, not evidence that every discussed feature shipped. The source has two entries headed May 6; preserve that ambiguity rather than inventing a different date.
+
+### Previous Published Release Notes (0.43)
+
+The [release-0.43.0.md](../../refs/falcosecurity/community/meeting-notes/release-0.43.0.md) file documents the 0.43 release cycle (Oct 2025 - Jan 2026):
 
 - **GPG Key Rotation** for Falco Packages (2026) - completed
 - **Multi-thread Falco** proposal under discussion
@@ -324,9 +328,9 @@ The [release-0.43.0.md](../../refs/falcosecurity/community/meeting-notes/release
 
 | Role | Members |
 |------|---------|
-| **Approvers** | leogr, Issif, Andreagit97, terylt, maxgio92, araujof |
+| **Approvers** | leogr, Issif, terylt, maxgio92, araujof |
 | **Reviewers** | kaizhe, mstemm |
-| **Emeritus** | leodido, fntlnz, mfdii, kris-nova, danpopnyc, nibalizer |
+| **Emeritus** | leodido, fntlnz, mfdii, kris-nova, danpopnyc, nibalizer, andreaterzolo |
 
 ## Additional Resources
 
@@ -365,6 +369,7 @@ For governance and organizational information, see:
 | Roadmap discussion | [`meeting-notes/2023-04-27-Falco-Roadmap-Discussion.md`](../../refs/falcosecurity/community/meeting-notes/2023-04-27-Falco-Roadmap-Discussion.md) |
 | Core maintainers Feb 2025 | [`meeting-notes/2025-02-20-Falco-Core-Maintainers.md`](../../refs/falcosecurity/community/meeting-notes/2025-02-20-Falco-Core-Maintainers.md) |
 | Release 0.43.0 notes | [`meeting-notes/release-0.43.0.md`](../../refs/falcosecurity/community/meeting-notes/release-0.43.0.md) |
+| Release 0.44.0 notes | [`meeting-notes/release-0.44.0.md`](../../refs/falcosecurity/community/meeting-notes/release-0.44.0.md) |
 
 ---
 

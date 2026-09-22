@@ -38,8 +38,21 @@ Rules are defined in YAML files. Each file is a YAML array where each element is
 | `exceptions` | array | No | `[]` | Structured whitelisting (see [Exception System](#exception-system)) |
 | `warn_evttypes` | boolean | No | `true` | Warn if rule matches too many event types |
 | `skip-if-unknown-filter` | boolean | No | `false` | Skip rule if filter field is unknown |
-| `capture` | boolean | No | `false` | Enable packet capture when triggered |
-| `capture_duration` | integer | No | `0` | Capture duration in seconds |
+| `capture` | boolean | No | `false` | Request event capture when global capture is enabled in `rules` mode |
+| `capture_duration` | integer | No | `0` | Capture duration in milliseconds; zero uses the global default |
+
+Capture writes events to a `.scap` file. The engine converts the per-rule duration to nanoseconds before the event loop applies it. **Sources:** [duration conversion](../../../refs/falcosecurity/falco/userspace/engine/falco_engine.cpp#L407-L422), [capture selection and dump](../../../refs/falcosecurity/falco/userspace/falco/app/actions/process_events.cpp#L310-L354).
+
+### Raw bytes and displayed output
+
+In Falco 0.45, non-regex comparisons operate on extracted bytes; alert output may escape control characters or replace invalid UTF-8. Do not assume that a displayed replacement character is the original value to match. Quoted filter literals accept `\xHH` with exactly two hexadecimal digits. A YAML block scalar preserves these escapes for the filter parser:
+
+```yaml
+condition: >
+  evt.type in (open, openat, openat2) and fd.name contains "\xff"
+```
+
+`regex` sanitizes the extracted value to UTF-8 before matching. **Sources:** [comparison input](../../../refs/falcosecurity/libs/userspace/libsinsp/sinsp_filtercheck.cpp#L880-L913), [hex escapes](../../../refs/falcosecurity/libs/userspace/libsinsp/filter/escaping.cpp#L139-L156), [output formatting](../../../refs/falcosecurity/falco/userspace/engine/formats.cpp#L76-L178).
 
 ## Lists
 

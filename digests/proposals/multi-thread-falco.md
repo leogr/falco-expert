@@ -1,12 +1,12 @@
 # Multi-Thread Falco Proposals
 
-> **Era relevance:** Falco 0.44 contains the high-level design document, but its syscall event source still runs one event-processing loop. The pinned libs 0.25.4 sources do not contain the proposed concurrent thread-table implementation.
+> **Era relevance:** Falco 0.45 contains the high-level design document, but its syscall event source still runs one event-processing loop. The pinned libs 0.26.0 sources do not contain the proposed concurrent thread-table implementation.
 
 ## Summary
 
 The pinned proposal set contains three documents:
 
-1. The Falco-level architecture and TGID partitioning design, present in the pinned Falco 0.44.1 sources.
+1. The Falco-level architecture and TGID partitioning design, present in the pinned Falco 0.45.0 sources.
 2. A work-in-progress Folly-based thread-manager design snapshot fetched on February 18, 2026.
 3. An earlier experimental RCU thread-manager design snapshot fetched on December 10, 2025.
 
@@ -17,7 +17,7 @@ The Folly document describes the RCU approach as challenging and intrusive and p
 ## Contents
 
 - [Proposal and Status Map](#proposal-and-status-map)
-- [Era 0.44 Baseline](#era-044-baseline)
+- [Era 0.45 Baseline](#era-045-baseline)
 - [Merged High-Level Design](#merged-high-level-design)
 - [Pinned Folly Thread-Manager Proposal](#pinned-folly-thread-manager-proposal)
 - [Historical RCU Proposal](#historical-rcu-proposal)
@@ -27,35 +27,35 @@ The Folly document describes the RCU approach as challenging and intrusive and p
 
 | Area / document | Scope | Current state |
 |-----------------|-------|---------------|
-| [Multi-Threaded Falco High-Level Design](../../refs/falcosecurity/falco/proposals/20251205-multi-thread-falco-design.md) | Falco architecture, event partitioning, ordering, rule evaluation, outputs | Present in the pinned Falco 0.44.1 proposal directory |
-| [Thread-Safe Thread Manager Using Folly ConcurrentHashMap](../../refs/proposals/multi-thread-falco/20260212-thread-safe-thread-manager.md) | Concurrent thread-table storage, lifetime-safe lookup and iteration, remaining shared state | Work-in-progress snapshot; proposed changes are absent from pinned libs 0.25.4 |
+| [Multi-Threaded Falco High-Level Design](../../refs/falcosecurity/falco/proposals/20251205-multi-thread-falco-design.md) | Falco architecture, event partitioning, ordering, rule evaluation, outputs | Present in the pinned Falco 0.45.0 proposal directory |
+| [Thread-Safe Thread Manager Using Folly ConcurrentHashMap](../../refs/proposals/multi-thread-falco/20260212-thread-safe-thread-manager.md) | Concurrent thread-table storage, lifetime-safe lookup and iteration, remaining shared state | Work-in-progress snapshot; proposed changes are absent from pinned libs 0.26.0 |
 | [Original RCU Thread Manager](../../refs/proposals/multi-thread-falco/20251127-thread-safe-sinsp-thread-manager.md) | Experimental RCU table and topology | Earlier experimental proposal superseded in the pinned proposal set by the Folly revision |
 
 > **Provenance note:** This digest describes only documents stored under [`refs/`](../../refs/proposals/multi-thread-falco/README.md). Later branch-only revisions are intentionally excluded until they are ingested into the pinned corpus.
 
-## Era 0.44 Baseline
+## Era 0.45 Baseline
 
 ### Falco event processing
 
-Falco 0.44.1 creates one `source_sync_context` per enabled event source. With one source, it runs that source's processing loop on the main thread; with multiple sources, it creates one thread per source. It does not create multiple event-processing workers for a single syscall source.
+Falco 0.45.0 creates one `source_sync_context` per enabled event source. With one source, it runs that source's processing loop on the main thread; with multiple sources, it creates one thread per source. It does not create multiple event-processing workers for a single syscall source.
 
-**Source:** [`process_events.cpp:574-610`](../../refs/falcosecurity/falco/userspace/falco/app/actions/process_events.cpp)
+**Source:** [`process_events.cpp:575-622`](../../refs/falcosecurity/falco/userspace/falco/app/actions/process_events.cpp)
 
 ### Libs state
 
-Libs 0.25.4 still uses `std::unordered_map<int64_t, std::shared_ptr<sinsp_threadinfo>>` for the thread table. The manager exposes reference-returning lookups, raw-pointer topology helpers, and direct access to the table rather than the proposed concurrent-map API.
+Libs 0.26.0 still uses `std::unordered_map<int64_t, std::shared_ptr<sinsp_threadinfo>>` for the thread table. The manager exposes reference-returning lookups, raw-pointer topology helpers, and direct access to the table rather than the proposed concurrent-map API.
 
-**Sources:** [`threadinfo.h:579-623`](../../refs/falcosecurity/libs/userspace/libsinsp/threadinfo.h), [`thread_manager.h:60-156`](../../refs/falcosecurity/libs/userspace/libsinsp/thread_manager.h)
+**Sources:** [`threadinfo.h:592-636`](../../refs/falcosecurity/libs/userspace/libsinsp/threadinfo.h#L592-L636), [`thread_manager.h:60-162`](../../refs/falcosecurity/libs/userspace/libsinsp/thread_manager.h)
 
 The pinned `sinsp_usergroup_manager` likewise has plain user/group maps and a plain `bool m_import_users`; its lookup APIs return raw pointers into those maps without the proposed synchronization or copy/visitor boundary.
 
-**Sources:** [`user.h:62-206`](../../refs/falcosecurity/libs/userspace/libsinsp/user.h), [`user.cpp:521-561`](../../refs/falcosecurity/libs/userspace/libsinsp/user.cpp)
+**Sources:** [`user.h:62-206`](../../refs/falcosecurity/libs/userspace/libsinsp/user.h#L62-L206), [`user.cpp:626-666`](../../refs/falcosecurity/libs/userspace/libsinsp/user.cpp#L626-L666)
 
 ## Merged High-Level Design
 
 The merged design targets event-drop reduction and throughput scaling beyond a single saturated core while preserving single-threaded performance as the default. It intentionally leaves component-level synchronization to separate designs.
 
-**Source:** [`20251205-multi-thread-falco-design.md:3-26`](../../refs/falcosecurity/falco/proposals/20251205-multi-thread-falco-design.md)
+**Source:** [`20251205-multi-thread-falco-design.md:3-26`](../../refs/falcosecurity/falco/proposals/20251205-multi-thread-falco-design.md#L3-L26)
 
 ### Selected architecture
 
@@ -71,23 +71,23 @@ ring_buffer_index = hash(event->tgid) % num_workers
 - Rule evaluation runs in parallel on the worker processing each event.
 - Falco's output queue is already designed for concurrent producers and a dedicated consumer.
 
-**Source:** [`20251205-multi-thread-falco-design.md:28-69`](../../refs/falcosecurity/falco/proposals/20251205-multi-thread-falco-design.md)
+**Source:** [`20251205-multi-thread-falco-design.md:28-69`](../../refs/falcosecurity/falco/proposals/20251205-multi-thread-falco-design.md#L28-L69)
 
 ### Ordering and consistency
 
 TGID affinity preserves ordering within one thread group and usually gives thread-group-owned data a single writer. Cross-partition access remains necessary for parent/child state, process reparenting, and ancestor fields. A lagging partition can make ancestor data missing, stale, or temporally ahead, producing incorrect rule context. The proposal leaves the wait/defer and polling/signaling strategy to implementation and measurement.
 
-**Source:** [`20251205-multi-thread-falco-design.md:71-116`](../../refs/falcosecurity/falco/proposals/20251205-multi-thread-falco-design.md)
+**Source:** [`20251205-multi-thread-falco-design.md:71-116`](../../refs/falcosecurity/falco/proposals/20251205-multi-thread-falco-design.md#L71-L116)
 
 Static TGID assignment can also concentrate a high-activity process on one worker. That worker becomes a bottleneck even if other workers have spare capacity, and the resulting lag increases the cross-partition consistency risk.
 
 For clone/fork state, the proposal identifies the clone-exit-parent event as a natural synchronization point because the parent has finished preparing inherited state. `vfork()` is a special case: it blocks the parent until the child executes a new program or exits, delaying that event and potentially requiring a different synchronization point.
 
-**Source:** [`20251205-multi-thread-falco-design.md:78-116`](../../refs/falcosecurity/falco/proposals/20251205-multi-thread-falco-design.md)
+**Source:** [`20251205-multi-thread-falco-design.md:78-116`](../../refs/falcosecurity/falco/proposals/20251205-multi-thread-falco-design.md#L78-L116)
 
 The proposal also evaluates TID, CPU, and functional-pipeline partitioning, but selects TGID as the initial trade-off among load distribution, contention, and temporal consistency.
 
-**Source:** [`20251205-multi-thread-falco-design.md:118-180`](../../refs/falcosecurity/falco/proposals/20251205-multi-thread-falco-design.md)
+**Source:** [`20251205-multi-thread-falco-design.md:118-180`](../../refs/falcosecurity/falco/proposals/20251205-multi-thread-falco-design.md#L118-L180)
 
 ## Pinned Folly Thread-Manager Proposal
 
@@ -97,7 +97,7 @@ The pinned work-in-progress thread-manager proposal replaces the `std::unordered
 
 ### API and lifetime changes
 
-| Current libs 0.25.4 shape | Proposed shape |
+| Current libs 0.26.0 shape | Proposed shape |
 |---------------------------|----------------|
 | `get_thread()` / `find_thread()` return an internal `shared_ptr` reference | Return `shared_ptr` by value |
 | Single-entry lookup cache | Remove shared lookup/insert caches |
@@ -130,7 +130,7 @@ The pinned Folly snapshot describes the RCU approach as challenging and intrusiv
 | Topic | Source |
 |-------|--------|
 | Merged high-level design | [`20251205-multi-thread-falco-design.md`](../../refs/falcosecurity/falco/proposals/20251205-multi-thread-falco-design.md) |
-| Falco 0.44 event loop | [`process_events.cpp`](../../refs/falcosecurity/falco/userspace/falco/app/actions/process_events.cpp) |
+| Falco 0.45 event loop | [`process_events.cpp`](../../refs/falcosecurity/falco/userspace/falco/app/actions/process_events.cpp) |
 | Historical RCU proposal | [`20251127-thread-safe-sinsp-thread-manager.md`](../../refs/proposals/multi-thread-falco/20251127-thread-safe-sinsp-thread-manager.md) |
 | Pinned Folly proposal snapshot | [`20260212-thread-safe-thread-manager.md`](../../refs/proposals/multi-thread-falco/20260212-thread-safe-thread-manager.md) |
 | Proposal snapshot metadata | [`README.md`](../../refs/proposals/multi-thread-falco/README.md) |
