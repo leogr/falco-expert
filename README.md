@@ -203,6 +203,7 @@ AI agent skills following [agentskills.io](https://agentskills.io/) specificatio
 - [`falco-rules-author/`](skills/falco-rules-author/) - Author, validate, test, and iteratively tune Falco detection rules with Docker-based feedback loops
 - [`falco-triage/`](skills/falco-triage/) - Triage GitHub issues and PRs across falcosecurity repositories with knowledge-base-backed analysis
 - [`falco-reviewer/`](skills/falco-reviewer/) - Review PRs across falcosecurity repositories as a ghost writer for Falco maintainers, with security review and breaking change analysis
+- [`falco-release/`](skills/falco-release/) - Assist a Falco release manager end to end: component inventory and chains, tracking issue, release candidates, freeze and cumulative sync, GA day, website, post-release; the agent never performs the final release
 
 #### Installing Skills for Claude Code
 
@@ -222,7 +223,10 @@ ln -s "$(cd falco-expert && pwd)/skills/falco-dev" ~/.claude/skills/falco-dev
 ln -s "$(cd falco-expert && pwd)/skills/falco-rules-author" ~/.claude/skills/falco-rules-author
 ln -s "$(cd falco-expert && pwd)/skills/falco-triage" ~/.claude/skills/falco-triage
 ln -s "$(cd falco-expert && pwd)/skills/falco-reviewer" ~/.claude/skills/falco-reviewer
+ln -s "$(cd falco-expert && pwd)/skills/falco-release" ~/.claude/skills/falco-release
 ```
+
+> **Note:** Every public action proposed by [`falco-release`](skills/falco-release/) requires explicit human consent. The agent never performs a final release.
 
 ### Agents ([`agents/`](agents/))
 

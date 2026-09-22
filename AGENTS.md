@@ -158,6 +158,7 @@ Documents following the [agentskills.io](https://agentskills.io/) specification.
 | [`falco-triage`](skills/falco-triage/SKILL.md) | Triage GitHub issues and PRs across falcosecurity repositories with knowledge-base-backed analysis |
 | [`falco-reviewer`](skills/falco-reviewer/SKILL.md) | Review PRs as a ghost writer for Falco maintainers, with security review and breaking change analysis |
 | [`falco-dependabot`](skills/falco-dependabot/SKILL.md) | Clear a repository's open Dependabot PR backlog in bulk: rebase, wait for CI, approve when green |
+| [`falco-release`](skills/falco-release/SKILL.md) | Assist a Falco release manager end to end: inventory and chains, tracking issue, hygiene, upstream components, release candidates, freeze and cumulative sync, GA day, website, post-release; never performs the final release |
 
 **Using `falco-cli`**: Agents working with this repository can use the `falco-cli` skill to:
 - Validate Falco rules files (`falco -V`)
@@ -205,6 +206,15 @@ To use, read [`skills/falco-reviewer/SKILL.md`](skills/falco-reviewer/SKILL.md) 
 - Distinguish fixable dependency alerts from those with no patched version, so a downgrade is never mistaken for a fix
 
 Approving merges the PR: falcosecurity Prow sets `review_acts_as_lgtm: true`, so one approval satisfies tide. To use, read [`skills/falco-dependabot/SKILL.md`](skills/falco-dependabot/SKILL.md) for complete instructions.
+
+**Using `falco-release`**: Agents can use the `falco-release` skill to:
+- Assist a Falco release manager from the first "is component X ready?" question through the tracking issue, the release candidates, the code freeze, the GA day, and the post-release checks, for any minor or patch release and every component of the train (libs and drivers, plugins, falcoctl, rules, k8s-metacollector, the Helm chart, the website, test-infra pins)
+- Model the work as serialized action chains plus parallel tracks, one table per chain, with background waiters that turn waiting into events
+- Keep the tracking issue synthetic and edit it only through a guarded, drift-aborting script; draft status comments in the maintainer's voice (via their voice skill when available) without dates
+- Verify candidate and final artifacts, repository indexes, chart releases, release notes, and branch equality with read-only scripts; carry fixes to the release branch through one cumulative sync PR
+- Execute recoverable public steps (candidate tags, pin PRs, sync PRs, re-runs) only on a literal per-item go through dry-run-by-default gated scripts, and never perform a final release: the readiness assessment plus the manual steps is the deliverable
+
+The actor's identity, mandate, and voice are inputs collected at launch; nothing about a person is hard-coded. To use, read [`skills/falco-release/SKILL.md`](skills/falco-release/SKILL.md) for complete instructions.
 
 ### [`output/`](output/)
 
