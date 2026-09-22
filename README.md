@@ -203,6 +203,7 @@ AI agent skills following [agentskills.io](https://agentskills.io/) specificatio
 - [`falco-rules-author/`](skills/falco-rules-author/) - Author, validate, test, and iteratively tune Falco detection rules with Docker-based feedback loops
 - [`falco-triage/`](skills/falco-triage/) - Triage GitHub issues and PRs across falcosecurity repositories with knowledge-base-backed analysis
 - [`falco-reviewer/`](skills/falco-reviewer/) - Review PRs across falcosecurity repositories as a ghost writer for Falco maintainers, with security review and breaking change analysis
+- [`falco-maintainer/`](skills/falco-maintainer/) - Discover and rank strategic sub-projects, advance human-approved jobs, and maintain a lightweight ongoing watch with explicit approval for every public action
 - [`falco-release/`](skills/falco-release/) - Assist a Falco release manager end to end: component inventory and chains, tracking issue, release candidates, freeze and cumulative sync, GA day, website, post-release; the agent never performs the final release
 
 #### Installing Skills for Claude Code
@@ -223,10 +224,11 @@ ln -s "$(cd falco-expert && pwd)/skills/falco-dev" ~/.claude/skills/falco-dev
 ln -s "$(cd falco-expert && pwd)/skills/falco-rules-author" ~/.claude/skills/falco-rules-author
 ln -s "$(cd falco-expert && pwd)/skills/falco-triage" ~/.claude/skills/falco-triage
 ln -s "$(cd falco-expert && pwd)/skills/falco-reviewer" ~/.claude/skills/falco-reviewer
+ln -s "$(cd falco-expert && pwd)/skills/falco-maintainer" ~/.claude/skills/falco-maintainer
 ln -s "$(cd falco-expert && pwd)/skills/falco-release" ~/.claude/skills/falco-release
 ```
 
-> **Note:** Every public action proposed by [`falco-release`](skills/falco-release/) requires explicit human consent. The agent never performs a final release.
+> **Note:** [`falco-maintainer`](skills/falco-maintainer/) uses this knowledge base for context and durable output. Public actions and substantial local implementation require explicit human approval. It preserves process lessons and proposes compaction near 40% context used after saving knowledge and a resume checkpoint. Its watch runs only while the host supports it. [`falco-release`](skills/falco-release/) retains its own per-item consent gates and never performs a final release.
 
 ### Agents ([`agents/`](agents/))
 
@@ -265,7 +267,7 @@ Replace `<absolute-path-to-falco-expert>` with the output of `cd falco-expert &&
 
 Verify by running `/agents` in Claude Code.
 
-> **Note:** The agent already includes all five skills. Installing skills separately is only needed if you want to use them without the agent.
+> **Note:** The agent already includes the five analysis skills (all except [`falco-maintainer`](skills/falco-maintainer/), which is intentionally excluded because the agent is read-only). Installing skills separately is only needed if you want to use them without the agent.
 
 ### Workflows ([`WORKFLOWS.md`](WORKFLOWS.md))
 

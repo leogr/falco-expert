@@ -157,6 +157,7 @@ Documents following the [agentskills.io](https://agentskills.io/) specification.
 | [`falco-rules-author`](skills/falco-rules-author/SKILL.md) | Author, validate, test, and iteratively tune Falco detection rules with Docker-based feedback loops |
 | [`falco-triage`](skills/falco-triage/SKILL.md) | Triage GitHub issues and PRs across falcosecurity repositories with knowledge-base-backed analysis |
 | [`falco-reviewer`](skills/falco-reviewer/SKILL.md) | Review PRs as a ghost writer for Falco maintainers, with security review and breaking change analysis |
+| [`falco-maintainer`](skills/falco-maintainer/SKILL.md) | Discover and rank strategic sub-projects, advance approved jobs, and keep a lightweight ongoing watch with explicit human approval for public actions and substantial implementation |
 | [`falco-dependabot`](skills/falco-dependabot/SKILL.md) | Clear a repository's open Dependabot PR backlog in bulk: rebase, wait for CI, approve when green |
 | [`falco-release`](skills/falco-release/SKILL.md) | Assist a Falco release manager end to end: inventory and chains, tracking issue, hygiene, upstream components, release candidates, freeze and cumulative sync, GA day, website, post-release; never performs the final release |
 
@@ -198,6 +199,16 @@ To use, read [`skills/falco-triage/SKILL.md`](skills/falco-triage/SKILL.md) for 
 - Generate ready-to-run shell scripts that publish pending (draft) GitHub reviews
 
 To use, read [`skills/falco-reviewer/SKILL.md`](skills/falco-reviewer/SKILL.md) for complete instructions.
+
+**Using `falco-maintainer`**: Agents can use the `falco-maintainer` skill to:
+- Investigate project state and group related issues into candidate sub-projects, distinguishing verified connections from hypotheses
+- Rank worthwhile outcomes by expected benefit, strategic relevance, dependencies, uncertainty and effort; bring short decision rounds to the maintainer
+- Execute bounded approved jobs, asking before substantial local implementation and obtaining an explicit go for every public action or fully specified group
+- Reuse triage, Dig Deeper, reviewer, CLI, dev, rules, Dependabot and release skills for scoped work while retaining responsibility for synthesis and follow-through
+- Monitor approved sources with incremental read-only collection and quiet backoff; revisit older commitments rather than relying only on recent activity
+- Preserve concise session notes, knowledge, feedback and process lessons; propose compaction near 40% context used only after saving a resume checkpoint, drafts, public outcomes and restart recipes
+
+The skill uses this knowledge base and the output protocol; monitoring persists only while the host actually supports it. Public approval remains with the human even when a specialist performs the work. To use, read [`skills/falco-maintainer/SKILL.md`](skills/falco-maintainer/SKILL.md) for complete instructions.
 
 **Using `falco-dependabot`**: Agents can use the `falco-dependabot` skill to:
 - Clear a repository's open Dependabot PR backlog in bulk, oldest to newest, batching PRs that are green and not expected to conflict, one at a time otherwise
@@ -329,6 +340,7 @@ Each workflow and skill defines **where and how** epistemic tags are used in its
 - **[Dig Deeper](WORKFLOWS.md#dig-deeper)**: Sub-agents tag every finding; the report separates verified from unverified content
 - **[Falco Reviewer](skills/falco-reviewer/SKILL.md)**: Only [FACT]+[DERIVED] backed findings become review comments; [INFERENCE] is hedged; [ASSUMPTION] is discarded or reported transparently
 - **[Falco Triage](skills/falco-triage/SKILL.md)**: Destructive actions (`/close`, `/triage duplicate`) require [FACT]+[DERIVED]; non-destructive labels require [FACT]+[INFERENCE]; suggested comment answers must be KB-grounded
+- **[Falco Maintainer](skills/falco-maintainer/SKILL.md)**: Verify factual premises of proposed work; mark expected value, rankings and uncertain connections as recommendations or [INFERENCE]; hypotheses can justify research, while public factual claims require [FACT]+[DERIVED]. [ASSUMPTION] is transparency-only. Public actions still require explicit human approval.
 - Other workflows and skills should apply the core rules above to their outputs
 
 ### Markdown Links
