@@ -79,7 +79,7 @@ Public text is ghost-written for the maintainer. When a voice skill for that mai
 | Verify CLI behaviour or a binary | [`falco-cli`](../falco-cli/SKILL.md) |
 | Build, test, reproduce a CI step | [`falco-dev`](../falco-dev/SKILL.md) |
 | Rules content in the train | [`falco-rules-author`](../falco-rules-author/SKILL.md) |
-| Broader maintainer session | [`falco-maintainer`](../falco-maintainer/SKILL.md) (its mandate and consent model are the ones reused here) |
+| Broader maintainer session | [`falco-maintainer`](../falco-maintainer/SKILL.md); share the established mandate, return to an existing coordinator, and retain this release skill's own consent gates |
 
 ## Scripts and templates
 
