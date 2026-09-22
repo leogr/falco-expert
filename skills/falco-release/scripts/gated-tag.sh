@@ -1,0 +1,226 @@
+#!/usr/bin/env bash
+# gated-tag.sh - create a delegated release candidate only when every gate holds.
+#
+# Gated: dry run by default, --apply writes.
+#
+# Purpose
+#   Publish a release candidate at the exact verified commit after checking that CI is green.
+#   Final releases of every component are the maintainer's manual step (exit 5).
+#
+# Usage
+#   gated-tag.sh --repo <owner/repo> --tag <tag> --target-sha <full sha> --branch <name>
+#       [--require-run-id <id>]... [--require-pr-tree-of <pr>] [--prerelease]
+#       [--title <text>] [--notes-file <abs>] [--allow-no-runs] [--apply]
+#   gated-tag.sh --final [--i-am-the-maintainer-and-ci-is-green] ...   (always exits 5, see below)
+#
+# Preconditions (checked on both dry run and --apply)
+#   1. refs/heads/<branch> == --target-sha
+#   2. refs/tags/<tag> absent and no GitHub release named <tag>
+#   3. every workflow run at the target is completed/success, with nonempty, completed green jobs
+#   4. every `github-actions` check-run at the target is completed with success (skipped is listed,
+#      accepted); check-runs of other apps are printed as informational only
+#   5. each --require-run-id run is completed/success, its jobs are success or skipped, and its
+#      head SHA is the target or has the same Git tree. --allow-no-runs requires these explicit runs.
+#   6. with --require-pr-tree-of <pr>: the PR head tree equals the target tree and an explicit
+#      required pull_request run tested that PR head (not an earlier head).
+#   Lists are paginated and their counts must match total_count. Select required run IDs from the
+#   live release CI configuration: absent path-gated workflows cannot be inferred from existing runs.
+#   Candidate tags end in -rc<N> (N >= 1); libs drivers may append +driver. Monorepo prefixes are
+#   checked for plugins and rules. Other tag schemes and direct chart tagging are refused.
+#
+# Apply
+#   Always `gh release create --prerelease --latest=false`; --satellite and --no-release refuse.
+#   Verify refs/tags/<tag> -> target and the prerelease/draft flags; last line TAG_DONE.
+#
+# Exit codes
+#   0 dry run OK / tag created and verified   2 usage   3 ABORT: precondition or drift
+#   4 GUARD_FAIL: post-apply verification failed   5 REFUSED: final releases are manual
+#
+# Example
+#   gated-tag.sh --repo falcosecurity/falco --tag 0.45.0-rc2 --branch release/0.45.x \
+#       --target-sha 00951ec55fa449cd29a9b3df3aef7fa54be1ff89 --require-run-id 34508533423 --prerelease
+#
+# Dry run by default; --apply performs the public action after re-checking every precondition.
+#
+# Sources generalized: output/2026-09-22-falco-release-helper-templates/falco-rc2-tag.sh,
+#   libs-rc2-tag.sh, libs-rc2-gate-check.sh, kc-release-0.19.0.sh, kc-release-finish.sh.
+#   Release workflows the tag triggers: falco .github/workflows/release.yaml (on: release published),
+#   libs .github/workflows/release-body.yml (on: release published).
+set -euo pipefail
+
+usage() { sed -n '2,/^set -euo pipefail/p' "$0" | sed '$d' | sed 's/^# \{0,1\}//'; }
+die_usage() { echo "usage error: $*" >&2; usage >&2; exit 2; }
+need2() { if [ $# -lt 2 ] || [ -z "$2" ]; then die_usage "$1 needs a value"; fi; }
+abort() { echo "ABORT: $*"; exit 3; }
+guard_fail() { echo "GUARD_FAIL: $*"; exit 4; }
+stamp() { date -u +%FT%TZ; }
+need_abs() { case "$2" in /*) ;; *) die_usage "$1 must be an absolute path: $2";; esac; }
+
+REPO=""; TAG=""; TARGET=""; BRANCH=""; TITLE=""; NOTES_FILE=""; PR_TREE_OF=""
+ALLOW_NO_RUNS=0; APPLY=0; FINAL=0; MAINTAINER_ACK=0
+REQUIRE_RUNS=()
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --help|-h) usage; exit 0;;
+    --repo) need2 "$@"; REPO=$2; shift 2;;
+    --tag) need2 "$@"; TAG=$2; shift 2;;
+    --target-sha) need2 "$@"; TARGET=$2; shift 2;;
+    --branch) need2 "$@"; BRANCH=$2; shift 2;;
+    --require-run-id) need2 "$@"; REQUIRE_RUNS+=("$2"); shift 2;;
+    --require-pr-tree-of) need2 "$@"; PR_TREE_OF=$2; shift 2;;
+    --prerelease) shift;; # compatibility flag; candidates are the only publishing mode
+    --no-release|--satellite) echo "REFUSED: $1 is disabled; only GitHub release candidates may be published"; exit 5;;
+    --title) need2 "$@"; TITLE=$2; shift 2;;
+    --notes-file) need2 "$@"; NOTES_FILE=$2; shift 2;;
+    --allow-no-runs) ALLOW_NO_RUNS=1; shift;;
+    --final) FINAL=1; shift;;
+    --i-am-the-maintainer-and-ci-is-green) MAINTAINER_ACK=1; shift;;
+    --apply) APPLY=1; shift;;
+    *) die_usage "unknown flag: $1";;
+  esac
+done
+
+if [ $FINAL = 1 ]; then
+  if [ $MAINTAINER_ACK = 1 ]; then
+    echo "REFUSED: final releases are the maintainer's manual step. Manual steps (not executed):"
+    echo "  1. confirm CI is fully green at the exact target commit on the release branch"
+    echo "  2. use the repository's release form and live procedure; for Falco, target the release branch, use the version as tag/title, leave the body empty and mark latest"
+    echo "  3. watch the release workflow; the release body is regenerated by the workflow (or built locally with release-body-build.sh)"
+    exit 5
+  fi
+  echo "REFUSED: final releases are the maintainer's manual step"
+  exit 5
+fi
+
+[ -n "$REPO" ] || die_usage "--repo is required"
+case "$REPO" in */*) ;; *) die_usage "--repo must be owner/repo";; esac
+[ -n "$TAG" ] || die_usage "--tag is required"
+[ -n "$TARGET" ] || die_usage "--target-sha is required"
+[[ "$TARGET" =~ ^[0-9a-f]{40}$ ]] || die_usage "--target-sha must be a full 40-hex sha"
+[ -n "$BRANCH" ] || die_usage "--branch is required"
+[ -z "$NOTES_FILE" ] || { need_abs --notes-file "$NOTES_FILE"; [ -f "$NOTES_FILE" ] || die_usage "notes file not found: $NOTES_FILE"; }
+[ -n "$TITLE" ] || TITLE=$TAG
+VERSION='(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)-rc[1-9][0-9]*'
+case "${REPO##*/}" in
+  falco) PATTERN="^${VERSION}$";;
+  libs) PATTERN="^${VERSION}(\+driver)?$";;
+  plugins) PATTERN="^plugins/[a-z0-9_-]+/v${VERSION}$";;
+  rules) PATTERN="^[a-z0-9-]+-rules-${VERSION}$";;
+  charts) echo "REFUSED: chart tags are produced by the chart release pipeline"; exit 5;;
+  *) PATTERN="^v?${VERSION}$";;
+esac
+if ! [[ "$TAG" =~ $PATTERN ]]; then
+  echo "REFUSED: tag '$TAG' is not a supported release candidate for $REPO"
+  exit 5
+fi
+for RID in "${REQUIRE_RUNS[@]}"; do [[ "$RID" =~ ^[0-9]+$ ]] || die_usage "--require-run-id must be numeric"; done
+[ -z "$PR_TREE_OF" ] || [[ "$PR_TREE_OF" =~ ^[0-9]+$ ]] || die_usage "--require-pr-tree-of must be numeric"
+if [ "$ALLOW_NO_RUNS" = 1 ] || [ -n "$PR_TREE_OF" ]; then
+  [ "${#REQUIRE_RUNS[@]}" -gt 0 ] || abort "--allow-no-runs and --require-pr-tree-of require explicit --require-run-id evidence"
+fi
+
+api_list() {
+  local endpoint=$1 field=$2
+  gh api --paginate --slurp "$endpoint" --jq "
+    if length > 0 and (map(.$field | length) | add) == .[0].total_count
+    then [.[].$field[]] else error(\"incomplete $field listing\") end"
+}
+tree_for() {
+  local tree
+  tree=$(gh api "repos/$REPO/git/commits/$1" --jq .tree.sha) || abort "cannot read tree of $1"
+  [[ "$tree" =~ ^[0-9a-f]{40}$ ]] || abort "invalid tree for $1"
+  printf '%s\n' "$tree"
+}
+verify_run() {
+  local rid=$1 required=${2:-0} run sha jobs tree
+  run=$(gh api "repos/$REPO/actions/runs/$rid") || abort "cannot read run $rid"
+  jq -e '.status == "completed" and .conclusion == "success"' <<<"$run" >/dev/null || abort "run $rid is not completed/success"
+  sha=$(jq -r .head_sha <<<"$run")
+  [[ "$sha" =~ ^[0-9a-f]{40}$ ]] || abort "run $rid has no valid head SHA"
+  if [ "$sha" != "$TARGET" ]; then
+    tree=$(tree_for "$sha") || abort "cannot verify run $rid tree"
+    [ "$tree" = "$TARGET_TREE" ] || abort "run $rid tested $sha with a different tree from target $TARGET"
+  fi
+  jobs=$(api_list "repos/$REPO/actions/runs/$rid/jobs?per_page=100" jobs) || abort "cannot enumerate all jobs of run $rid"
+  jq -e 'length > 0 and all(.[]; .status == "completed" and (.conclusion == "success" or .conclusion == "skipped"))' <<<"$jobs" >/dev/null || abort "run $rid has missing, unfinished or non-green jobs"
+  echo "ok: run $rid green with complete jobs; tested $sha (target or identical tree)"
+  if [ "$required" = 1 ] && [ -n "$PR_HEAD" ] && [ "$sha" = "$PR_HEAD" ] && [ "$(jq -r .event <<<"$run")" = pull_request ]; then
+    PR_RUN_VERIFIED=1
+  fi
+}
+
+echo "== $(stamp) gated-tag $REPO tag=$TAG branch=$BRANCH target=$TARGET apply=$APPLY"
+
+# 1. branch head
+HEAD=$(gh api "repos/$REPO/git/ref/heads/$BRANCH" --jq .object.sha) || abort "cannot read refs/heads/$BRANCH"
+[ "$HEAD" = "$TARGET" ] || abort "$BRANCH head is $HEAD, target is $TARGET (branch moved or wrong target)"
+echo "ok: $BRANCH head == target"
+TARGET_TREE=$(tree_for "$TARGET") || abort "cannot verify target tree"
+
+# 2. tag and release absent
+TAGS=$(gh api --paginate "repos/$REPO/git/matching-refs/tags/$TAG" --jq '.[].ref') || abort "cannot check tag absence"
+if grep -Fxq "refs/tags/$TAG" <<<"$TAGS"; then abort "tag $TAG already exists"; fi
+RELEASES=$(gh api --paginate "repos/$REPO/releases?per_page=100" --jq '.[].tag_name') || abort "cannot check release absence"
+if grep -Fxq "$TAG" <<<"$RELEASES"; then abort "release $TAG already exists"; fi
+echo "ok: no tag or release named $TAG"
+
+PR_HEAD=""; PR_RUN_VERIFIED=0
+if [ -n "$PR_TREE_OF" ]; then
+  PR_HEAD=$(gh api "repos/$REPO/pulls/$PR_TREE_OF" --jq .head.sha) || abort "cannot read PR #$PR_TREE_OF"
+  [[ "$PR_HEAD" =~ ^[0-9a-f]{40}$ ]] || abort "invalid PR head SHA"
+  PR_TREE=$(tree_for "$PR_HEAD") || abort "cannot verify PR tree"
+  [ "$PR_TREE" = "$TARGET_TREE" ] || abort "PR #$PR_TREE_OF tree differs from target"
+fi
+
+# 3. workflow runs at the target
+RUNS=$(api_list "repos/$REPO/actions/runs?head_sha=$TARGET&per_page=100" workflow_runs) || abort "cannot enumerate all runs at target"
+if [ "$(jq length <<<"$RUNS")" = 0 ]; then
+  [ $ALLOW_NO_RUNS = 1 ] || abort "no workflow runs at the target (pass --allow-no-runs together with --require-run-id when CI ran on another ref of the same tree)"
+  echo "warn: no workflow runs at the target (allowed)"
+else
+  jq -e --arg sha "$TARGET" 'all(.[]; .head_sha == $sha and .status == "completed" and .conclusion == "success")' <<<"$RUNS" >/dev/null || abort "workflow runs at the target are not all completed/success"
+  while read -r RID; do verify_run "$RID"; done < <(jq -r '.[].id' <<<"$RUNS")
+  echo "ok: all workflow runs at the target are completed/success"
+fi
+
+# 4. check-runs at the target (github-actions is CI; other apps informational)
+CHECKS=$(api_list "repos/$REPO/commits/$TARGET/check-runs?per_page=100" check_runs) || abort "cannot enumerate all target check-runs"
+CR=$(jq -r '.[] | "\(.status)/\(.conclusion // "-") app=\(.app.slug) \(.name)"' <<<"$CHECKS")
+printf '%s\n' "$CR" | grep ' app=github-actions ' | sed 's/^/  check: /' || true
+printf '%s\n' "$CR" | grep -v ' app=github-actions ' | sed 's/^/  info (non-CI app): /' || true
+BAD_CR=$(printf '%s\n' "$CR" | grep ' app=github-actions ' | grep -v -E '^completed/(success|skipped) ' || true)
+[ -z "$BAD_CR" ] || abort "github-actions check-run(s) at the target not green: $(printf '%s' "$BAD_CR" | tr '\n' ';')"
+SKIPPED=$(printf '%s\n' "$CR" | grep ' app=github-actions ' | grep -c '^completed/skipped ' || true)
+echo "ok: all github-actions check-runs at the target are success (skipped: ${SKIPPED:-0})"
+
+# 5. required runs
+for RID in "${REQUIRE_RUNS[@]}"; do verify_run "$RID" 1; done
+
+# 6. PR tree equality
+if [ -n "$PR_HEAD" ]; then
+  [ "$PR_RUN_VERIFIED" = 1 ] || abort "no required pull_request run tested the current head of PR #$PR_TREE_OF"
+fi
+
+echo "plan: GitHub pre-release $TAG at $TARGET title='$TITLE' latest=false notes=${NOTES_FILE:-'(empty body)'}"
+if [ $APPLY = 0 ]; then echo "DRY_RUN_OK"; exit 0; fi
+
+# Enumeration can take time; recheck branch and PR drift immediately before publication.
+HEAD=$(gh api "repos/$REPO/git/ref/heads/$BRANCH" --jq .object.sha) || abort "cannot re-read branch head"
+[ "$HEAD" = "$TARGET" ] || abort "$BRANCH moved during verification"
+if [ -n "$PR_HEAD" ]; then
+  HEAD_NOW=$(gh api "repos/$REPO/pulls/$PR_TREE_OF" --jq .head.sha) || abort "cannot re-read PR head"
+  [ "$HEAD_NOW" = "$PR_HEAD" ] || abort "PR #$PR_TREE_OF moved during verification"
+fi
+NOTES=(--notes "")
+[ -z "$NOTES_FILE" ] || NOTES=(--notes-file "$NOTES_FILE")
+gh release create "$TAG" -R "$REPO" --target "$TARGET" --prerelease --latest=false --title "$TITLE" "${NOTES[@]}" || guard_fail "candidate creation failed; inspect live state before retrying"
+
+echo "== $(stamp) verify"
+REF=$(gh api "repos/$REPO/git/ref/tags/$TAG" --jq '"\(.object.type) \(.object.sha)"') || guard_fail "refs/tags/$TAG not readable after creation"
+REF_TYPE=${REF%% *}; REF_SHA=${REF##* }
+if [ "$REF_TYPE" = "tag" ]; then REF_SHA=$(gh api "repos/$REPO/git/tags/$REF_SHA" --jq .object.sha); fi
+[ "$REF_SHA" = "$TARGET" ] || guard_fail "refs/tags/$TAG points to $REF_SHA, expected $TARGET"
+echo "ok: refs/tags/$TAG -> $TARGET ($REF_TYPE)"
+RELEASE=$(gh release view "$TAG" -R "$REPO" --json tagName,isPrerelease,isDraft,url) || guard_fail "release $TAG not readable after creation"
+jq -e --arg tag "$TAG" '.tagName == $tag and .isPrerelease == true and .isDraft == false' <<<"$RELEASE" >/dev/null || guard_fail "release is not the published candidate requested"
+echo "TAG_DONE $(stamp) $TAG $TARGET"
