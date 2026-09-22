@@ -69,6 +69,14 @@ Information in this repo is organized by Falco version "eras". The Falco version
 - **Development cycle**: January 28, 2026 → May 26, 2026
 - Patch versions (e.g., 0.44.x) belong to the same era
 
+### Era Snapshots
+
+`main` holds the living era. Before an [era transition](WORKFLOWS.md#era-transition), the human confirms that the old era is complete and the agent tags its final commit as `<major>.<minor>.x` (e.g., `0.44.x`). That tag stays fixed; subsequent commits belong to the next era. Falco does not release patches for previous minor versions.
+
+Choose sources according to the question: the living KB may be most useful for broad or cross-era investigations; tagged snapshots are useful for narrow investigations of a specific older era or historical comparisons. Use snapshots selectively where they help establish the relevant behavior.
+
+To consult a snapshot, find its tag with `git tag --list '*.x'` and read its [index](README.md), [specs](specs/) and [digests](digests/) using `git show <era-tag>:<path>` (e.g., `git show 0.44.x:README.md`). Verify claims about that era against the matching sources; the snapshot records its submodule commits (`git ls-tree <era-tag> -- <submodule-path>`). Cite the era tag or pinned source commit so historical findings remain identifiable.
+
 ### Release Schedule
 
 Falco typically releases 3 times per year:

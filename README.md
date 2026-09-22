@@ -8,6 +8,8 @@ Falco Knowledge Base for AI Agents.
 
 Information in this repository corresponds to Falco version 0.44.x (released May 26, 2026).
 
+`main` is the living era; each completed era is archived under a Git tag such as `0.44.x` before the next transition. See [Era Snapshots](AGENTS.md#era-snapshots) for historical lookup and the [Era Transition workflow](WORKFLOWS.md#era-transition) for tagging.
+
 ## For Humans
 
 Read the [Getting Started guide](GETTING-STARTED.md) for setup instructions and usage examples.

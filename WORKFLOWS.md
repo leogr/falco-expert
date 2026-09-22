@@ -152,6 +152,8 @@ Each sub-agent investigating a topic MUST follow this process:
 
 Use your knowledge and all indexes in this repo ([`README.md`](README.md), [`AGENTS.md`](AGENTS.md), folder READMEs) to identify documents relevant to your assigned topic.
 
+Choose the living KB or an [era snapshot](AGENTS.md#era-snapshots) according to the question. Broad or cross-era investigations may use the living KB, consulting snapshots selectively for narrow historical questions and comparisons.
+
 #### 1.2 Follow the Investigation Order
 
 Process documents in this order (most comprehensive to most detailed):
@@ -435,6 +437,12 @@ OUTPUT_DIR/2026-02-23-falco-issue-3789-race-condition/
 - The new Falco version must be officially released
 - You must know the new version number (e.g., 0.44) and its release date
 
+### Step 0: Confirm and Tag the Old Era
+
+Before changing era content or submodule pins, ensure the old-era work is committed and ask the human to confirm tagging that final commit as `<major>.<minor>.x` (e.g., `0.44.x`). Include the commit and tag name, and explain that the tag will be published with the completed transition. After confirmation, create the tag at that commit and proceed. On resume, reuse the already approved tag; never move it.
+
+All subsequent work belongs to the new era. A branch is optional; keep transition commits local until verification, then publish them together in one push.
+
 ### Step 1: Update Submodules
 
 Update each git submodule in [`refs/`](refs/) to the correct version for the new era:
@@ -516,7 +524,8 @@ Update the `digests/README.md` table:
 
 1. Run `git submodule status` to confirm all submodules are at the expected versions
 2. Review all changes with `git diff`
-3. Verify no broken links in modified files
+3. Run `make check-docs` and fix any reported issues
+4. Publish the old-era tag and all transition commits together in one push; multiple commits are fine
 
 ### Step 9: Summarize
 
