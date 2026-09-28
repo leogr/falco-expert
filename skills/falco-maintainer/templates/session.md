@@ -6,7 +6,8 @@ Working memory for an ongoing session. Keep the current view compact; link detai
 
 - Checkpoint UTC time and trigger (event / near 40% context / interruption):
 - Previous session note; relevant knowledge, learning and required instruction links:
-- Current recommendation and why:
+- Pass stage (opening / small actions / synthesis / focused project / watch / stopped), current picture and next useful step:
+- Source coverage still missing or due for refresh:
 - Approved work in progress and its stopping point:
 - Decisions awaiting the human:
 - Public effects needing reconciliation (check before another write):
@@ -21,13 +22,32 @@ Before proposing compaction near 40% context used, save findings and lessons bel
 
 - Maintainer, authenticated account, relevant authority evidence:
 - Sources/repositories, interests, commitments and exclusions:
-- Approved discovery/watch scope, cadence, resource bounds:
+- Approved maintenance scope and effort bound; whether small local fixes are included and their limits:
+- Optional watch scope, cadence, resource bounds; explicit stops:
 - Standing constraints, holds, voice, workspace and identity choices:
 - Absolute `OUTPUT_DIR`:
 
-## Candidate sub-projects
+## Maintenance picture and coverage
 
-| Candidate / intended outcome | Why this rank | Evidence, links and uncertainty | Next job / state |
+Summarize obligations, incoming work, contributor waits, dependencies/unreleased changes, current-version reports, CI or broken paths, and community/maintainer focus. Reuse current evidence; keep this short enough to guide the next decision.
+
+| Area / repository | Source or query, window/revision, checked time | Coverage and material gap / next refresh |
+|---|---|---|
+| | | Checked, partial, unavailable or deliberately deferred, with reason |
+
+Record a pass boundary when reached: what was learned, useful small work completed or prepared, remaining gaps and why to move to larger-project comparison, narrow the scope or stop. Do not equate a watcher's window with full maintenance coverage.
+
+## Small actions and downstream follow-through
+
+| Finding / intended outcome | Why worth doing now; evidence | Result / next action and authority | Affected consumers / remaining dependency and owner |
+|---|---|---|---|
+| | Impact, obligation, community demand, confidence and total effort | Completed, ready for approval, needs check, waiting or deferred | Include release/pin/package/configuration checks where relevant |
+
+Track only retained findings and useful deferrals. Distinguish a prepared patch, posted answer or merged change from the verified user outcome. If no downstream work applies, record the reason briefly.
+
+## Larger projects emerging from the pass
+
+| Candidate / intended outcome | Why this rank | Supporting pass findings or commitment; uncertainty | First increment / state |
 |---|---|---|---|
 | | | | |
 

@@ -165,7 +165,7 @@ Documents following the [agentskills.io](https://agentskills.io/) specification.
 | [`falco-rules-author`](skills/falco-rules-author/SKILL.md) | Author, validate, test, and iteratively tune Falco detection rules with Docker-based feedback loops |
 | [`falco-triage`](skills/falco-triage/SKILL.md) | Triage GitHub issues and PRs across falcosecurity repositories with knowledge-base-backed analysis |
 | [`falco-reviewer`](skills/falco-reviewer/SKILL.md) | Review PRs as a ghost writer for Falco maintainers, with security review and breaking change analysis |
-| [`falco-maintainer`](skills/falco-maintainer/SKILL.md) | Discover and rank strategic sub-projects, advance approved jobs, and keep a lightweight ongoing watch with explicit human approval for public actions and substantial implementation |
+| [`falco-maintainer`](skills/falco-maintainer/SKILL.md) | Clear useful small maintenance work, understand project health and community needs, and use that evidence to select larger projects and follow downstream outcomes |
 | [`falco-dependabot`](skills/falco-dependabot/SKILL.md) | Clear a repository's open Dependabot PR backlog in bulk: rebase, wait for CI, approve when green |
 | [`falco-release`](skills/falco-release/SKILL.md) | Assist a Falco release manager end to end: inventory and chains, tracking issue, hygiene, upstream components, release candidates, freeze and cumulative sync, GA day, website, post-release; never performs the final release |
 
@@ -209,9 +209,11 @@ To use, read [`skills/falco-triage/SKILL.md`](skills/falco-triage/SKILL.md) for 
 To use, read [`skills/falco-reviewer/SKILL.md`](skills/falco-reviewer/SKILL.md) for complete instructions.
 
 **Using `falco-maintainer`**: Agents can use the `falco-maintainer` skill to:
-- Investigate project state and group related issues into candidate sub-projects, distinguishing verified connections from hypotheses
-- Rank worthwhile outcomes by expected benefit, strategic relevance, dependencies, uncertainty and effort; bring short decision rounds to the maintainer
-- Execute bounded approved jobs, asking before substantial local implementation and obtaining an explicit go for every public action or fully specified group
+- Start with personal obligations, incoming triage, contributor waits, dependencies, unreleased changes, latest-version reports, CI health and community activity; record coverage and gaps
+- Select useful small tasks by impact, unblock value, community demand, confidence and total effort; complete authorized work while building the project picture
+- Check affected components and remaining release, consumer pin or packaging work before calling a broader outcome solved
+- Choose larger projects from the pass's findings and known commitments, distinguishing verified connections from hypotheses; bring short decision rounds to the maintainer
+- Execute bounded approved passes and jobs, including scoped small local fixes when authorized, asking before substantial new implementation and obtaining an explicit go for every public action or fully specified group
 - Reuse triage, Dig Deeper, reviewer, CLI, dev, rules, Dependabot and release skills for scoped work while retaining responsibility for synthesis and follow-through
 - Monitor approved sources with incremental read-only collection and quiet backoff; revisit older commitments rather than relying only on recent activity
 - Preserve concise session notes, knowledge, feedback and process lessons; propose compaction near 40% context used only after saving a resume checkpoint, drafts, public outcomes and restart recipes

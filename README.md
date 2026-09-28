@@ -205,7 +205,7 @@ AI agent skills following [agentskills.io](https://agentskills.io/) specificatio
 - [`falco-rules-author/`](skills/falco-rules-author/) - Author, validate, test, and iteratively tune Falco detection rules with Docker-based feedback loops
 - [`falco-triage/`](skills/falco-triage/) - Triage GitHub issues and PRs across falcosecurity repositories with knowledge-base-backed analysis
 - [`falco-reviewer/`](skills/falco-reviewer/) - Review PRs across falcosecurity repositories as a ghost writer for Falco maintainers, with security review and breaking change analysis
-- [`falco-maintainer/`](skills/falco-maintainer/) - Discover and rank strategic sub-projects, advance human-approved jobs, and maintain a lightweight ongoing watch with explicit approval for every public action
+- [`falco-maintainer/`](skills/falco-maintainer/) - Start with useful maintenance and small tasks, build a picture of project health and community needs, then choose larger projects and follow downstream outcomes
 - [`falco-release/`](skills/falco-release/) - Assist a Falco release manager end to end: component inventory and chains, tracking issue, release candidates, freeze and cumulative sync, GA day, website, post-release; the agent never performs the final release
 
 #### Installing Skills for Claude Code
@@ -230,7 +230,7 @@ ln -s "$(cd falco-expert && pwd)/skills/falco-maintainer" ~/.claude/skills/falco
 ln -s "$(cd falco-expert && pwd)/skills/falco-release" ~/.claude/skills/falco-release
 ```
 
-> **Note:** [`falco-maintainer`](skills/falco-maintainer/) uses this knowledge base for context and durable output. Public actions and substantial local implementation require explicit human approval. It preserves process lessons and proposes compaction near 40% context used after saving knowledge and a resume checkpoint. Its watch runs only while the host supports it. [`falco-release`](skills/falco-release/) retains its own per-item consent gates and never performs a final release.
+> **Note:** [`falco-maintainer`](skills/falco-maintainer/) starts general sessions with a bounded maintenance pass and preserves coverage, small outcomes and lessons in a session note. Public actions and substantial local implementation require explicit human approval; an approved pass may include scoped small local fixes. Its optional watch runs only while the host supports it, and it proposes compaction near 40% context used after saving a checkpoint. [`falco-release`](skills/falco-release/) retains its own per-item consent gates and never performs a final release.
 
 ### Agents ([`agents/`](agents/))
 

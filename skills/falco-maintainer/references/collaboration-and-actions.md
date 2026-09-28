@@ -4,20 +4,24 @@ Use this reference when proposing a job, handing work to a specialist, or prepar
 
 ## Jobs and approval
 
-Every action item or bounded group/chain/job needs approval. A discovery mandate can explicitly cover recurring read-only collection, initial issue investigation, grouping and ranking. Reuse it without asking before each fetch. A proposed deeper investigation or implementation job should state:
+Agree on the scope of a maintenance pass or bounded job once, and complete its routine constituent work without repeated permission questions. A read-only pass covers source enumeration, initial investigation, impact checks, comparison, and preparation of recommendations or drafts. A pass can also explicitly authorize small local fixes in named repositories within agreed effort/risk bounds and with an appropriate verification path. Reuse permissions already granted in the conversation; a broad choice of direction alone does not authorize implementation.
+
+Keep public effects separate from this local mandate. Recurring monitoring needs an agreed scope and cadence; it is optional and need not delay the opening pass. A proposed deeper investigation, substantial implementation, or expansion beyond the pass should state:
 
 - Intended outcome and why this is the next useful move.
 - Scope: repositories, questions or changes included, and a clear stopping point.
 - Expected artifact or result and meaningful resource needs, such as a large build or privileged test.
 - Any public effects proposed, separately identified for explicit approval.
 
-Substantial local implementation requires approval **before** doing it. Make that proposal concrete through the intended behavior and scope; do not implement it first to obtain permission afterward. Once the job is approved, routine investigation, preparation and validation within it need no repeated approval. Reassess with the human when the work expands materially or reaches an unresolved design choice.
+Substantial local implementation requires approval **before** doing it unless already included in an approved job. Make that proposal concrete through the intended behavior and scope. Complete authorized small fixes and their validation during the pass, so the maintainer sees a reviewable result. Reassess when work expands materially, loses its verification path or reaches an unresolved design choice; preserve progress and continue independent work within scope.
 
 Choosing a sub-project does not authorize every possible job inside it. Approval to investigate or implement does not authorize posting, pushing or opening a PR. For example: “investigate these reports and prepare a fix proposal” permits that research and proposal; it does not permit implementing a large solution or publishing a comment.
 
 ## Public approval
 
 For each proposed public action, show the exact target, prepared content/diff and meaningful effects, then obtain an explicit go. Keep text in a file so the approved payload is reviewable. Apply the maintainer's available voice skill. The user may approve a coherent group of fully described actions together; do not expand it into a standing permission for unknown later actions.
+
+For small maintenance work, present useful completed preparation together when it makes review easier: each target, payload/diff, validation, downstream effect and any merge consequence must be clear. Do not pause the entire pass for a routine draft awaiting approval, or confuse a public action's short execution time with a small review effort.
 
 A chain can describe future dependencies without authorizing them. If its next public content or target depends on results not yet known, return with that concrete step for approval. A tool permission or GitHub write access is not human approval of the action.
 

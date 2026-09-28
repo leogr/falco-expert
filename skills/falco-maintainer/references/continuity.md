@@ -4,22 +4,22 @@ Use this reference for session memory, learning, compaction and watching. Keep p
 
 ## Durable memory
 
-Create a dated directory under the resolved `OUTPUT_DIR` and a dated Markdown state note using the [template](../templates/session.md). Save the current recommendation, approved jobs, meaningful decisions, draft/published distinction, uncertain action outcomes, evidence revisions, waits and rejection reasons. Link supporting artifacts; do not maintain a second full backlog database.
+Create a dated directory under the resolved `OUTPUT_DIR` and a dated Markdown state note using the [template](../templates/session.md). Save the pass's scope/stage, source coverage and gaps, useful small outcomes, project picture, downstream dependencies, current recommendations and approvals. Preserve draft/published distinctions, uncertain actions, evidence revisions, waits and rejection reasons. Link supporting artifacts; do not maintain a second full backlog database.
 
 Update after meaningful events and before an interruption or blocking question. Keep the newest resume summary first. Concrete events belong in session history; lessons worth changing the skill should become a proposed improvement for human review.
 
 On resume:
 
-1. Read the mandate, newest summary and relevant carried lessons, following their evidence links when needed. Reuse established preferences rather than repeating launch questions; check that a lesson's context still applies.
+1. Read the mandate, pass coverage, project picture, newest summary and relevant carried lessons, following their evidence links when needed. Reuse established preferences rather than repeating launch questions; check that a lesson's context still applies. Resume incomplete coverage or follow-through without repeating the whole pass merely because a new turn began.
 2. Reconcile attempted public actions with unknown outcomes using remote reads. Do not replay them. Distinguish permission already granted in the continuing conversation from an old note merely claiming permission; ask if authorization cannot be established.
 3. Read watcher events since the last handled event and refresh facts relevant to active work. Closed or merged items are ordinary changes, not state errors. Preserve valid investigation results while their decisive facts still hold.
-4. Check actual host/process handles and specialist artifacts. A PID in a saved file is not proof of a running process. Record gaps, restart authorized watches, and return with changed recommendations or the next job.
+4. Check actual host/process handles and specialist artifacts. A PID in a saved file is not proof of a running process. Record gaps, restart only still-authorized watches, and return with changed recommendations or the next job. An explicit stop supersedes earlier watch approval; do not restart until the user resumes it.
 
 ## Learning from sessions
 
 Keep short process observations in the session note at meaningful decisions, feedback, completed jobs or surprises. Cover discovery, investigation, specialist handoffs, execution and communication as relevant. Use a few lines and evidence links; avoid a transcript of tool calls or a retrospective after every poll.
 
-- Record the approach and why it was chosen. For discovery, include sources explored, coverage gaps, credible alternatives and why particular candidates received attention. Keep expected benefit separate from what eventually happened. Note elapsed effort or resource cost when available and useful; label estimates.
+- Record the approach and why it was chosen: coverage and gaps, small tasks selected or deferred, credible alternatives, and what the outcomes revealed about larger work. Compare expected benefit with verified results such as a contributor unblocked, useful CI restored or a fix reaching consumers. Include maintainer review effort when known; action counts alone do not measure success. Note elapsed effort or resource cost when useful; label estimates.
 - Capture the maintainer's feedback and reasons for accepting, deferring, rejecting or redirecting work. Reuse feedback from the conversation; ask only when a missing explanation would materially change the next approach. Silence supplies no feedback, and approval alone does not establish usefulness. Follow up on actual outcomes when they become observable.
 - Extract a tentative lesson or next experiment, linked to the concrete observations. State its applicable context, uncertainty and any contrary evidence. A successful example does not establish a universal rule; a situational preference does not establish a permanent priority. Correct or retire lessons when later results contradict them.
 
@@ -34,7 +34,7 @@ As context usage approaches or crosses **about 40% used**, propose compaction at
 **Save before proposing.** Reach a boundary where the current tool operation has returned, then persist:
 
 - Acquired project knowledge, source revisions, verified findings, hypotheses, open questions, reproduction/test results and specialist reports in linked durable artifacts. Keep facts separate from process lessons; preserve both, subject to the private-security boundary.
-- Current rankings and alternatives, feedback, tentative lessons, rejected suggestions and any pending process-improvement proposal.
+- Pass stage and coverage, completed/ready/waiting small actions, downstream delivery gaps, current rankings and alternatives, feedback, tentative lessons, rejected suggestions and any pending process-improvement proposal.
 - Exact approved scopes and approval references, holds, pending decisions, local drafts versus published effects, receipts and uncertain outcomes. Compaction cannot turn an uncertain write into a retry or a pending proposal into permission.
 - Checkouts, durable script/draft paths, worker handles and deliverables, watcher scope and last handled event, actual liveness, next checks and restart commands. Do not assume background tasks will survive compaction.
 
@@ -44,7 +44,7 @@ After compaction, follow the resume steps above: reload the required repository/
 
 ## Watch scope and attention
 
-Agree on a recurring discovery job: sources, purpose, cadence, resource bounds and the decisions it should surface. It covers observation and initial synthesis, not unknown future public effects or substantial implementation. Use broad lightweight observation plus focused waits for active dependencies. Revisit older commitments and unscanned areas at an agreed strategic-review time, even if no new events arrive.
+After establishing the maintenance picture, or while useful approved work is waiting, agree on an optional recurring watch: sources, purpose, cadence, resource bounds and decisions it should surface. It covers observation and initial synthesis, not unknown future public effects or substantial implementation. Use broad lightweight observation plus focused waits for active dependencies. Record when personal obligations, reviews, CI, releases and unscanned areas need direct refresh; a quiet recent-activity feed does not keep those sources current. Revisit older commitments and community needs at an agreed review time even if no events arrive.
 
 Prefer host event subscriptions/wait facilities if available. Otherwise use the small [GitHub watcher](../scripts/watch.py). It does not create a service, schedule future sessions, select projects, or perform any public write. Use a host background task/completion notification to wait without repeatedly waking an LLM. If the host cannot notify or retain the task, say what is actually possible; do not claim unattended monitoring. Installing a daemon or scheduler requires a separate approved job.
 
@@ -87,7 +87,7 @@ The [repository issues API](https://docs.github.com/en/rest/issues/issues#list-r
 
 `complete-window` describes **those endpoints and that time window**, never complete project/backlog knowledge. Initial discovery and periodic strategic review must include relevant older open work separately. The listing is not an event log: multiple updates can coalesce, deletions/transfers or delayed indexing can escape the window, and concurrent pagination is not a transaction. Re-fetch the exact object before a consequential decision; reconcile active objects directly during periodic review.
 
-The helper does not establish review status, head-specific CI, merged-versus-closed PR semantics, effective dependency versions, releases, discussion contents, meeting changes or root causes. Query those separately when relevant. A branch-head change or issue summary is a lead. Inaccessible sources and partial collections remain gaps, never evidence of absence.
+The helper does not establish the maintainer's assignments, subscriptions, mentions or participation queue, review status, head-specific CI, merged-versus-closed PR semantics, effective dependency versions, releases, discussion contents, meeting changes or root causes. Query those separately as part of the [maintenance pass](discovery.md#establish-coverage-with-a-shallow-first-pass) and subsequent due refreshes. A branch-head change or issue summary is a lead. Inaccessible sources and partial collections remain gaps, never evidence of absence.
 
 ## Legacy runs
 
@@ -101,4 +101,4 @@ The [watcher tests](../tests/test_watch.py) run offline with stubbed API respons
 python3 <skill-dir>/tests/test_watch.py --workdir <absolute-output-dir>/<dated-test-directory>
 ```
 
-The [behavioral scenarios](../tests/scenarios.json) exercise selection, approvals, specialists, quiet periods and resume. Give the prompts and raw scenario facts to independent evaluators without the grading criteria. Evaluate their recommendations and actions, not whether they reproduce headings or wording. A fixture pass cannot prove unattended host persistence or that a real maintainer values the ranking; validate those through bounded live pilots and human feedback.
+The [behavioral scenarios](../tests/scenarios.json) exercise opening coverage, selective small progress, downstream delivery, community signals, the transition to larger projects, approvals, specialists, quiet periods and resume. Give the prompts and raw scenario facts to independent evaluators without the grading criteria. Evaluate source choices, work completed or prepared, prioritization, delivery claims and respect for scope; do not grade matching headings or wording. Retain the raw responses and observed failures so revisions can be justified. A fixture pass cannot prove unattended host persistence or actual maintainer benefit; validate those through separately authorized bounded live pilots and human feedback.
