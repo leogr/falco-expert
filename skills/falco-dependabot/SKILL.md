@@ -64,6 +64,22 @@ gh pr checks $PR --repo $REPO --json name,bucket | jq -r '
 
 ## Approving
 
+Before approving a GREEN PR, check its labels:
+
+```bash
+gh pr view $PR --repo $REPO --json labels --jq '[.labels[].name] | join(", ")'
+```
+
+If it carries **`do-not-merge/release-note-label-needed`**, which blocks tide ([prow-config.md:L178-L179](../../digests/falcosecurity/test-infra/prow-config.md#L178-L179)), comment `/release-note-none`, **except on `falcosecurity/falco` and `falcosecurity/libs`**. Their release bodies, and Falco's `CHANGELOG.md`, are generated from the PRs' release-note blocks ([RELEASE.md:L117-L120](../../refs/falcosecurity/falco/RELEASE.md#L117-L120), [release.yaml:L180-L184](../../refs/falcosecurity/falco/.github/workflows/release.yaml#L180-L184), [release-body.yml:L105-L109](../../refs/falcosecurity/libs/.github/workflows/release-body.yml#L105-L109)), so on those two repos stop and ask the maintainer for the note instead. After the comment, re-read the labels and confirm the blocking label is gone; Prow relabels within about a minute ([release-note audit](../falco-release/references/02-hygiene.md#release-note-audit)).
+
+```bash
+gh pr comment $PR --repo $REPO --body '/release-note-none'   # never on falco or libs
+```
+
+Post no `/kind` at this point: `needs-kind` does not block tide (see [Gotchas](#gotchas)).
+
+Then approve:
+
 ```bash
 gh pr review $PR --repo $REPO --approve --body 'LGTM :+1:'
 ```
@@ -76,6 +92,20 @@ gh pr review $PR --repo $REPO --approve --body 'LGTM :+1:'
 > gh pr view $PR --repo $REPO --json labels --jq '[.labels[].name] | join(", ")'
 > gh pr edit $PR --repo $REPO --add-label approved
 > ```
+
+**After approving, confirm nothing still blocks tide.** It needs `approved`, `lgtm` and `dco-signoff: yes`, and none of `do-not-merge`, `do-not-merge/hold`, `do-not-merge/invalid-owners-file`, `do-not-merge/work-in-progress`, `do-not-merge/release-note-label-needed` or `needs-rebase` ([prow-config.md:L166-L179](../../digests/falcosecurity/test-infra/prow-config.md#L166-L179)). Re-read the labels (command above) and tide's own verdict:
+
+```bash
+gh pr checks $PR --repo $REPO --json name,description --jq '.[] | select(.name == "tide") | .description'
+```
+
+If tide still names `needs-kind` once the approval and the release-note step are done, that repo blocks merge on it: comment `/kind bug`. Otherwise post no `/kind`.
+
+```bash
+gh pr comment $PR --repo $REPO --body '/kind bug'   # only when tide still names needs-kind
+```
+
+List every PR still open after tide's next sync in the final report, with the label or check that keeps it out (for example a release note awaited from the maintainer on `falco` or `libs`, a missing `approved`, or `needs-rebase`).
 
 ## Gotchas
 
@@ -102,7 +132,7 @@ gh pr review $PR --repo $REPO --approve --body 'LGTM :+1:'
 
 - **Fix a broken bump on the Dependabot branch itself.** Dependabot PRs accept extra commits, so push the fix as a commit on the PR rather than opening a separate one. It keeps the bump and its fix in a single reviewable change.
 
-- **`needs-kind` does not block tide.** poiana nags about a missing `/kind` label; tide only requires `approved` and `lgtm`. Add a kind label only if the human asks.
+- **`needs-kind` does not block tide.** poiana nags about a missing `kind/*` label ([prow-config.md:L308-L320](../../digests/falcosecurity/test-infra/prow-config.md#L308-L320)), but no tide query lists `needs-kind` ([prow-config.md:L166-L179](../../digests/falcosecurity/test-infra/prow-config.md#L166-L179)). Post no `/kind` unless tide still names `needs-kind` after approval ([Approving](#approving)); then use `/kind bug`, never `/kind chore`: the Falco PR template offers `bug` but no `chore` ([PULL_REQUEST_TEMPLATE.md:L10-L28](../../refs/falcosecurity/falco/.github/PULL_REQUEST_TEMPLATE.md#L10-L28)).
 
 - **Cross-repo bumps need the upstream fixed first.** If repo A's Dependabot PR fails because repo B (a falcosecurity dependency) uses a removed API, fix and tag B first, then bump B in A.
 
