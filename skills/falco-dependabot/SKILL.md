@@ -70,7 +70,7 @@ Before approving a GREEN PR, check its labels:
 gh pr view $PR --repo $REPO --json labels --jq '[.labels[].name] | join(", ")'
 ```
 
-If it carries **`do-not-merge/release-note-label-needed`**, which blocks tide ([prow-config.md:L178-L179](../../digests/falcosecurity/test-infra/prow-config.md#L178-L179)), comment `/release-note-none`, **except on `falcosecurity/falco` and `falcosecurity/libs`**. Their release bodies, and Falco's `CHANGELOG.md`, are generated from the PRs' release-note blocks ([RELEASE.md:L117-L120](../../refs/falcosecurity/falco/RELEASE.md#L117-L120), [release.yaml:L180-L184](../../refs/falcosecurity/falco/.github/workflows/release.yaml#L180-L184), [release-body.yml:L105-L109](../../refs/falcosecurity/libs/.github/workflows/release-body.yml#L105-L109)), so on those two repos stop and ask the maintainer for the note instead. After the comment, re-read the labels and confirm the blocking label is gone; Prow relabels within about a minute ([release-note audit](../falco-release/references/02-hygiene.md#release-note-audit)).
+If it carries **`do-not-merge/release-note-label-needed`**, which tide treats as a blocker only on the repositories whose query lists it ([prow-config.md:L178-L179](../../digests/falcosecurity/test-infra/prow-config.md#L178-L179)), comment `/release-note-none`, **except on `falcosecurity/falco` and `falcosecurity/libs`**. Their release bodies, and Falco's `CHANGELOG.md`, are generated from the PRs' release-note blocks ([RELEASE.md:L117-L120](../../refs/falcosecurity/falco/RELEASE.md#L117-L120), [release.yaml:L180-L184](../../refs/falcosecurity/falco/.github/workflows/release.yaml#L180-L184), [release-body.yml:L105-L109](../../refs/falcosecurity/libs/.github/workflows/release-body.yml#L105-L109)), so on those two repos stop and ask the maintainer for the note instead. After the comment, re-read the labels and confirm the label is gone; Prow relabels within about a minute ([release-note audit](../falco-release/references/02-hygiene.md#release-note-audit)).
 
 ```bash
 gh pr comment $PR --repo $REPO --body '/release-note-none'   # never on falco or libs
@@ -93,7 +93,7 @@ gh pr review $PR --repo $REPO --approve --body 'LGTM :+1:'
 > gh pr edit $PR --repo $REPO --add-label approved
 > ```
 
-**After approving, confirm nothing still blocks tide.** It needs `approved`, `lgtm` and `dco-signoff: yes`, and none of `do-not-merge`, `do-not-merge/hold`, `do-not-merge/invalid-owners-file`, `do-not-merge/work-in-progress`, `do-not-merge/release-note-label-needed` or `needs-rebase` ([prow-config.md:L166-L179](../../digests/falcosecurity/test-infra/prow-config.md#L166-L179)). Re-read the labels (command above) and tide's own verdict:
+**After approving, confirm nothing still blocks tide.** What blocks a merge is set by the repository's own tide query ([prow-config.md:L162-L179](../../digests/falcosecurity/test-infra/prow-config.md#L162-L179)). Commonly that means `approved`, `lgtm` and `dco-signoff: yes`, and none of `do-not-merge`, `do-not-merge/hold`, `do-not-merge/invalid-owners-file`, `do-not-merge/work-in-progress` or `needs-rebase`. Only some queries also exclude `do-not-merge/release-note-label-needed`. Re-read the labels (command above) and tide's own verdict, which names what that query still misses for this PR:
 
 ```bash
 gh pr checks $PR --repo $REPO --json name,description --jq '.[] | select(.name == "tide") | .description'
@@ -105,7 +105,7 @@ If tide still names `needs-kind` once the approval and the release-note step are
 gh pr comment $PR --repo $REPO --body '/kind bug'   # only when tide still names needs-kind
 ```
 
-List every PR still open after tide's next sync in the final report, with the label or check that keeps it out (for example a release note awaited from the maintainer on `falco` or `libs`, a missing `approved`, or `needs-rebase`).
+List every PR still open after tide's next sync in the final report, with the reason tide's verdict gives, not one inferred from labels alone (for example a release note awaited from the maintainer on `falco` or `libs`, a missing `approved`, or `needs-rebase`).
 
 ## Gotchas
 
