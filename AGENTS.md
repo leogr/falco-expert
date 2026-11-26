@@ -168,6 +168,7 @@ Documents following the [agentskills.io](https://agentskills.io/) specification.
 | [`falco-maintainer`](skills/falco-maintainer/SKILL.md) | Clear useful small maintenance work, understand project health and community needs, and use that evidence to select larger projects and follow downstream outcomes |
 | [`falco-dependabot`](skills/falco-dependabot/SKILL.md) | Clear a repository's open Dependabot PR backlog in bulk: rebase, wait for CI, approve when green |
 | [`falco-release`](skills/falco-release/SKILL.md) | Assist a Falco release manager end to end: inventory and chains, tracking issue, hygiene, upstream components, release candidates, freeze and cumulative sync, GA day, website, post-release; never performs the final release |
+| [`falco-yolo-team`](skills/falco-yolo-team/SKILL.md) | Work on Falco as a yoloctl agent team: roles, shared `.falco-team/` tracking and worktrees, privileged QA box, gated upstream hand-off |
 
 **Using `falco-cli`**: Agents working with this repository can use the `falco-cli` skill to:
 - Validate Falco rules files (`falco -V`)
@@ -236,6 +237,16 @@ Approving merges the PR: falcosecurity Prow sets `review_acts_as_lgtm: true`, so
 - Execute recoverable public steps (candidate tags, pin PRs, sync PRs, re-runs) only on a literal per-item go through dry-run-by-default gated scripts, and never perform a final release: the readiness assessment plus the manual steps is the deliverable
 
 The actor's identity, mandate, and voice are inputs collected at launch; nothing about a person is hard-coded. To use, read [`skills/falco-release/SKILL.md`](skills/falco-release/SKILL.md) for complete instructions.
+
+**Using `falco-yolo-team`**: Agents running in a yoloctl space can use the `falco-yolo-team` skill to:
+- Take an assigned coordinator, architect, dev or DevOps/QA role and load only that role's reference
+- Track tickets through Plan → Build → Review → QA → Merge in the Git-ignored `.falco-team/` workspace, with per-ticket plans and evidence
+- Clone falcosecurity repositories once and work in isolated per-ticket worktrees, never in the era-pinned [`refs/`](refs/)
+- Route specialist work to the other falco-expert skills (Dig Deeper, reviewer, dev, rules, CLI, triage, maintainer)
+- Run Docker-based builds and tests in an agentless privileged box driven by the DevOps operator
+- Coordinate through the managed AIRC chat, and prepare every public action (push, PR, review, Prow command) for an explicit per-item user go, executed only by the dedicated `gh` publisher box that holds the GitHub credential
+
+To use, read [`skills/falco-yolo-team/SKILL.md`](skills/falco-yolo-team/SKILL.md) for complete instructions.
 
 ### [`output/`](output/)
 

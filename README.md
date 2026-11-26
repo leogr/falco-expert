@@ -206,6 +206,7 @@ AI agent skills following [agentskills.io](https://agentskills.io/) specificatio
 - [`falco-triage/`](skills/falco-triage/) - Triage GitHub issues and PRs across falcosecurity repositories with knowledge-base-backed analysis
 - [`falco-reviewer/`](skills/falco-reviewer/) - Review PRs across falcosecurity repositories as a ghost writer for Falco maintainers, with security review and breaking change analysis
 - [`falco-maintainer/`](skills/falco-maintainer/) - Start with useful maintenance and small tasks, build a picture of project health and community needs, then choose larger projects and follow downstream outcomes
+- [`falco-yolo-team/`](skills/falco-yolo-team/) - Work on Falco as a yoloctl agent team (coordinator, architect, dev, DevOps/QA) with shared tracking, worktrees, privileged QA and gated upstream hand-off
 - [`falco-release/`](skills/falco-release/) - Assist a Falco release manager end to end: component inventory and chains, tracking issue, release candidates, freeze and cumulative sync, GA day, website, post-release; the agent never performs the final release
 
 #### Installing Skills for Claude Code
@@ -228,6 +229,7 @@ ln -s "$(cd falco-expert && pwd)/skills/falco-triage" ~/.claude/skills/falco-tri
 ln -s "$(cd falco-expert && pwd)/skills/falco-reviewer" ~/.claude/skills/falco-reviewer
 ln -s "$(cd falco-expert && pwd)/skills/falco-maintainer" ~/.claude/skills/falco-maintainer
 ln -s "$(cd falco-expert && pwd)/skills/falco-release" ~/.claude/skills/falco-release
+ln -s "$(cd falco-expert && pwd)/skills/falco-yolo-team" ~/.claude/skills/falco-yolo-team
 ```
 
 > **Note:** [`falco-maintainer`](skills/falco-maintainer/) starts general sessions with a bounded maintenance pass and preserves coverage, small outcomes and lessons in a session note. Public actions and substantial local implementation require explicit human approval; an approved pass may include scoped small local fixes. Its optional watch runs only while the host supports it, and it proposes compaction near 40% context used after saving a checkpoint. [`falco-release`](skills/falco-release/) retains its own per-item consent gates and never performs a final release.

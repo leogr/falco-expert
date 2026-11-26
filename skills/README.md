@@ -14,6 +14,7 @@ Documents following the [agentskills.io](https://agentskills.io/) specification.
 | [`falco-reviewer`](falco-reviewer/) | Review PRs across falcosecurity repositories as a ghost writer for Falco maintainers | 0.45 |
 | [`falco-rules-author`](falco-rules-author/) | Author, validate, test, and iteratively tune Falco detection rules | 0.45 |
 | [`falco-triage`](falco-triage/) | Triage GitHub issues and PRs across falcosecurity repositories | 0.45 |
+| [`falco-yolo-team`](falco-yolo-team/) | Work on Falco as a yoloctl agent team: roles, shared tracking and worktrees, privileged QA, gated upstream hand-off | 0.45 |
 
 ## Guidelines
 

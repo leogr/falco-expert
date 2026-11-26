@@ -14,3 +14,6 @@ skills/*/evals/
 
 # Local scratchpad for tracked improvements and open questions
 TODOs.md
+
+# yoloctl team workspace (tracking, clones, worktrees, task evidence)
+.falco-team/
